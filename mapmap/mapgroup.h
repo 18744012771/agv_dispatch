@@ -5,6 +5,13 @@
 #include "mapspirit.h"
 
 //一个区块 区块内只能有一个车
+enum
+{
+    COMMON_GROUP = 1,
+    HALT_GROUP = 2,
+    ELEVATOR_GROUP = 3
+};
+
 class MapGroup : public MapSpirit
 {
 public:

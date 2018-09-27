@@ -34,6 +34,9 @@ void MapManager::checkTable()
         if (!g_db.tableExists("agv_group")) {
             g_db.execDML("create table agv_group(id INTEGER,name char(64),spirits char(512));");
         }
+        if (!g_db.tableExists("agv_conflict")) {
+            g_db.execDML("create table agv_conflict(id INTEGER,name char(64),aspirit INTEGER,bspirit INTEGER);");
+        }
     }
     catch (CppSQLite3Exception &e) {
         combined_logger->error("sqlerr code:{0} msg:{1}", e.errorCode(), e.errorMessage());
@@ -335,6 +338,8 @@ bool MapManager::save()
 
         g_db.execDML("delete from agv_group;");
 
+        g_db.execDML("delete from agv_conflict;");
+
         g_db.execDML("begin transaction;");
 
         std::list<MapSpirit *> spirits = g_onemap.getAllElement();
@@ -392,6 +397,11 @@ bool MapManager::save()
                 for (auto p : ps1)str1 << p << ";";
 
                 bufSQL.format("insert into agv_group(id ,name,spirits,groupType) values (%d,'%s', '%s',%d);", group->getId(), group->getName().c_str(), str1.str().c_str(), group->getGroupType());
+                g_db.execDML(bufSQL);
+            }
+            else if (spirit->getSpiritType() == MapSpirit::Map_Sprite_Type_Conflict) {
+                MapConflictPair *mcp = static_cast<MapConflictPair *>(spirit);
+                bufSQL.format("insert into agv_conflict(id ,name,aspirit,bspirit) values (%d,'%s', %d,%d);", mcp->getId(), mcp->getName().c_str(), mcp->getA(),mcp->getB());
                 g_db.execDML(bufSQL);
             }
         }
@@ -592,6 +602,20 @@ bool MapManager::loadFromDb()
             g_onemap.addSpirit(mgroup);
         }
 
+        CppSQLite3Table table_conflict = g_db.getTable("select id,name,aspirit,bspirit from agv_conflict;");
+        if (table_conflict.numRows() > 0 && table_conflict.numFields() != 4)return false;
+        for (int row = 0; row < table_conflict.numRows(); row++)
+        {
+            table_conflict.setRow(row);
+
+            int id = atoi(table_conflict.fieldValue(0));
+            std::string name = std::string(table_conflict.fieldValue(1));
+            int a = atoi(table_conflict.fieldValue(2));
+            int b = atoi(table_conflict.fieldValue(3));
+            MapConflictPair *mcp = new MapConflictPair(id,name,a,b);
+            g_onemap.addSpirit(mcp);
+        }
+
         int max_id = 0;
         auto ps = g_onemap.getAllElement();
         for (auto p : ps) {
@@ -612,55 +636,6 @@ bool MapManager::loadFromDb()
     }
     return true;
 }
-
-//std::vector<int> MapManager::getBestPathDy(int agv, int lastStation, int startStation, int endStation, int &distance, bool changeDirect)
-//{
-//    //获取路径的必经点
-//    std::queue<int> chd_station;
-//    int startBlock = getBlock(startStation);
-//    int endBlock = getBlock(endStation);
-//    if(m_chd_station.find(std::make_pair(startBlock, endBlock)) != m_chd_station.end() )
-//    {
-//        chd_station = m_chd_station[std::make_pair(startBlock, endBlock)];
-//    }
-//    //判断是否有必经点
-//    if(chd_station.size())
-//    {
-//        chd_station.push(endStation);
-//        std::vector<int> exec_path;
-//        distance = 0;
-//        do
-//        {
-//            int pos = chd_station.front();
-//            int sub_dis;
-//            std::vector<int> sub_path = getBestPath(agv, lastStation, startStation, pos, sub_dis, changeDirect);
-//            if(!sub_path.size())
-//            {
-//                return sub_path;
-//            }
-//            else
-//            {
-//                distance += sub_dis;
-//                exec_path.insert(exec_path.end(), sub_path.begin(), sub_path.end());
-//                startStation = pos;
-//                auto ptr = g_onemap.getSpiritById(exec_path.back());
-//                if(MapSpirit::Map_Sprite_Type_Path != ptr->getSpiritType())
-//                {
-//                    exec_path.clear();
-//                    return exec_path;
-//                }
-//                MapPath *lastPath = static_cast<MapPath *>(ptr);
-//                lastStation = lastPath->getEnd();
-//                chd_station.pop();
-//            }
-//        }while(chd_station.size());
-//        return exec_path;
-//    }
-//    else
-//    {
-//        return getBestPath(agv, lastStation, startStation, endStation, distance, changeDirect);
-//    }
-//}
 
 //获取最优路径
 std::vector<int> MapManager::getBestPath(int agv, int lastStation, int startStation, int endStation, int &distance, bool changeDirect)
@@ -1212,7 +1187,8 @@ void MapManager::check()
     //check lines!
     bool changed = false;
     auto paths = g_onemap.getPaths();
-    for(auto path:paths){
+    for(auto path:paths)
+    {
         auto start = path->getStart();
         auto end = path->getEnd();
         if(g_onemap.getPointById(start) == nullptr
@@ -1278,10 +1254,121 @@ void MapManager::check()
             }
         }
     }
+
     if(changed){
         save();
         changed = false;
     }
+
+    //TODO:run one! load conflict from block
+    //    {
+    //        auto blocksTemp = g_onemap.getBlocks();
+    //        for(auto blockTemp:blocksTemp){
+    //            auto ps = blockTemp->getSpirits();
+    //            for(auto p:ps)
+    //            {
+    //                for(auto p2:ps)
+    //                {
+    //                    if(p == p2)continue;
+    //                    auto p_p = g_onemap.getSpiritById(p);
+    //                    auto p_p2 = g_onemap.getSpiritById(p2);
+    //                    if(p_p == nullptr || p_p2 == nullptr)continue;
+    //                    int mmaxid = g_onemap.getMaxId();
+    //                    std::stringstream ss;
+    //                    ss<<p_p->getName()<<"-"<<p_p2->getName();
+    //                    MapConflictPair *mcp = new MapConflictPair(++mmaxid,ss.str(),p_p->getId(),p_p2->getId());
+    //                    g_onemap.addSpirit(mcp);
+    //                    g_onemap.setMaxId(mmaxid);
+    //                }
+    //            }
+    //        }
+    //        changed = true;
+    //    }
+
+    //delete same or reverse conflict!
+    //    {
+    //        auto conflicts = g_onemap.getConflictPairs();
+    //        combined_logger->info("conflicts.length = {}",conflicts.size());
+    //        int ii = 0;
+    //        int deleteii = 0;
+    //        std::map<std::pair<int,int>,int> existss;
+    //        for(auto conflict:conflicts)
+    //        {
+    //            if(existss.find(std::make_pair(conflict->getA(),conflict->getB()))!=existss.end()
+    //            ||existss.find(std::make_pair(conflict->getB(),conflict->getA()))!=existss.end())
+    //            {
+    //                g_onemap.removeSpirit(conflict);
+    //                combined_logger->info("delete = {}",++deleteii);
+    //            }else{
+    //                existss[std::make_pair(conflict->getA(),conflict->getB())] = conflict->getId();
+    //            }
+    //            combined_logger->info("now = {}",ii++);
+    //        }
+
+    //        changed = true;
+    //    }
+
+    //check conflict
+    //    auto conflicts = g_onemap.getConflictPairs();
+    //    for(auto conflict:conflicts)
+    //    {
+    //        int a = conflict->getA();
+    //        int b = conflict->getB();
+    //        auto aStation = g_onemap.getPointById(a);
+    //        auto aLine = g_onemap.getPathById(a);
+    //        auto bStation = g_onemap.getPointById(b);
+    //        auto bLine = g_onemap.getPathById(b);
+
+    //        if((aStation == nullptr && aLine == nullptr)||(bStation == nullptr && bLine == nullptr))
+    //        {
+    //            g_onemap.removeSpiritById(conflict->getId());
+    //            changed = true;
+    //        }
+    //    }
+
+    //remove reverselines in conflict!
+    //    auto conflicts = g_onemap.getConflictPairs();
+    //    int ii = 0;
+    //    int deleteii = 0;
+    //    combined_logger->info("conflicts.length = {}",conflicts.size());
+    //    for(auto conflict:conflicts)
+    //    {
+    //        combined_logger->info("now = {}",ii++);
+    //        auto a = conflict->getA();
+    //        auto b = conflict->getB();
+    //        auto aptr = getPathById(a);
+    //        auto bptr = getPathById(b);
+    //        if(aptr == nullptr || bptr == nullptr)continue;
+    //        if(m_reverseLines.find(a)!=m_reverseLines.end())
+    //        {
+    //            for(auto itr = m_reverseLines[a].begin();itr!=m_reverseLines[a].end();++itr){
+    //                if(*itr == b){
+    //                    g_onemap.removeSpirit(conflict);
+    //                    combined_logger->info("===================delete = {}",++deleteii);
+    //                    break;
+    //                }
+    //            }
+    //        }else if(m_reverseLines.find(b)!=m_reverseLines.end()){
+    //            for(auto itr = m_reverseLines[b].begin();itr!=m_reverseLines[b].end();++itr){
+    //                if(*itr == a){
+    //                    g_onemap.removeSpirit(conflict);
+    //                    combined_logger->info("===================delete = {}",++deleteii);
+    //                    break;
+    //                }
+    //            }
+    //        }
+    //    }
+
+    //TODO: calculate the length of each path:
+
+
+    //    changed = true;
+
+
+    //    if(changed){
+    //        save();
+    //        changed = false;
+    //    }
 }
 
 void MapManager::getAdj()
@@ -1340,6 +1427,11 @@ int MapManager::getFloor(int spiritID)
         }
     }
     return floor;
+}
+
+std::list<MapConflictPair *> MapManager::getConflictPairs()
+{
+    return g_onemap.getConflictPairs();
 }
 
 std::vector<int> MapManager::getGroup(int spiritID)
@@ -1454,6 +1546,7 @@ void MapManager::interSetMap(SessionPtr conn, const Json::Value &request)
             g_db.execDML("delete from agv_bkg");
             g_db.execDML("delete from agv_block");
             g_db.execDML("delete from agv_group");
+            g_db.execDML("delete from agv_conflict");
 
             //TODO:
             //1.解析站点
@@ -1601,6 +1694,19 @@ void MapManager::interSetMap(SessionPtr conn, const Json::Value &request)
                 g_onemap.addSpirit(p);
             }
 
+            //7.解析conflict
+            for (unsigned int i = 0; i < request["conflicts"].size(); ++i)
+            {
+                Json::Value conflict = request["conflicts"][i];
+                int id = conflict["id"].asInt();
+                std::string name = conflict["name"].asString();
+                int a = conflict["a"].asInt();
+                int b = conflict["b"].asInt();
+                MapConflictPair *p = new MapConflictPair(id, name, a, b);
+
+                g_onemap.addSpirit(p);
+            }
+
             int max_id = request["maxId"].asInt();
             g_onemap.setMaxId(max_id);
 
@@ -1661,6 +1767,7 @@ void MapManager::interGetMap(SessionPtr conn, const Json::Value &request)
         Json::Value v_bkgs;
         Json::Value v_blocks;
         Json::Value v_groups;
+        Json::Value v_conflicts;
         for (auto spirit : allspirit)
         {
             if (spirit->getSpiritType() == MapSpirit::Map_Sprite_Type_Point) {
@@ -1782,6 +1889,15 @@ void MapManager::interGetMap(SessionPtr conn, const Json::Value &request)
 
                 v_groups.append(pv);
             }
+            else if (spirit->getSpiritType() == MapSpirit::Map_Sprite_Type_Conflict) {
+                MapConflictPair *p = static_cast<MapConflictPair *>(spirit);
+                Json::Value pv;
+                pv["id"] = p->getId();
+                pv["name"] = p->getName();
+                pv["a"] = p->getA();
+                pv["b"] = p->getB();
+                v_conflicts.append(pv);
+            }
         }
 
         if (v_points.size() > 0)
@@ -1796,6 +1912,8 @@ void MapManager::interGetMap(SessionPtr conn, const Json::Value &request)
             response["blocks"] = v_blocks;
         if (v_groups.size() > 0)
             response["groups"] = v_groups;
+        if (v_conflicts.size() > 0)
+            response["conflicts"] = v_conflicts;
         response["maxId"] = g_onemap.getMaxId();
     }
     conn->send(response);

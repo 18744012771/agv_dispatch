@@ -7,6 +7,7 @@
 #include "mapbackground.h"
 #include "mapblock.h"
 #include "mapgroup.h"
+#include "mapconflictpair.h"
 
 //一个地图[有若干个元素组成]//用于显示和保存地图
 class OneMap
@@ -33,11 +34,13 @@ public:
 
     std::vector<int> getStations();
     std::list<MapFloor *> getFloors();
+    std::list<MapSpirit *> getPointsAndPaths();
     std::list<MapPath *> getRootPaths();
     std::list<MapPath *> getPaths();
     std::list<MapBlock *> getBlocks();
     std::list<MapGroup *> getGroups(int groupType);
     std::list<MapGroup *> getGroups();
+    std::list<MapConflictPair *>  getConflictPairs();
     std::list<MapSpirit *> getAllElement(){return all_element;}
 
     MapSpirit *getSpiritById(int id);
@@ -49,6 +52,7 @@ public:
     MapBackground *getBackgroundById(int id);
     MapBlock *getBlockById(int id);
     MapGroup *getGroupById(int id);
+    MapConflictPair *getConflictPairById(int id);
 
     void setMaxId(int maxid){max_id = maxid; }
     int getMaxId(){return max_id; }

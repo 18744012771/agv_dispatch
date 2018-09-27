@@ -121,6 +121,7 @@ MapBlock *OneMap::getBlockById(int id)
     }
     return nullptr;
 }
+
 MapGroup *OneMap::getGroupById(int id)
 {
     for (auto p : all_element) {
@@ -130,6 +131,17 @@ MapGroup *OneMap::getGroupById(int id)
     }
     return nullptr;
 }
+
+MapConflictPair *OneMap::getConflictPairById(int id)
+{
+    for (auto p : all_element) {
+        if (p->getId() == id && p->getSpiritType() == MapSpirit::Map_Sprite_Type_Conflict) {
+            return static_cast<MapConflictPair *>(p);
+        }
+    }
+    return nullptr;
+}
+
 
 
 std::vector<int> OneMap::getStations()
@@ -150,6 +162,16 @@ std::list<MapFloor *> OneMap::getFloors()
         if(s->getSpiritType() == MapSpirit::Map_Sprite_Type_Floor)floors.push_back(static_cast<MapFloor *>(s));
     }
     return floors;
+}
+
+std::list<MapSpirit *> OneMap::getPointsAndPaths()
+{
+    std::list<MapSpirit *> es;
+    for(auto s:all_element)
+    {
+        if(s->getSpiritType() == MapSpirit::Map_Sprite_Type_Point ||s->getSpiritType() == MapSpirit::Map_Sprite_Type_Path)es.push_back(s);
+    }
+    return es;
 }
 
 std::list<MapPath *> OneMap::getPaths()
@@ -228,5 +250,19 @@ std::list<MapGroup *> OneMap::getGroups()
         }
     }
     return groups;
+}
+
+std::list<MapConflictPair *>  OneMap::getConflictPairs()
+{
+    std::list<MapConflictPair *> cs;
+    for(auto s:all_element)
+    {
+        if(s->getSpiritType() == MapSpirit::Map_Sprite_Type_Conflict)
+        {
+            MapConflictPair* group = static_cast<MapConflictPair *>(s);
+            cs.push_back(group);
+        }
+    }
+    return cs;
 }
 

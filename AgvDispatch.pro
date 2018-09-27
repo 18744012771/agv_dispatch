@@ -140,7 +140,10 @@ HEADERS += \
     device/devicemanager.h \
     device/elevator/elevatorManager.h \
     mapmap/blockmanager.h \
-    qingdao/qingdaonodetingmove.h
+    qingdao/qingdaonodetingmove.h \
+    mapmap/conflict.h \
+    mapmap/conflictmanager.h \
+    mapmap/mapconflictpair.h
 SOURCES += \
     agv.cpp \
     agvmanager.cpp \
@@ -201,4 +204,7 @@ SOURCES += \
     device/devicemanager.cpp \
     device/elevator/elevatorManager.cpp \
     mapmap/blockmanager.cpp \
-    qingdao/qingdaonodetingmove.cpp
+    qingdao/qingdaonodetingmove.cpp \
+    mapmap/conflict.cpp \
+    mapmap/conflictmanager.cpp \
+    mapmap/mapconflictpair.cpp

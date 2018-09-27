@@ -16,12 +16,7 @@
 
 class MapManager;
 using MapManagerPtr = std::shared_ptr<MapManager>;
-enum
-{
-    COMMON_GROUP = 1,//普通group
-    HALT_GROUP = 2,
-    ELEVATOR_GROUP = 3
-};
+
 //地图 由两部分助成： 点AgvStation 和 点之间的连线AgvLine
 class MapManager : public noncopyable, public std::enable_shared_from_this<MapManager>
 {
@@ -80,6 +75,7 @@ public:
     int getFloor(int spiritID);
     std::vector<int> getBlocks(int spiritID);
     std::vector<int> getGroup(int spiritID);
+    std::list<MapConflictPair *> getConflictPairs();
 
     MapPoint *getPointById(int id) { return g_onemap.getPointById(id); }
     MapPath *getPathById(int id) { return g_onemap.getPathById(id); }
@@ -88,8 +84,6 @@ public:
     MapBlock *getBlockById(int id) { return g_onemap.getBlockById(id); }
     MapGroup *getGroupById(int id) { return g_onemap.getGroupById(id); }
     MapPath *getPathByStartEnd(int start,int end){return g_onemap.getPathByStartEnd(start,end);}
-
-    //bool blockPassable(int blockId, int agvIdD);
 
     std::list<int> getOccuSpirit(int agvId);
 
@@ -127,6 +121,7 @@ private:
 
     std::vector<int> getPath(int agv, int lastStation, int startStation, int endStation, int &distance, bool changeDirect);
     std::vector<int> getPath(int from, int to, int &distance, bool changeDirect = CAN_CHANGE_DIRECTION);
+
     void checkTable();
 
     void getReverseLines();
@@ -139,6 +134,7 @@ private:
     //void init_task_splitinfo();
     std::atomic_bool mapModifying;
     std::map< std::pair<int, int>, std::queue<int> > m_chd_station;
+
 };
 
 #endif // MAPMANAGER_H
