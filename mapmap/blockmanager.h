@@ -43,26 +43,26 @@ private:
     std::vector<AgvOccuSpirits> agv_spirits;
 };
 
-class BlockManager: public noncopyable, public std::enable_shared_from_this<BlockManager>
-{
-public:
-    static BlockManagerPtr getInstance() {
-        static BlockManagerPtr m_inst = BlockManagerPtr(new BlockManager());
-        return m_inst;
-    }
+//class BlockManager: public noncopyable, public std::enable_shared_from_this<BlockManager>
+//{
+//public:
+//    static BlockManagerPtr getInstance() {
+//        static BlockManagerPtr m_inst = BlockManagerPtr(new BlockManager());
+//        return m_inst;
+//    }
 
-    bool tryAddBlockOccu(std::vector<int> blocks,int agvId,int spiritId);
-    void freeBlockOccu(std::vector<int> blocks,int agvId, int spiritId);
+//    bool tryAddBlockOccu(std::vector<int> blocks,int agvId,int spiritId);
+//    void freeBlockOccu(std::vector<int> blocks,int agvId, int spiritId);
 
-    bool blockPassable(std::vector<int> blocks, int agvId);
-    void clear();
-    void printBlock();
-    void test();
-private:
-    BlockManager();
+//    bool blockPassable(std::vector<int> blocks, int agvId);
+//    void clear();
+//    void printBlock();
+//    void test();
+//private:
+//    BlockManager();
 
-    std::mutex blockMtx;
-    std::vector<BBlock> bblocks;
-};
+//    std::mutex blockMtx;
+//    std::vector<BBlock> bblocks;
+//};
 
 #endif // BLOCKMANAGER_H

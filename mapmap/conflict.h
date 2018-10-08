@@ -8,12 +8,15 @@ class Conflict
 {
 public:
     Conflict(int _agvAId, std::vector<int> _agvAspirits, int _agvBId, std::vector<int> _agvBspirits);
+    Conflict(const Conflict&b);
     ~Conflict();
     bool tryLock(int agvId, int spirit);
     bool freeLock(int agvId,int spirit);
+    bool freeLockExcept(int agvId,int spirit);
     bool isAllFree();
     bool passable(int agvId,int spirit);
     void print();
+    Conflict &operator = (const Conflict&b);
 private:
     int agvA;
     int agvB;

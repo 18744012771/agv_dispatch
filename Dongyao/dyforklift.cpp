@@ -5,6 +5,7 @@
 #include "charge/chargemachine.h"
 #include "../device/elevator/elevatorManager.h"
 #include "../mapmap/blockmanager.h"
+#include "../mapmap/conflictmanager.h"
 #define RESEND
 //#define HEART
 
@@ -357,24 +358,30 @@ void DyForklift::arrve(int x, int y) {
 //执行路径规划结果
 void DyForklift::excutePath(std::vector<int> lines)
 {
+    auto conflictmanagerptr = ConflictManager::getInstance();
     combined_logger->info("dyForklift{0} excutePath", id);
 
+    std::vector<int> spirits;
     std::stringstream ss;
     stationMtx.lock();
     excutestations.clear();
     excutespaths.clear();
     excutestations.push_back(nowStation);
     for (auto line : lines) {
+        spirits.push_back(line);
         MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(line);
         if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Path)continue;
 
         MapPath *path = static_cast<MapPath *>(spirit);
         int endId = path->getEnd();
+        spirits.push_back(endId);
         excutestations.push_back(endId);
         excutespaths.push_back(line);
         ss<<path->getName()<<"  ";
     }
     stationMtx.unlock();
+
+    conflictmanagerptr->addAgvExcuteStationPath(spirits,getId());
 
     combined_logger->info("excutePath: {0}", ss.str());
     //    actionpoint = 0;
@@ -669,7 +676,8 @@ void DyForklift::goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd
     MapPoint *end;
 
     MapManagerPtr mapmanagerptr = MapManager::getInstance();
-    BlockManagerPtr blockmanagerptr = BlockManager::getInstance();
+    auto conflictmanagerptr = ConflictManager::getInstance();
+    //BlockManagerPtr blockmanagerptr = BlockManager::getInstance();
 
     combined_logger->info("dyForklift goStation");
     std::stringstream body;
@@ -715,15 +723,14 @@ void DyForklift::goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd
         for(auto line:lines){
             auto linePtr = mapmanagerptr->getPathById(line);
             if(linePtr==nullptr)continue;
-            auto bs = mapmanagerptr->getBlocks(line);
-            if(!blockmanagerptr->tryAddBlockOccu(bs,getId(),line)){
+            if(!conflictmanagerptr->conflictPassable(line,getId())){
                 canGo = false;
                 break;
             }
-
-            auto bs2 = mapmanagerptr->getBlocks(linePtr->getEnd());
-            if(!blockmanagerptr->tryAddBlockOccu(bs2,getId(),linePtr->getEnd())){
-                canGo = false;
+            if(canGo){
+                if(!conflictmanagerptr->conflictPassable(linePtr->getEnd(),getId())){
+                    canGo = false;
+                }
             }
             break;
         }
@@ -750,15 +757,13 @@ void DyForklift::goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd
 
             //could occu current station or path block?
             if(nowStation>0){
-                auto bs = mapmanagerptr->getBlocks(nowStation);
-                if(!blockmanagerptr->tryAddBlockOccu(bs,getId(),nowStation)){
+                if(!conflictmanagerptr->tryAddConflictOccu(nowStation,getId())){
                     canResume = false;
                 }
             }else{
                 auto path = mapmanagerptr->getPathByStartEnd(lastStation,nextStation);
                 if(path!=nullptr){
-                    auto bs = mapmanagerptr->getBlocks(path->getId());
-                    if(!blockmanagerptr->tryAddBlockOccu(bs,getId(),path->getId())){
+                    if(!conflictmanagerptr->tryAddConflictOccu(path->getId(),getId())){
                         canResume = false;
                     }
                 }
@@ -767,7 +772,7 @@ void DyForklift::goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd
             if(!canResume)continue;
 
             //could occu next station or path block?
-            std::vector<int> bs;
+            int iip;
             if(nowStation!=0){
                 int pId = -1;
                 stationMtx.lock();
@@ -779,15 +784,16 @@ void DyForklift::goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd
                     }
                 }
                 stationMtx.unlock();
-                bs = mapmanagerptr->getBlocks(pId);
+                iip = pId;
             }
             else {
-                bs = mapmanagerptr->getBlocks(nextStation);
+                iip = nextStation;
             }
 
-            if (!blockmanagerptr->blockPassable(bs,getId())) {
+            if (!conflictmanagerptr->conflictPassable(iip,getId())) {
                 canResume = false;
-                break;
+            }else{
+                canResume = conflictmanagerptr->tryAddConflictOccu(iip,getId());
             }
             if(canResume)
                 resume();
@@ -1210,5 +1216,7 @@ void DyForklift::onTaskCanceled(AgvTaskPtr _task)
 
     //TODO:
     //occu current station or  current path
+    auto conflictmanagerptr = ConflictManager::getInstance();
+    conflictmanagerptr->freeAgvOccu(getId(),lastStation,nowStation,nextStation);
 }
 

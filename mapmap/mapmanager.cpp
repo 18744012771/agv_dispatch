@@ -6,6 +6,8 @@
 #include "../userlogmanager.h"
 #include "../base64.h"
 #include "blockmanager.h"
+#include "conflictmanager.h"
+#include "../bezierarc.h"
 #include <algorithm>
 
 MapManager::MapManager() :mapModifying(false)
@@ -92,7 +94,7 @@ MapPath *MapManager::getMapPathByStartEnd(int start, int end)
 void MapManager::printGroup()
 {
     UNIQUE_LCK(groupMtx);
-    combined_logger->debug("GROUP===================");
+    combined_logger->debug("GROUP==========================================");
     for(auto p=group_occuagv.begin();p!=group_occuagv.end();++p){
 
         auto pp = p->second;
@@ -116,7 +118,7 @@ void MapManager::printGroup()
         combined_logger->debug("{0}",ss1.str());
         combined_logger->debug("{0}",ss2.str());
     }
-    combined_logger->debug("GROUP===================");
+    combined_logger->debug("GROUP==========================================");
 }
 
 //一个Agv占领一个站点
@@ -842,7 +844,7 @@ std::vector<int> MapManager::getPath(int from, int to, int &distance, bool chang
 
     for (auto line : paths) {
         if (line->getStart() == from) {
-            lineDistanceColors[line->getId()].distance = line->getLength();
+            lineDistanceColors[line->getId()].distance = getRealLength(line,nullptr);
             lineDistanceColors[line->getId()].color = AGV_LINE_COLOR_GRAY;
             Q.insert(std::make_pair(lineDistanceColors[line->getId()].distance, line->getId()));
         }
@@ -857,18 +859,18 @@ std::vector<int> MapManager::getPath(int from, int to, int &distance, bool chang
         {
             if (lineDistanceColors[adj].color == AGV_LINE_COLOR_BLACK)continue;
 
-            MapSpirit *pp = g_onemap.getSpiritById(adj);
-            if (pp->getSpiritType() != MapSpirit::Map_Sprite_Type_Path)continue;
-            MapPath *path = static_cast<MapPath *>(pp);
+            MapPath *path = getPathById(adj);
+            if(path == nullptr)continue;
+            int realLength = getRealLength(path,getPathById(startLine));
             if (lineDistanceColors[adj].color == AGV_LINE_COLOR_WHITE) {
-                lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + path->getLength();
+                lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + realLength;
                 lineDistanceColors[adj].color = AGV_LINE_COLOR_GRAY;
                 lineDistanceColors[adj].father = startLine;
                 Q.insert(std::make_pair(lineDistanceColors[adj].distance, adj));
             }
             else if (lineDistanceColors[adj].color == AGV_LINE_COLOR_GRAY) {
-                if (lineDistanceColors[adj].distance > lineDistanceColors[startLine].distance + path->getLength()) {
-                    lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + path->getLength();
+                if (lineDistanceColors[adj].distance > lineDistanceColors[startLine].distance + realLength) {
+                    lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + realLength;
                     lineDistanceColors[adj].father = startLine;
 
                     //更新Q中的 adj
@@ -921,6 +923,22 @@ std::vector<int> MapManager::getPath(int from, int to, int &distance, bool chang
     return result;
 }
 
+int MapManager::getRealLength(MapPath *p,MapPath *lastPath)
+{
+    if(p == nullptr)return DISTANCE_INFINITY;
+    int length = p->getLength();
+    if(p->getPathType() == MapPath::Map_Path_Type_Cubic_Bezier ||p->getPathType() == MapPath::Map_Path_Type_Quadratic_Bezier){
+        length *= 1.5;
+    }
+    if(p->getSpeed()<0){
+        length *= 1.2;
+    }
+
+    if(lastPath != nullptr && p->getSpeed() * lastPath->getSpeed()<0){
+        length *= 2;
+    }
+    return length;
+}
 
 std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation, int endStation, int &distance, bool changeDirect)
 {
@@ -958,7 +976,7 @@ std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation,
             for (auto path : paths) {
                 if (path->getStart() == lastStation && path->getEnd() == startStation) {
                     result.push_back(path->getId());
-                    distance = path->getLength();
+                    distance = getRealLength(path,nullptr);
                 }
             }
         }
@@ -1029,7 +1047,7 @@ std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation,
             if (line->getStart() == lastStation) {
                 if (pathPassable(line, agv,passable_uturnPoints)) {
                     if (lineDistanceColors[line->getId()].color == AGV_LINE_COLOR_BLACK)continue;
-                    lineDistanceColors[line->getId()].distance = line->getLength();
+                    lineDistanceColors[line->getId()].distance = getRealLength(line,nullptr);
                     lineDistanceColors[line->getId()].color = AGV_LINE_COLOR_GRAY;
                     Q.insert(std::make_pair(lineDistanceColors[line->getId()].distance, line->getId()));
                 }
@@ -1042,7 +1060,7 @@ std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation,
                 //            if (line->getStart() == startStation && line->getEnd() != lastStation) {
                 if (pathPassable(line, agv,passable_uturnPoints)) {
                     if (lineDistanceColors[line->getId()].color == AGV_LINE_COLOR_BLACK)continue;
-                    lineDistanceColors[line->getId()].distance = line->getLength();
+                    lineDistanceColors[line->getId()].distance = getRealLength(line,nullptr);//
                     lineDistanceColors[line->getId()].color = AGV_LINE_COLOR_GRAY;
                     Q.insert(std::make_pair(lineDistanceColors[line->getId()].distance, line->getId()));
                 }
@@ -1062,16 +1080,19 @@ std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation,
             MapPath *path = g_onemap.getPathById(adj);
             if (path == nullptr)continue;
             if (!pathPassable(path, agv,passable_uturnPoints))continue;
+
+            int realLength = getRealLength(path,getPathById(startLine));
+
             if (lineDistanceColors[adj].color == AGV_LINE_COLOR_WHITE) {
-                lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + path->getLength();
+                lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + realLength;
                 lineDistanceColors[adj].color = AGV_LINE_COLOR_GRAY;
                 lineDistanceColors[adj].father = startLine;
                 Q.insert(std::make_pair(lineDistanceColors[adj].distance, adj));
             }
             else if (lineDistanceColors[adj].color == AGV_LINE_COLOR_GRAY) {
-                if (lineDistanceColors[adj].distance > lineDistanceColors[startLine].distance + path->getLength()) {
+                if (lineDistanceColors[adj].distance > lineDistanceColors[startLine].distance + realLength) {
                     //更新father和距离
-                    lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + path->getLength();
+                    lineDistanceColors[adj].distance = lineDistanceColors[startLine].distance + realLength;
                     lineDistanceColors[adj].father = startLine;
 
                     //更新Q中的 adj
@@ -1260,7 +1281,49 @@ void MapManager::check()
         changed = false;
     }
 
-    //TODO:run one! load conflict from block
+    //    //add adjs to conflicts
+    //    auto lines = g_onemap.getPaths();
+    //    for(auto line:lines){
+    //        auto adjs = m_adj[line->getId()];
+    //        for(auto adj:adjs){
+    //            auto adjptr = g_onemap.getPathById(adj);
+    //            if(adjptr!=nullptr){
+    //                int mmaxid = g_onemap.getMaxId();
+    //                std::stringstream ss;
+    //                ss<<line->getName()<<"-"<<adjptr->getName();
+    //                MapConflictPair *mcp = new MapConflictPair(++mmaxid,ss.str(),line->getId(),adjptr->getId());
+    //                g_onemap.addSpirit(mcp);
+    //                g_onemap.setMaxId(mmaxid);
+    //            }
+    //        }
+    //    }
+
+    //    //add point and its conntec lines to conflicts
+    //    for(auto line:lines){
+    //        auto startptr = g_onemap.getPointById(line->getStart());
+    //        auto endptr = g_onemap.getPointById(line->getEnd());
+    //        if(startptr!=nullptr){
+    //            int mmaxid = g_onemap.getMaxId();
+    //            std::stringstream ss;
+    //            ss<<line->getName()<<"-"<<startptr->getName();
+    //            MapConflictPair *mcp = new MapConflictPair(++mmaxid,ss.str(),line->getId(),startptr->getId());
+    //            g_onemap.addSpirit(mcp);
+    //            g_onemap.setMaxId(mmaxid);
+    //        }
+
+    //        if(endptr!=nullptr){
+    //            int mmaxid = g_onemap.getMaxId();
+    //            std::stringstream ss;
+    //            ss<<line->getName()<<"-"<<endptr->getName();
+    //            MapConflictPair *mcp = new MapConflictPair(++mmaxid,ss.str(),line->getId(),endptr->getId());
+    //            g_onemap.addSpirit(mcp);
+    //            g_onemap.setMaxId(mmaxid);
+    //        }
+    //    }
+
+    //TODO: add 2p1 / 2p2 to conflicts
+
+    //TODO:run once! load conflict from block
     //    {
     //        auto blocksTemp = g_onemap.getBlocks();
     //        for(auto blockTemp:blocksTemp){
@@ -1285,7 +1348,7 @@ void MapManager::check()
     //        changed = true;
     //    }
 
-    //delete same or reverse conflict!
+    //    //delete same or reverse conflict!
     //    {
     //        auto conflicts = g_onemap.getConflictPairs();
     //        combined_logger->info("conflicts.length = {}",conflicts.size());
@@ -1295,7 +1358,7 @@ void MapManager::check()
     //        for(auto conflict:conflicts)
     //        {
     //            if(existss.find(std::make_pair(conflict->getA(),conflict->getB()))!=existss.end()
-    //            ||existss.find(std::make_pair(conflict->getB(),conflict->getA()))!=existss.end())
+    //                    ||existss.find(std::make_pair(conflict->getB(),conflict->getA()))!=existss.end())
     //            {
     //                g_onemap.removeSpirit(conflict);
     //                combined_logger->info("delete = {}",++deleteii);
@@ -1326,7 +1389,7 @@ void MapManager::check()
     //        }
     //    }
 
-    //remove reverselines in conflict!
+    //    //remove reverselines in conflict!
     //    auto conflicts = g_onemap.getConflictPairs();
     //    int ii = 0;
     //    int deleteii = 0;
@@ -1359,14 +1422,38 @@ void MapManager::check()
     //        }
     //    }
 
-    //TODO: calculate the length of each path:
+    //    //TODO: calculate the length of each path:
+    //    auto lines = g_onemap.getPaths();
+    //    for(auto lineptr:lines){
+    //        if(lineptr==nullptr || lineptr->getPathType()==MapPath::Map_Path_Type_Between_Floor)continue;
 
+    //        auto startptr = getPointById(lineptr->getStart());
+    //        auto endptr = getPointById(lineptr->getEnd());
+    //        if(startptr == nullptr || endptr == nullptr)continue;
+
+    //        PointF a(startptr->getRealX(),startptr->getRealY());
+    //        PointF b(lineptr->getP1x(),lineptr->getP1y());
+    //        PointF c(lineptr->getP2x(),lineptr->getP2y());
+    //        PointF d(endptr->getRealX(),endptr->getRealY());
+
+    //        if(lineptr->getPathType()==MapPath::Map_Path_Type_Line){
+    //            //zhixian
+    //            lineptr->setLength(sqrt((endptr->getRealY()-startptr->getRealY())*(endptr->getRealY()-startptr->getRealY())+(endptr->getRealX()-startptr->getRealX())*(endptr->getRealX()-startptr->getRealX())));
+    //        }else if(lineptr->getPathType()==MapPath::Map_Path_Type_Quadratic_Bezier){
+    //            //erci
+    //            lineptr->setLength(BezierArc::BezierArcLength(a,b,d));
+    //        }else if(lineptr->getPathType()==MapPath::Map_Path_Type_Cubic_Bezier){
+    //            //sanci
+    //            lineptr->setLength(BezierArc::BezierArcLength(a,b,c,d));
+    //        }
+    //    }
 
     //    changed = true;
 
-
     //    if(changed){
     //        save();
+    //        auto conflicts = g_onemap.getConflictPairs();
+    //        combined_logger->info("conflicts.length = {}",conflicts.size());
     //        changed = false;
     //    }
 }
@@ -1391,7 +1478,8 @@ void MapManager::clear()
 {
     line_occuagvs.clear();
     station_occuagv.clear();
-    BlockManager::getInstance()->clear();
+    ConflictManager::getInstance()->clear();
+    //BlockManager::getInstance()->clear();
     m_reverseLines.clear();
     m_adj.clear();
     g_onemap.clear();
@@ -2175,6 +2263,7 @@ bool MapManager::addOccuGroup(int groupid, int agvId)
     }
     return true;
 }
+
 bool MapManager::freeGroup(int groupid, int agvId)
 {
     auto group = getGroupById(groupid);

@@ -11,6 +11,24 @@ Conflict::Conflict(int _agvAId, std::vector<int> _agvAspirits, int _agvBId, std:
 
 }
 
+Conflict::Conflict(const Conflict&b)
+{
+    lockedAgv = b.lockedAgv;
+    agvA = b.agvA;
+    agvB = b.agvB;
+    agvAspirits = b.agvAspirits;
+    agvBspirits = b.agvBspirits;
+}
+
+Conflict &Conflict::operator = (const Conflict&b)
+{
+    lockedAgv = b.lockedAgv;
+    agvA = b.agvA;
+    agvB = b.agvB;
+    agvAspirits = b.agvAspirits;
+    agvBspirits = b.agvBspirits;
+}
+
 Conflict::~Conflict()
 {
 
@@ -45,6 +63,38 @@ bool Conflict::tryLock(int agvId,int spirit)
     if(lockedAgv == agvId)return true;
     if(lockedAgv!=0 && lockedAgv!=agvId)return false;
     lockedAgv = agvId;
+    return true;
+}
+
+bool Conflict::freeLockExcept(int agvId,int spirit)
+{
+    UNIQUE_LCK(lockedAgvMtx);
+    if(agvId == agvA){
+        for(auto itr = agvAspirits.begin();itr!=agvAspirits.end();){
+            if(*itr == spirit){
+                ++itr;
+            }else{
+                itr = agvAspirits.erase(itr);
+            }
+        }
+
+        if(agvAspirits.empty()){
+            lockedAgv = 0;
+        }
+    }else if(agvId == agvB){
+        for(auto itr = agvBspirits.begin();itr!=agvBspirits.end();){
+            if(*itr == spirit){
+                ++itr;
+            }else{
+                itr = agvBspirits.erase(itr);
+            }
+        }
+
+        if(agvBspirits.empty()){
+            lockedAgv = 0;
+        }
+    }
+
     return true;
 }
 

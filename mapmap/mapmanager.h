@@ -121,6 +121,7 @@ private:
 
     std::vector<int> getPath(int agv, int lastStation, int startStation, int endStation, int &distance, bool changeDirect);
     std::vector<int> getPath(int from, int to, int &distance, bool changeDirect = CAN_CHANGE_DIRECTION);
+    int getRealLength(MapPath *p, MapPath *lastPath);
 
     void checkTable();
 

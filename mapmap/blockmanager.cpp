@@ -115,103 +115,103 @@ void BBlock::print()
     }
 }
 
-BlockManager::BlockManager()
-{
+//BlockManager::BlockManager()
+//{
 
-}
+//}
 
-bool BlockManager::tryAddBlockOccu(std::vector<int> blocks,int agvId,int spiritId)
-{
-    if(spiritId>2000){
-        combined_logger->debug("spiritId={0}",spiritId);
-    }
-    if(!blockPassable(blocks,agvId))return false;
+//bool BlockManager::tryAddBlockOccu(std::vector<int> blocks,int agvId,int spiritId)
+//{
+//    if(spiritId>2000){
+//        combined_logger->debug("spiritId={0}",spiritId);
+//    }
+//    if(!blockPassable(blocks,agvId))return false;
 
 
-    UNIQUE_LCK(blockMtx);
-    for(auto block:blocks)
-    {
-        bool alreadAdd = false;
-        for(auto itr=bblocks.begin();itr!=bblocks.end();++itr)
-        {
-            if(itr->getBlockId() == block){
-                itr->addOccu(agvId,spiritId);
-                alreadAdd = true;
-                break;
-            }
-        }
+//    UNIQUE_LCK(blockMtx);
+//    for(auto block:blocks)
+//    {
+//        bool alreadAdd = false;
+//        for(auto itr=bblocks.begin();itr!=bblocks.end();++itr)
+//        {
+//            if(itr->getBlockId() == block){
+//                itr->addOccu(agvId,spiritId);
+//                alreadAdd = true;
+//                break;
+//            }
+//        }
 
-        if(!alreadAdd){
-            BBlock bb(block);
-            bb.addOccu(agvId,spiritId);
-            bblocks.push_back(bb);
-        }
-    }
+//        if(!alreadAdd){
+//            BBlock bb(block);
+//            bb.addOccu(agvId,spiritId);
+//            bblocks.push_back(bb);
+//        }
+//    }
 
-    return true;
-}
-void BlockManager::freeBlockOccu(std::vector<int> blocks,int agvId, int spiritId)
-{
-    UNIQUE_LCK(blockMtx);
-    for(auto block:blocks)
-    {
-        for(auto itr=bblocks.begin();itr!=bblocks.end();++itr)
-        {
-            if(itr->getBlockId() == block){
-                itr->removeOccu(agvId,spiritId);
-            }
-        }
-    }
-}
+//    return true;
+//}
+//void BlockManager::freeBlockOccu(std::vector<int> blocks,int agvId, int spiritId)
+//{
+//    UNIQUE_LCK(blockMtx);
+//    for(auto block:blocks)
+//    {
+//        for(auto itr=bblocks.begin();itr!=bblocks.end();++itr)
+//        {
+//            if(itr->getBlockId() == block){
+//                itr->removeOccu(agvId,spiritId);
+//            }
+//        }
+//    }
+//}
 
-bool BlockManager::blockPassable(std::vector<int> blocks, int agvId)
-{
-    UNIQUE_LCK(blockMtx);
-    for(auto block:blocks)
-    {
-        for(auto itr = bblocks.begin();itr!=bblocks.end();++itr){
-            if(itr->getBlockId() == block){
-                if(!itr->passable(agvId))return false;
-            }
-        }
-    }
-    return true;
-}
+//bool BlockManager::blockPassable(std::vector<int> blocks, int agvId)
+//{
+//    UNIQUE_LCK(blockMtx);
+//    for(auto block:blocks)
+//    {
+//        for(auto itr = bblocks.begin();itr!=bblocks.end();++itr){
+//            if(itr->getBlockId() == block){
+//                if(!itr->passable(agvId))return false;
+//            }
+//        }
+//    }
+//    return true;
+//}
 
-void BlockManager::clear()
-{
-    UNIQUE_LCK(blockMtx);
-    bblocks.clear();
-}
+//void BlockManager::clear()
+//{
+//    UNIQUE_LCK(blockMtx);
+//    bblocks.clear();
+//}
 
-void BlockManager::printBlock()
-{
-    UNIQUE_LCK(blockMtx);
-    combined_logger->debug("BLOCK===============================================");
-    for(auto itr = bblocks.begin();itr!=bblocks.end();++itr){
-        itr->print();
-    }
-    combined_logger->debug("BLOCK===============================================");
-}
+//void BlockManager::printBlock()
+//{
+//    UNIQUE_LCK(blockMtx);
+//    combined_logger->debug("BLOCK===============================================");
+//    for(auto itr = bblocks.begin();itr!=bblocks.end();++itr){
+//        itr->print();
+//    }
+//    combined_logger->debug("BLOCK===============================================");
+//}
 
-void BlockManager::test()
-{
-    std::vector<int> bs;
-    bs.push_back(101);
-    bs.push_back(102);
-    bs.push_back(103);
+//void BlockManager::test()
+//{
+//    std::vector<int> bs;
+//    bs.push_back(101);
+//    bs.push_back(102);
+//    bs.push_back(103);
 
-    std::vector<int> bss;
-    bss.push_back(101);
-    bss.push_back(103);
+//    std::vector<int> bss;
+//    bss.push_back(101);
+//    bss.push_back(103);
 
-    tryAddBlockOccu(bs,1,1001);
-    printBlock();
-    tryAddBlockOccu(bss,1,1002);
-    printBlock();
-    freeBlockOccu(bs,1,1002);
-    printBlock();
-    freeBlockOccu(bss,1,1001);
-    printBlock();
-}
+//    tryAddBlockOccu(bs,1,1001);
+//    printBlock();
+//    tryAddBlockOccu(bss,1,1002);
+//    printBlock();
+//    freeBlockOccu(bs,1,1002);
+//    printBlock();
+//    freeBlockOccu(bss,1,1001);
+//    printBlock();
+//}
 

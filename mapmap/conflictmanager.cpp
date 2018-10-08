@@ -13,11 +13,11 @@ void ConflictManager::init()
     auto cc = mapmanagerptr->getConflictPairs();
     for(auto c:cc)
     {
-        conflict_pairs.insert(c->getA(),c->getB());
+        conflict_pairs.insert(std::make_pair(c->getA(),c->getB()));
     }
     for(auto c:cc)
     {
-        conflict_pairs.insert(c->getB(),c->getA());
+        conflict_pairs.insert(std::make_pair(c->getB(),c->getA()));
     }
 }
 
@@ -36,15 +36,16 @@ bool ConflictManager::checkConflict(int a,int b)
 void ConflictManager::calcc(std::vector<int> &agv1spirits,std::vector<int> &agv2spirits,int &i,int &j,std::vector<int> &ic,std::vector<int>&jc)
 {
     if(i<agv1spirits.size() && j>=0){
-        ic.push_back(i);
-        jc.push_back(j);
-        //check i+1 and j - 1
         if(i+1<agv1spirits.size() && j-1>=0 && checkConflict(agv1spirits[i+1],agv2spirits[j-1])){
-            calcc(agv1spirits,agv2spirits,++i,--j,ic,jc);
+            ic.push_back(agv1spirits[++i]);
+            jc.push_back(agv2spirits[--j]);
+            calcc(agv1spirits,agv2spirits,i,j,ic,jc);
         }else if(i+1<agv1spirits.size() && j>=0 && checkConflict(agv1spirits[i+1],agv2spirits[j])){
-            calcc(agv1spirits,agv2spirits,++i,j,ic,jc);
+            ic.push_back(agv1spirits[++i]);
+            calcc(agv1spirits,agv2spirits,i,j,ic,jc);
         }else if(j-1>=0  && checkConflict(agv1spirits[i],agv2spirits[j-1])){
-            calcc(agv1spirits,agv2spirits,i,--j,ic,jc);
+            jc.push_back(agv2spirits[--j]);
+            calcc(agv1spirits,agv2spirits,i,j,ic,jc);
         }
     }
 }
@@ -52,22 +53,21 @@ void ConflictManager::calcc(std::vector<int> &agv1spirits,std::vector<int> &agv2
 
 void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId)
 {
-
-    UNIQUE_LCK(&stationPathMtx);
-    stationsPaths[agvId] = spirits;
+    UNIQUE_LCK(stationPathMtx);
+    agvStationsPaths[agvId] = spirits;
 
     UNIQUE_LCK(conflictMtx);
     conflicts.clear();
 
-    for(auto itr = stationsPaths.begin();itr!=stationsPaths.end();++itr)
+    for(auto itr = agvStationsPaths.begin();itr!=agvStationsPaths.end();++itr)
     {
-        for(auto pos = stationsPaths.begin();pos != stationsPaths.end();++pos)
+        for(auto pos = agvStationsPaths.begin();pos != agvStationsPaths.end();++pos)
         {
             if(itr->first == pos->first)continue;
             int agv1 = itr->first;
             int agv2 = pos->first;
             std::vector<int> agv1spirits = itr->second;
-            std::vector<int> agv2spirits = itr->second;
+            std::vector<int> agv2spirits = pos->second;
 
             for(int i=0;i<agv1spirits.size();)
             {
@@ -83,19 +83,82 @@ void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId
                 if(hasConflict){
                     std::vector<int> ic;
                     std::vector<int> jc;
+
+                    ic.push_back(agv1spirits[i]);
+                    jc.push_back(agv2spirits[j]);
+
                     calcc(agv1spirits,agv2spirits,i,j,ic,jc);
+                    std::reverse(jc.begin(),jc.end());
                     Conflict c(agv1,ic,agv2,jc);
                     conflicts.push_back(c);
-                }else{
-                    ++i;
                 }
+                ++i;
             }
         }
     }
 }
 
-void ConflictManager::removeAgvExcuteStationPath(int spirit,int agvId)
+void ConflictManager::freeAgvOccu(int agvId,int lastStation,int nowStation,int nextStation)
 {
+    int occu = -1;
+    if(nowStation > 0){
+        occu = nowStation;
+    }else{
+        auto line = MapManager::getInstance()->getPathByStartEnd(lastStation,nextStation);
+        if(line!=nullptr)occu = line->getId();
+    }
+
+    std::vector<int> nowOccus;
+    nowOccus.push_back(occu);
+
+    UNIQUE_LCK(stationPathMtx);
+    if(agvStationsPaths.find(agvId) == agvStationsPaths.end()){
+        agvStationsPaths[agvId] = nowOccus;
+        return ;
+    }
+
+    //free conflict
+    UNIQUE_LCK(conflictMtx);
+    for(auto itr = conflicts.begin();itr!=conflicts.end();){
+        itr->freeLockExcept(agvId,occu);
+        if(itr->isAllFree()){
+            itr = conflicts.erase(itr);
+        }else
+            ++itr;
+    }
+}
+
+void ConflictManager::freeConflictOccu(int spirit,int agvId)
+{
+    UNIQUE_LCK(stationPathMtx);
+    if(agvStationsPaths.find(agvId) == agvStationsPaths.end())return ;
+
+    auto spirits = agvStationsPaths[agvId];
+    //check if exist
+    bool exist = false;
+    for(auto pos = spirits.begin();pos!=spirits.end();++pos)
+    {
+        if(*pos == spirit){
+            exist = true;
+            break;
+        }
+    }
+
+    //remove before
+    if(exist){
+        for(auto pos = spirits.begin();pos!=spirits.end();)
+        {
+            if(*pos == spirit){
+                pos = spirits.erase(pos);
+                break;
+            }
+            pos = spirits.erase(pos);
+        }
+    }
+
+    agvStationsPaths[agvId] = spirits;
+
+    //free conflict
     UNIQUE_LCK(conflictMtx);
     for(auto itr = conflicts.begin();itr!=conflicts.end();){
         itr->freeLock(agvId,spirit);
@@ -114,33 +177,33 @@ bool ConflictManager::tryAddConflictOccu(int spirit,int agvId)
     }
     return true;
 }
-void ConflictManager::freeConflictOccu(std::vector<int> spirits,int agvId)
-{
-    //    UNIQUE_LCK(conflictMtx);
-    //    for(auto block:blocks)
-    //    {
-    //        for(auto itr=bblocks.begin();itr!=bblocks.end();++itr)
-    //        {
-    //            if(itr->getBlockId() == block){
-    //                itr->removeOccu(agvId,spiritId);
-    //            }
-    //        }
-    //    }
-    //}
+//void ConflictManager::freeConflictOccu(std::vector<int> spirits,int agvId)
+//{
+//    UNIQUE_LCK(conflictMtx);
+//    for(auto block:blocks)
+//    {
+//        for(auto itr=bblocks.begin();itr!=bblocks.end();++itr)
+//        {
+//            if(itr->getBlockId() == block){
+//                itr->removeOccu(agvId,spiritId);
+//            }
+//        }
+//    }
+//}
 
-    //bool ConflictManager::conflictPassable(std::vector<int> blocks, int agvId)
-    //{
-    //    UNIQUE_LCK(conflictMtx);
-    //    for(auto block:blocks)
-    //    {
-    //        for(auto itr = bblocks.begin();itr!=bblocks.end();++itr){
-    //            if(itr->getBlockId() == block){
-    //                if(!itr->passable(agvId))return false;
-    //            }
-    //        }
-    //    }
-    //    return true;
-}
+//bool ConflictManager::conflictPassable(std::vector<int> blocks, int agvId)
+//{
+//    UNIQUE_LCK(conflictMtx);
+//    for(auto block:blocks)
+//    {
+//        for(auto itr = bblocks.begin();itr!=bblocks.end();++itr){
+//            if(itr->getBlockId() == block){
+//                if(!itr->passable(agvId))return false;
+//            }
+//        }
+//    }
+//    return true;
+//}
 
 void ConflictManager::clear()
 {

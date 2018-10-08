@@ -2,6 +2,7 @@
 #include "mapmap/onemap.h"
 #include "mapmap/mapmanager.h"
 #include "mapmap/blockmanager.h"
+#include "mapmap/conflictmanager.h"
 #include "agvtask.h"
 #include "bezierarc.h"
 #include <limits>
@@ -43,18 +44,26 @@ bool VirtualRosAgv::resume()
 
 void VirtualRosAgv::excutePath(std::vector<int> lines)
 {
+    auto conflictmanagerptr = ConflictManager::getInstance();
+
     auto mapmanagerptr = MapManager::getInstance();
     isStop = false;
+
+    std::vector<int> spirits;
     stationMtx.lock();
     excutespaths = lines;
     excutestations.clear();
     for (auto line : lines) {
+        spirits.push_back(line);
         MapPath *path = mapmanagerptr->getPathById(line);
         if(path == nullptr)continue;
         int endId = path->getEnd();
+        spirits.push_back(endId);
         excutestations.push_back(endId);
     }
     stationMtx.unlock();
+
+    conflictmanagerptr->addAgvExcuteStationPath(spirits,getId());
 
     int next = 0;//下一个要去的位置
     MapPoint *currentPoint = mapmanagerptr->getPointById(nowStation);
@@ -131,7 +140,8 @@ void VirtualRosAgv::cancelTask()
 
 void VirtualRosAgv::goStation(int station, bool stop)
 {
-    BlockManagerPtr blockmanagerptr = BlockManager::getInstance();
+    auto conflictmanagerptr = ConflictManager::getInstance();
+    //BlockManagerPtr blockmanagerptr = BlockManager::getInstance();
     MapManagerPtr mapmanagerptr = MapManager::getInstance();
     //看是否是写特殊点
     MapPoint *endPoint = mapmanagerptr->getPointById(station);
@@ -211,14 +221,12 @@ void VirtualRosAgv::goStation(int station, bool stop)
     while(!g_quit && currentTask!=nullptr && !currentTask->getIsCancel()){
         //can start the path?
         bool canGo = true;
-        auto bs = mapmanagerptr->getBlocks(path->getId());
-        if(!blockmanagerptr->tryAddBlockOccu(bs,getId(),path->getId())){
+        if(!conflictmanagerptr->conflictPassable(path->getId(),getId())){
             canGo = false;
         }
 
         if(canGo){
-            auto bs2 = mapmanagerptr->getBlocks(path->getEnd());
-            if(!blockmanagerptr->tryAddBlockOccu(bs2,getId(),path->getEnd()))
+            if(!conflictmanagerptr->conflictPassable(path->getEnd(),getId()))
             {
                 canGo = false;
             }
@@ -234,6 +242,21 @@ void VirtualRosAgv::goStation(int station, bool stop)
     while(true){
         if(isStop)break;
         if(isPaused){
+            //TODO:check can resume
+            bool canResume = true;
+            if(!conflictmanagerptr->conflictPassable(path->getId(),getId())){
+                canResume = false;
+            }
+
+            if(canResume){
+                if(!conflictmanagerptr->conflictPassable(path->getEnd(),getId()))
+                {
+                    canResume = false;
+                }
+            }
+
+            if(canResume)resume();
+
             Sleep(500);
             continue;
         }
@@ -244,7 +267,8 @@ void VirtualRosAgv::goStation(int station, bool stop)
             x = startPoint->getX()+(endPoint->getX()-startPoint->getX()) * currentT;
             y = startPoint->getY() + (endPoint->getY() - startPoint->getY()) * currentT;
             if(path->getSpeed()<0){
-                theta =180-atan2(endPoint->getY()-y,endPoint->getX()-x)*180/M_PI;
+                int angle = 180 +atan2(endPoint->getY()-y,endPoint->getX()-x)*180/M_PI;
+                theta = std::min(angle, abs(360-angle));
             }else{
                 theta = atan2(endPoint->getY()-y,endPoint->getX()-x)*180/M_PI;
             }
@@ -257,7 +281,8 @@ void VirtualRosAgv::goStation(int station, bool stop)
             x = pp.pos.x();
             y = pp.pos.y();
             if(path->getSpeed()<0){
-                theta = 180 -pp.angle;
+                int angle = 180 + pp.angle;
+                theta = std::min(angle, abs(360-angle));
             }else{
                 theta = pp.angle;
             }
@@ -270,7 +295,8 @@ void VirtualRosAgv::goStation(int station, bool stop)
             x = pp.pos.x();
             y = pp.pos.y();
             if(path->getSpeed()<0){
-                theta =180 -pp.angle;
+                int angle = 180 + pp.angle;
+                theta = std::min(angle, abs(360-angle));
             }else{
                 theta = pp.angle;
             }
@@ -334,4 +360,7 @@ void VirtualRosAgv::onTaskCanceled(AgvTaskPtr _task){
             }
         }
     }
+
+    auto conflictmanagerptr = ConflictManager::getInstance();
+    conflictmanagerptr->freeAgvOccu(getId(),lastStation,nowStation,nextStation);
 }

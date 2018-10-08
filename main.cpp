@@ -16,6 +16,7 @@
 #include "Dongyao/dyforklift.h"
 #include "Dongyao/dytaskmaker.h"
 #include "mapmap/blockmanager.h"
+#include "mapmap/conflictmanager.h"
 
 #define DY_TEST
 void initLog()
@@ -188,6 +189,8 @@ int main(int argc, char *argv[])
         combined_logger->error("map manager load fail");
         return -2;
     }
+
+    ConflictManager::getInstance()->init();
 
     //3.初始化车辆及其链接
     if (!AgvManager::getInstance()->init()) {

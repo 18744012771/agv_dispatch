@@ -519,7 +519,7 @@ void AtForklift::goStation(std::vector<int> lines, bool stop)
     MapPoint *end;
 
     MapManagerPtr mapmanagerptr = MapManager::getInstance();
-    auto blockmanagerptr = BlockManager::getInstance();
+    //auto blockmanagerptr = BlockManager::getInstance();
     combined_logger->info("atForklift goStation");
     std::stringstream body;
 
@@ -610,10 +610,10 @@ void AtForklift::goStation(std::vector<int> lines, bool stop)
                 bs = mapmanagerptr->getBlocks(nextStation);
             }
             bool canResume = true;
-            if (!blockmanagerptr->blockPassable(bs,getId())) {
-                canResume = false;
-                break;
-            }
+//            if (!blockmanagerptr->blockPassable(bs,getId())) {
+//                canResume = false;
+//                break;
+//            }
             if(canResume)
                 resume();
 

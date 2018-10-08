@@ -24,11 +24,14 @@ public:
     //upate agv current stations and paths
     //if agv arrive station,free path
     //if agv leave sation,free station
-    void removeAgvExcuteStationPath(int spirit,int agvId);
+    void freeConflictOccu(int spirit,int agvId);
+
+    //cancel task! free all spirit but now station or last/nextstation path
+    void freeAgvOccu(int agvId,int lastStation,int nowStation,int nextStation);
 
     //
     bool tryAddConflictOccu(int spirit, int agvId);
-    void freeConflictOccu(std::vector<int> spirits,int agvId);
+    //void freeConflictOccu(std::vector<int> spirits,int agvId);
 
     //
     bool conflictPassable(int spiritId,int agvId);
@@ -46,7 +49,7 @@ private:
     std::vector<Conflict> conflicts;
 
     std::mutex stationPathMtx;
-    std::map<int,std::vector<int> > stationsPaths;
+    std::map<int,std::vector<int> > agvStationsPaths;
 
     std::multimap<int,int> conflict_pairs;
 
