@@ -1,7 +1,7 @@
 ﻿#ifndef CHARGEMACHINE_H
 #define CHARGEMACHINE_H
 #include "../../device/device.h"
-#include "qyhbuffer.h"
+#include "../../qyhbuffer.h"
 #define MAX_RECORD_NUM 20
 #define MSG_HEAD_LEN 3
 #define REAL_DATA_LEN 21

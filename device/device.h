@@ -24,7 +24,7 @@ public:
     int getId(){return id;}
     string getIp(){return ip;}
     int getType(){return deviceType;}
-    int setType(int _type){deviceType = _type;}
+    void setType(int _type){deviceType = _type;}
 
     bool isConnected()
     {

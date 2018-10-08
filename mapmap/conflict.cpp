@@ -27,6 +27,7 @@ Conflict &Conflict::operator = (const Conflict&b)
     agvB = b.agvB;
     agvAspirits = b.agvAspirits;
     agvBspirits = b.agvBspirits;
+    return *this;
 }
 
 Conflict::~Conflict()

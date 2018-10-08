@@ -420,7 +420,7 @@ bool Elevator::ResetElevatorState(int elevator_id)
     // send and recv (忽略发送延时)
     notify(p);
     std::cout << "复位电梯状态 success...." << std::endl;
-
+    return true;
 }
 
 // 电梯状态询问

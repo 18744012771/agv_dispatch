@@ -153,13 +153,7 @@
     <ClInclude Include="..\..\Dongyao\dyforkliftthingfork.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Dongyao\dyforkliftthingturn.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Dongyao\dyforkliftupdwms.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Dongyao\dymappath.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Dongyao\dytaskmaker.h">
@@ -199,6 +193,27 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Anting\station_pos.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mapmap\conflict.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mapmap\conflictmanager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\device\elevator\elevatorManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\device\devicemanager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Dongyao\dyforkliftthingcharge.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mapmap\mapconflictpair.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\qingdao\qingdaonodetingmove.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -329,13 +344,7 @@
     <ClCompile Include="..\..\Dongyao\dyforkliftthingfork.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Dongyao\dyforkliftthingturn.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Dongyao\dyforkliftupdwms.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Dongyao\dymappath.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Dongyao\dytaskmaker.cpp">
@@ -372,6 +381,27 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Anting\attaskmaker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mapmap\conflict.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mapmap\conflictmanager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\device\elevator\elevatorManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\device\devicemanager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dongyao\dyforkliftthingcharge.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mapmap\mapconflictpair.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\qingdao\qingdaonodetingmove.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

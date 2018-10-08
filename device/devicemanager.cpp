@@ -1,10 +1,10 @@
 ﻿#include "devicemanager.h"
 #include "device.h"
-#include "sqlite3/CppSQLite3.h"
-#include "common.h"
-#include "userlogmanager.h"
-#include "Dongyao/charge/chargemachine.h"
-#include "mapmap/mapmanager.h"
+#include "../sqlite3/CppSQLite3.h"
+#include "../common.h"
+#include "../userlogmanager.h"
+#include "../Dongyao/charge/chargemachine.h"
+#include "../mapmap/mapmanager.h"
 DeviceManager::DeviceManager()
 {
 }

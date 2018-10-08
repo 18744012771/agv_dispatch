@@ -1,7 +1,7 @@
 ﻿#include "elevatorManager.h"
-#include "sqlite3/CppSQLite3.h"
-#include "common.h"
-#include "userlogmanager.h"
+#include "../../sqlite3/CppSQLite3.h"
+#include "../../common.h"
+#include "../../userlogmanager.h"
 #include "elevator.h"
 
 ElevatorManager::ElevatorManager()

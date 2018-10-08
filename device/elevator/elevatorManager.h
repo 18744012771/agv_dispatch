@@ -4,9 +4,9 @@
 #include <vector>
 #include <memory>
 #include <mutex>
-#include "utils/noncopyable.h"
-#include "protocol.h"
-#include "network/tcpsession.h"
+#include "../../utils/noncopyable.h"
+#include "../../protocol.h"
+#include "../../network/tcpsession.h"
 #include "elevator.h"
 
 class Elevator;

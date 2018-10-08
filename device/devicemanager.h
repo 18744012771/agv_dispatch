@@ -5,9 +5,9 @@
 #include <memory>
 #include <mutex>
 #include <functional>
-#include "utils/noncopyable.h"
-#include "protocol.h"
-#include "network/session.h"
+#include "../utils/noncopyable.h"
+#include "../protocol.h"
+#include "../network/session.h"
 
 enum DEVICE_TYPE
 {
