@@ -48,7 +48,7 @@ std::string getTimeStrNow();
 std::string getTimeStrToday();
 std::string getTimeStrTomorrow();
 
-std::string toHexString(char *data, int len);
+std::string toHexString(const char *data, int len);
 std::string intToString(int i);
 std::string longToString(long l);
 int stringToInt(std::string str);

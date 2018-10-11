@@ -5,8 +5,8 @@ ThreadPool g_threadPool(30);
 CppSQLite3DB g_db;
 
 //const int GLOBAL_AGV_PROJECT = AGV_PROJECT_ANTING;
-const int GLOBAL_AGV_PROJECT = AGV_PROJECT_QINGDAO;
-//const int GLOBAL_AGV_PROJECT = AGV_PROJECT_DONGYAO;
+//const int GLOBAL_AGV_PROJECT = AGV_PROJECT_QINGDAO;
+const int GLOBAL_AGV_PROJECT = AGV_PROJECT_DONGYAO;
 //const int GLOBAL_AGV_PROJECT = AGV_PROJECT_QUNCHUANG;
 
 std::shared_ptr<spdlog::logger> combined_logger;
@@ -66,7 +66,7 @@ std::string getTimeStrTomorrow()
     return ss.str();
 }
 
-std::string toHexString(char *data,int len)
+std::string toHexString(const char *data,int len)
 {
     std::stringstream out;
     out<<std::hex<<std::setfill('0');

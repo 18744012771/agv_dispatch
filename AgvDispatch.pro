@@ -143,7 +143,9 @@ HEADERS += \
     qingdao/qingdaonodetingmove.h \
     mapmap/conflict.h \
     mapmap/conflictmanager.h \
-    mapmap/mapconflictpair.h
+    mapmap/mapconflictpair.h \
+    device/new_elevator/newelevatormanager.h \
+    device/new_elevator/newelevator.h
 SOURCES += \
     agv.cpp \
     agvmanager.cpp \
@@ -207,4 +209,6 @@ SOURCES += \
     qingdao/qingdaonodetingmove.cpp \
     mapmap/conflict.cpp \
     mapmap/conflictmanager.cpp \
-    mapmap/mapconflictpair.cpp
+    mapmap/mapconflictpair.cpp \
+    device/new_elevator/newelevatormanager.cpp \
+    device/new_elevator/newelevator.cpp

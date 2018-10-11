@@ -6,6 +6,8 @@
 #include "../device/elevator/elevatorManager.h"
 #include "../mapmap/blockmanager.h"
 #include "../mapmap/conflictmanager.h"
+#include "../device/new_elevator/newelevator.h"
+#include "../device/new_elevator/newelevatormanager.h"
 #define RESEND
 //#define HEART
 
@@ -531,13 +533,23 @@ void DyForklift::goElevator(std::vector<int> lines)
     int endId = elevator_path_back->getEnd();
 
     //根据电梯等待区设置呼叫某个ID电梯
-    ElevatorPtr elevator = ElevatorManager::getInstance()->getElevatorById(stoi(elevator_point->getLineId()));
+    NewElevatorManagerPtr elemanagerptr = NewElevatorManager::getInstance();
+    NewElevator *elevator = elemanagerptr->getEleById(stringToInt(elevator_point->getLineId()));
 
     if(elevator == nullptr)
     {
         combined_logger->error("DyForklift,  excutePath, no elevator!!!!!");
         return;
     }
+
+    if(elevator->getOccuAgvId()>0 && elevator->getOccuAgvId()!=getId()){
+        combined_logger->error("DyForklift, excutePath,elevator  occu!!!!!");
+        return;
+    }
+
+    int elevator_id = elevator->getId();
+
+    elevator->setOccuAgvId(getId());
 
     int to_floor = MapManager::getInstance()->getFloor(endId);
 
@@ -551,39 +563,76 @@ void DyForklift::goElevator(std::vector<int> lines)
         goSameFloorPath(lines_to_elevator);//到达电梯口
     }
 
-    //呼叫电梯到达楼层
-    int result = -1;
-    do
-    {
-        combined_logger->info("DyForklift,  excutePath, 呼叫电梯到达 {0} 楼, 30s超时继续呼叫电梯 ", from_floor);
-        result = elevator->RequestTakeElevator(from_floor, 0, elevator->getId(), agv_id, 30);
-    }
-    while(result < 0);
+    elevator->resetFlags();
 
+    int needResendTimes = 0;
 
-    int try_times = 10;
-    bool enter_ele = false;
-    do
-    {
-        combined_logger->info("DyForklift,  excutePath, 发送乘梯应答 ");
+    auto p1 = elemanagerptr->create_param(lynx::elevator::CallEleENQ,0,from_floor,elevator_id,getId());
+    //TODO: 【呼梯问询】 dispatch --> elevator
+    elevator->send(p1);
 
-        elevator->TakeEleAck(from_floor, to_floor, elevator->getId(), agv_id);
-        std::cout << "等待电梯的进入指令...." << std::endl;
-        combined_logger->info("DyForklift,  excutePath, 发送乘梯应答, 5s超时 ");
-
-        enter_ele = elevator->ConfirmEleInfo(from_floor, to_floor, elevator->getId(), agv_id, 5);
-        try_times--;
-    }
-    while(!enter_ele &&  try_times > 0);
-
-    if( enter_ele == false )
-    {
-        combined_logger->error("DyForklift,  excutePath, ====no 等待电梯的进入指令....==================");
-        return;
+    //TODO: 【呼梯应答】 elevator --> dispatch
+    needResendTimes = 0;
+    while(!g_quit && !currentTask->getIsCancel()){
+        if(elevator->getCallEleACK()){
+            break;
+        }
+        ++needResendTimes;
+        if(needResendTimes>20)
+        {
+            //do not recv ack in 2 seconds,resend!
+            elevator->send(p1);
+            needResendTimes = 0;
+        }
+        usleep(100000);//100ms
     }
 
-    elevator->StartSendThread(lynx::elevator::TakeEleACK,from_floor, to_floor, elevator->getId(), agv_id);
+    //TODO: 【乘梯问询】 elevator -->  dispatch
+    needResendTimes = 0;
+    while(!g_quit && !currentTask->getIsCancel())
+    {
+        if(elevator->getTakeEleENQ()){
+            break;
+        }
+        ++needResendTimes;
+        if(needResendTimes>400)
+        {
+            //do not recv task ele enqueue in 40 seconds,resend!
+            elevator->send(p1);
+            needResendTimes = 0;
+        }
+        usleep(100000);//100ms
+    }
 
+    if(g_quit||currentTask->getIsCancel()) return ;
+
+    //TODO: 【乘梯应答】 dispatch --> elevator
+    auto p2 = elemanagerptr->create_param(lynx::elevator::TakeEleACK, from_floor, to_floor, elevator_id, getId());
+    elevator->send(p2);
+
+    //TODO: 【进入指令】 elevator -->  dispatch
+    needResendTimes = 0;
+    while(!g_quit && !currentTask->getIsCancel())
+    {
+        if(elevator->getIntoEleENQ()){
+            break;
+        }
+
+        ++needResendTimes;
+        if(needResendTimes>50)
+        {
+            //do not recv task ele enqueue in 5 seconds,resend!
+            elevator->send(p2);
+            needResendTimes = 0;
+        }
+        usleep(100000);//100ms
+    }
+    if(g_quit||currentTask->getIsCancel()) return ;
+
+    //TODO:5s一次 【乘梯应答】 dispatch --> elevator
+    elevator->StartSendThread(lynx::elevator::TakeEleACK,from_floor, to_floor, elevator_id, agv_id);
+
+    //TODO: agv go into elevator
     sleep(3); //等待电梯门完全打开
 
     if(lines_enter_elevator.size() > 0)
@@ -591,75 +640,96 @@ void DyForklift::goElevator(std::vector<int> lines)
         goStation(lines_enter_elevator, true, FORKLIFT_MOVEELE);//进入电梯
     }
 
+    //TODO:如果进入电梯一半，取消任务，这个时候不应该关闭电梯。但是！就不应该在半截取消任务
     elevator->StopSendThread();
 
-    bool leave_elevator = false;
+    if(g_quit||currentTask->getIsCancel()) return ;
 
-    do
+    //TODO:agv就位后 【进入电梯应答】 dispatch --> elevator
+    auto p3 = elemanagerptr->create_param(lynx::elevator::IntoEleACK, from_floor,to_floor, elevator_id, agv_id);
+    elevator->send(p3);
+    ////TODO:【进入应答确认】 ignored
+    /// TODO:【进入应答确认】elevator -->  dispatch
+    //TODO:【到达指令】elevator -->  dispatch
+    needResendTimes = 0;
+    while(!g_quit && !currentTask->getIsCancel())
     {
-        elevator->AgvEnterConfirm(from_floor, to_floor, elevator->getId(), agv_id, 3);
+        if(elevator->getLeftEleENQ()){
+            break;
+        }
 
-        leave_elevator = elevator->AgvWaitArrive(from_floor, to_floor, elevator->getId(), agv_id, 30);
-        if(leave_elevator)
+        ++needResendTimes;
+        if(needResendTimes>300)
         {
-            combined_logger->info("DyForklift,  excutePath, ===电梯到达===");
+            //do not recv task ele enqueue in 30 seconds,resend!
+            elevator->send(p3);
+            needResendTimes = 0;
         }
-        else
-        {
-            combined_logger->error("DyForklift,  excutePath, ===电梯未到达===");
-        }
+        usleep(100000);//100ms
     }
-    while(!leave_elevator);
+    if(g_quit||currentTask->getIsCancel()) return ;
 
-    if(leave_elevator)
+    setInitPos(endId);
+
+    //TODO: 每5s发送【离开指令】 dispatch --> elevator
+    //TODO: 每次【离开指令确认】 elevator -->  dispatch
+    //通知电梯AGV正在出电梯,离开过程中每5s发送一次【离开指令】，要求内呼等待机器人离开
+    elevator->StartSendThread(lynx::elevator::LeftEleCMD,from_floor, to_floor, elevator->getId(), agv_id);
+
+    sleep(5);//等待电梯门完全打开
+
+    //AGV出电梯
+    goStation(lines_out_elevator, true, FORKLIFT_MOVEELE);
+
+    //TODO:如果进入电梯一半，取消任务，这个时候不应该关闭电梯。但是！就不应该在半截取消任务
+    elevator->StopSendThread();//stop send 离开指令
+
+    if(g_quit||currentTask->getIsCancel()) return ;
+
+    sleep(2);
+
+    if(lines_out_elevator.size() > 0)
     {
-        combined_logger->debug("DyForklift,  excutePath, *********************************");
-        combined_logger->debug("DyForklift,  excutePath, ******start to change map********");
-        combined_logger->debug("DyForklift,  excutePath, *********************************");
-
-        //TODO 切换地图
-        setInitPos(endId);
-
-        //通知电梯AGV正在出电梯,离开过程中每5s发送一次【离开指令】，要求内呼等待机器人离开
-        elevator->StartSendThread(lynx::elevator::LeftEleCMD,from_floor, to_floor, elevator->getId(), agv_id);
-
-        sleep(5);//等待电梯门完全打开
-
-        //AGV出电梯
-        goStation(lines_out_elevator, true, FORKLIFT_MOVEELE);
-        //this->startTask("out_elevator");
-        elevator->StopSendThread();//stop send 离开指令
-
-        sleep(2);
-
-
-        if(lines_out_elevator.size() > 0)
+        int path_id = lines_out_elevator.at(lines_out_elevator.size()-1);
+        MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(path_id);
+        if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Path)
         {
-            int path_id = lines_out_elevator.at(lines_out_elevator.size()-1);
-            MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(path_id);
-            if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Path)
-            {
-                combined_logger->error("DyForklift,  excutePath, !MapSpirit::Map_Sprite_Type_Path");
-                return;
-            }
-
-            MapPath *path = static_cast<MapPath *>(spirit);
-
-            this->nowStation = path->getEnd();
-            combined_logger->debug("DyForklift,  excutePath, AGV出电梯, nowStation: {0}", nowStation);
-
-            this->lastStation = 0;
-            this->nextStation = 0;
+            combined_logger->error("DyForklift,  excutePath, !MapSpirit::Map_Sprite_Type_Path");
+            return;
         }
+
+        MapPath *path = static_cast<MapPath *>(spirit);
+
+        this->nowStation = path->getEnd();
+        combined_logger->debug("DyForklift,  excutePath, AGV出电梯, nowStation: {0}", nowStation);
+
+        this->lastStation = 0;
+        this->nextStation = 0;
     }
 
-    //通知电梯AGV完成出电梯
-    bool leftEleStatus = elevator->AgvLeft(from_floor, to_floor, elevator->getId(), agv_id, 10);
+    //TODO:离开电梯后后,发送【离开应答】 dispatch --> elevator
+    auto p4 = elemanagerptr->create_param(lynx::elevator::LeftEleACK, from_floor, to_floor, elevator_id, agv_id);
+    elevator->send(p4);
 
-    /*if(!leftEleStatus)//复位电梯状态, maybe elevator error
+
+    elevator->setOccuAgvId(0);
+    //TODO:【离开应答确认】elevator -->  dispatch
+    needResendTimes = 0;
+    while(!g_quit && !currentTask->getIsCancel())
+    {
+        if(elevator->getLeftEleSet()){
+            break;
+        }
+
+        ++needResendTimes;
+        if(needResendTimes>50)
         {
-            elevator->ResetElevatorState(elevator->getId());
-        }*/
+            //do not recv task ele enqueue in 5 seconds,resend!
+            break;
+        }
+        usleep(100000);//100ms
+    }
+    if(g_quit||currentTask->getIsCancel()) return ;
 
     if(lines_leave_elevator.size() > 0)
     {
@@ -667,6 +737,124 @@ void DyForklift::goElevator(std::vector<int> lines)
         goSameFloorPath(lines_leave_elevator);//离开电梯口去目标
     }
     combined_logger->info("excute path finish");
+
+//    //呼叫电梯到达楼层
+//    Elevator *elevator2;
+//    int result = -1;
+//    do
+//    {
+//        combined_logger->info("DyForklift,  excutePath, 呼叫电梯到达 {0} 楼, 30s超时继续呼叫电梯 ", from_floor);
+//        result = elevator2->RequestTakeElevator(from_floor, 0, elevator->getId(), agv_id, 30);
+//    }
+//    while(result < 0);
+
+
+//    int try_times = 10;
+//    bool enter_ele = false;
+//    do
+//    {
+//        combined_logger->info("DyForklift,  excutePath, 发送乘梯应答 ");
+
+//        elevator2->TakeEleAck(from_floor, to_floor, elevator2->getId(), agv_id);
+//        std::cout << "等待电梯的进入指令...." << std::endl;
+//        combined_logger->info("DyForklift,  excutePath, 发送乘梯应答, 5s超时 ");
+
+//        enter_ele = elevator2->ConfirmEleInfo(from_floor, to_floor, elevator2->getId(), agv_id, 5);
+//        try_times--;
+//    }
+//    while(!enter_ele &&  try_times > 0);
+
+//    if( enter_ele == false )
+//    {
+//        combined_logger->error("DyForklift,  excutePath, ====no 等待电梯的进入指令....==================");
+//        return;
+//    }
+
+//    elevator2->StartSendThread(lynx::elevator::TakeEleACK,from_floor, to_floor, elevator->getId(), agv_id);
+
+//    sleep(3); //等待电梯门完全打开
+
+//    if(lines_enter_elevator.size() > 0)
+//    {
+//        goStation(lines_enter_elevator, true, FORKLIFT_MOVEELE);//进入电梯
+//    }
+
+//    elevator2->StopSendThread();
+
+//    bool leave_elevator = false;
+
+//    do
+//    {
+//        elevator2->AgvEnterConfirm(from_floor, to_floor, elevator->getId(), agv_id, 3);
+
+//        leave_elevator = elevator2->AgvWaitArrive(from_floor, to_floor, elevator->getId(), agv_id, 30);
+//        if(leave_elevator)
+//        {
+//            combined_logger->info("DyForklift,  excutePath, ===电梯到达===");
+//        }
+//        else
+//        {
+//            combined_logger->error("DyForklift,  excutePath, ===电梯未到达===");
+//        }
+//    }
+//    while(!leave_elevator);
+
+//    if(leave_elevator)
+//    {
+//        combined_logger->debug("DyForklift,  excutePath, *********************************");
+//        combined_logger->debug("DyForklift,  excutePath, ******start to change map********");
+//        combined_logger->debug("DyForklift,  excutePath, *********************************");
+
+//        //TODO 切换地图
+//        setInitPos(endId);
+
+//        //通知电梯AGV正在出电梯,离开过程中每5s发送一次【离开指令】，要求内呼等待机器人离开
+//        elevator2->StartSendThread(lynx::elevator::LeftEleCMD,from_floor, to_floor, elevator->getId(), agv_id);
+
+//        sleep(5);//等待电梯门完全打开
+
+//        //AGV出电梯
+//        goStation(lines_out_elevator, true, FORKLIFT_MOVEELE);
+//        //this->startTask("out_elevator");
+//        elevator2->StopSendThread();//stop send 离开指令
+
+//        sleep(2);
+
+
+//        if(lines_out_elevator.size() > 0)
+//        {
+//            int path_id = lines_out_elevator.at(lines_out_elevator.size()-1);
+//            MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(path_id);
+//            if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Path)
+//            {
+//                combined_logger->error("DyForklift,  excutePath, !MapSpirit::Map_Sprite_Type_Path");
+//                return;
+//            }
+
+//            MapPath *path = static_cast<MapPath *>(spirit);
+
+//            this->nowStation = path->getEnd();
+//            combined_logger->debug("DyForklift,  excutePath, AGV出电梯, nowStation: {0}", nowStation);
+
+//            this->lastStation = 0;
+//            this->nextStation = 0;
+//        }
+//    }
+
+//    //通知电梯AGV完成出电梯
+//    bool leftEleStatus = elevator2->AgvLeft(from_floor, to_floor, elevator->getId(), agv_id, 10);
+
+//    /*if(!leftEleStatus)//复位电梯状态, maybe elevator error
+//        {
+//            elevator->ResetElevatorState(elevator->getId());
+//        }*/
+
+//    if(lines_leave_elevator.size() > 0)
+//    {
+//        combined_logger->debug("DyForklift,  excutePath, 离开电梯口去目标");
+//        goSameFloorPath(lines_leave_elevator);//离开电梯口去目标
+//    }
+//    combined_logger->info("excute path finish");
 }
 
 //移动至指定站点

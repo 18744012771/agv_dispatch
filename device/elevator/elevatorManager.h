@@ -32,8 +32,6 @@ public:
 
 private:
     void checkTable();
-
-    std::mutex mtx;
     std::vector<ElevatorPtr> elevators;
 };
 

@@ -40,7 +40,7 @@ bool ElevatorManager::init()
             combined_logger->error("ElevatorManager init agv_elevator table error!");
             return false;
         }
-        std::unique_lock<std::mutex> lck(mtx);
+
         for (int row = 0; row < table_ele.numRows(); row++)
         {
             table_ele.setRow(row);

@@ -13,6 +13,8 @@
 #include "device/elevator/elevator.h"
 #include "device/elevator/elevatorManager.h"
 #include "device/devicemanager.h"
+#include "device/new_elevator/newelevator.h"
+#include "device/new_elevator/newelevatormanager.h"
 #include "Dongyao/dyforklift.h"
 #include "Dongyao/dytaskmaker.h"
 #include "mapmap/blockmanager.h"
@@ -117,55 +119,13 @@ void testAGV()
 
 
     std::cout << "testAGV end...." << std::endl;
-
 }
-
-void testElevator()
-{
-    // test elevator
-    //    Elevator ele(1, "ele_0", "127.0.0.1", 8889);
-    //    ele.init();
-    //    g_threadPool.enqueue([&](){
-    //        while (!ele.IsConnected())
-    //            std::this_thread::sleep_for(std::chrono::microseconds(30));
-    //        int from = 1;
-    //        int to   = 2;
-    //        int agv  = 1;
-    //        // 请求某电梯 (30s超时)
-    //        int elevator = ele.RequestTakeElevator(from, to, 0, agv, 30);
-    //        if (elevator != -1) {
-    //            // 乘梯应答
-    //            ele.TakeEleAck(from, to, elevator, agv);
-    //            // 等待电梯的进入指令 (30s超时)
-    //            if (ele.ConfirmEleInfo(from, to, elevator, agv, 30)) {
-    //                // todo: 此时agv可以进入, 进入过程每5秒发送一次乘梯应答
-    //                //
-    //                // 直到完全进入, agv发送进入电梯应答, 电梯开始运行直到到达目标楼层
-    //                if (ele.AgvEnterUntilArrive(from, to, elevator, agv, 30)) {
-    //                    // todo: 此时agv可以离开, 离开过程每5秒发送一次离开指令
-    //                    //
-    //                    // 直到完全离开, 发送离开应答结束乘梯流程
-    //                    ele.AgvLeft(from, to, elevator, agv, 30);
-    //                    return true;
-    //                }
-    //            }
-    //            //
-    //        }
-
-    //        return false;
-    //    });
-}
-
-
-
-
 
 void quit(int sig)
 {
     g_quit = true;
     _exit(0);
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -216,13 +176,11 @@ int main(int argc, char *argv[])
     //7.初始化日志发布
     UserLogManager::getInstance()->init();
 
-    // test ros agv
-    //rosAgvPtr agv(new rosAgv(1,"robot_0","127.0.0.1",7070));
-    //agv->init();
-
     //8.初始化电梯
-    ElevatorManager::getInstance()->init();
+    NewElevatorManager::getInstance()->init();
 
+    //TODO:test 电梯
+    //NewElevatorManager::getInstance()->test();
 
     //9.初始化任务生成
     TaskMaker::getInstance()->init();
