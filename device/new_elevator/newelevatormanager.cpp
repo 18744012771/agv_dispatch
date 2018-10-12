@@ -96,12 +96,16 @@ void NewElevatorManager::onRead(int ele_id, std::string ele_name, const char *da
 {
     combined_logger->info("ele:{0};name:{1};read:{2}",ele_id,ele_name,toHexString(data,len));
 
-    //TODO:
+
     std::string err;
     using namespace lynx::elevator;
-    auto p = Param::parse((Param::byte_t *)data, len, err);
 
-    if (err.empty()) {
+    int templen = len;
+
+    while(templen>=8){
+        const char *temp = data+len - templen;
+        auto p = Param::parse((Param::byte_t *)temp,templen,err);
+        if(!err.empty())break;
         auto eleptr = getEleById(p.elevator_no);
         if(eleptr!=nullptr&& eleptr->getOccuAgvId() == p.robot_no){
             if(p.cmd == CallEleACK)eleptr->setCallEleACK(true);
@@ -112,7 +116,26 @@ void NewElevatorManager::onRead(int ele_id, std::string ele_name, const char *da
             else if(p.cmd == TakeEleENQ)eleptr->setTakeEleENQ(true);
             else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
         }
+        temp+=8;
+        templen -= 8;
     }
+
+    //    std::string err;
+    //    using namespace lynx::elevator;
+    //    auto p = Param::parse((Param::byte_t *)data, len, err);
+
+    //    if (err.empty()) {
+    //        auto eleptr = getEleById(p.elevator_no);
+    //        if(eleptr!=nullptr&& eleptr->getOccuAgvId() == p.robot_no){
+    //            if(p.cmd == CallEleACK)eleptr->setCallEleACK(true);
+    //            else if(p.cmd == IntoEleSet)eleptr->setIntoEleSet(true);
+    //            else if(p.cmd == LeftCMDSet)eleptr->setLeftCMDSet(true);
+    //            else if(p.cmd == LeftEleSet)eleptr->setLeftEleSet(true);
+    //            else if(p.cmd == LeftEleENQ)eleptr->setLeftEleENQ(true);
+    //            else if(p.cmd == TakeEleENQ)eleptr->setTakeEleENQ(true);
+    //            else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
+    //        }
+    //    }
 }
 
 // 通知不必有信息返回
@@ -233,8 +256,9 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     sleep(3); //等待电梯门完全打开
 
     //go into elevator
+    combined_logger->info("AGV START GO INTO ELEVATOR");
     sleep(20);
-
+    combined_logger->info("AGV FINISH GO INTO ELEVATOR");
     elevator->StopSendThread();
 
     if(g_quit) return ;
@@ -271,7 +295,9 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     sleep(5);//等待电梯门完全打开
 
     //moni AGV出电梯
+    combined_logger->info("AGV START GO OUT ELEVATOR");
     sleep(20);
+    combined_logger->info("AGV FINISH GO OUT ELEVATOR");
 
     elevator->StopSendThread();//stop send 离开指令
 

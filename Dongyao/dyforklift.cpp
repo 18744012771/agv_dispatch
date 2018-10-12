@@ -339,6 +339,8 @@ void DyForklift::arrve(int x, int y) {
         MapPoint *point = mapmanagerptr->getPointById(station);
         if (point == nullptr)continue;
 
+        if(mapmanagerptr->getFloor(station)!=floor)continue;
+
         auto dis = func_dis(x, y, point->getRealX(), point->getRealY());
         if(dis<minDis && dis<PRECISION && station != nowStation && func_angle(-point->getRealA()/10, (int)theta) < ANGLE_PRECISION ){
             minDis = dis;
