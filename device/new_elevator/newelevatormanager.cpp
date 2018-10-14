@@ -1,6 +1,8 @@
 #include "newelevatormanager.h"
 #include "../../common.h"
 #include "../elevator/elevator_protocol.h"
+#include "../../agvmanager.h"
+#include "../../agv.h"
 
 NewElevatorManager::NewElevatorManager()
 {
@@ -107,15 +109,42 @@ void NewElevatorManager::onRead(int ele_id, std::string ele_name, const char *da
         auto p = Param::parse((Param::byte_t *)temp,templen,err);
         if(!err.empty())break;
         auto eleptr = getEleById(p.elevator_no);
-        if(eleptr!=nullptr&& eleptr->getOccuAgvId() == p.robot_no){
-            if(p.cmd == CallEleACK)eleptr->setCallEleACK(true);
-            else if(p.cmd == IntoEleSet)eleptr->setIntoEleSet(true);
-            else if(p.cmd == LeftCMDSet)eleptr->setLeftCMDSet(true);
-            else if(p.cmd == LeftEleSet)eleptr->setLeftEleSet(true);
-            else if(p.cmd == LeftEleENQ)eleptr->setLeftEleENQ(true);
-            else if(p.cmd == TakeEleENQ)eleptr->setTakeEleENQ(true);
-            else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
+        auto agv = AgvManager::getInstance()->getAgvById(p.robot_no);
+        if(agv!=nullptr && eleptr!=nullptr&& eleptr->getOccuAgvId() == p.robot_no){
+            combined_logger->debug("p.cmd={0};p.robot_no={1}",p.cmd,p.robot_no);
+
+            bool b = (p.cmd == TakeEleENQ);
+            combined_logger->debug("p.cmd == TakeEleENQ?{0};",b);
+
+            if(b){
+                combined_logger->debug("get take ele enq");
+            }
+
+            if(p.cmd == TakeEleENQ){
+                combined_logger->debug("get take ele enq");
+            }
+
+            if(p.cmd == TakeEleENQ && p.src_floor == agv->getToFloor()){
+                eleptr->setTakeEleENQ(true);
+            }else if(p.src_floor == agv->getFromFloor() && p.dst_floor == agv->getToFloor()){
+                if(p.cmd == CallEleACK)eleptr->setCallEleACK(true);
+                else if(p.cmd == IntoEleSet)eleptr->setIntoEleSet(true);
+                else if(p.cmd == LeftCMDSet)eleptr->setLeftCMDSet(true);
+                else if(p.cmd == LeftEleSet)eleptr->setLeftEleSet(true);
+                else if(p.cmd == LeftEleENQ)eleptr->setLeftEleENQ(true);
+
+                else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
+            }
         }
+        //        if( && ){
+        //            if(p.cmd == CallEleACK)eleptr->setCallEleACK(true);
+        //            else if(p.cmd == IntoEleSet)eleptr->setIntoEleSet(true);
+        //            else if(p.cmd == LeftCMDSet)eleptr->setLeftCMDSet(true);
+        //            else if(p.cmd == LeftEleSet)eleptr->setLeftEleSet(true);
+        //            else if(p.cmd == LeftEleENQ)eleptr->setLeftEleENQ(true);
+        //            else if(p.cmd == TakeEleENQ)eleptr->setTakeEleENQ(true);
+        //            else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
+        //        }
         temp+=8;
         templen -= 8;
     }

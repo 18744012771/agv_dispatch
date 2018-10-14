@@ -559,6 +559,8 @@ void DyForklift::goElevator(std::vector<int> lines)
 
     combined_logger->info("DyForklift,  excutePath, from_floor: {0}, to_floor: {1}", from_floor, to_floor);
 
+    if(from_floor<0 || to_floor <0)return ;
+
 
     if(lines_to_elevator.size() > 0)
     {
@@ -568,6 +570,10 @@ void DyForklift::goElevator(std::vector<int> lines)
     elevator->resetFlags();
 
     int needResendTimes = 0;
+
+
+    fromFloor = 0;
+    toFloor = from_floor;
 
     auto p1 = elemanagerptr->create_param(lynx::elevator::CallEleENQ,0,from_floor,elevator_id,getId());
     //TODO: 【呼梯问询】 dispatch --> elevator
@@ -609,6 +615,10 @@ void DyForklift::goElevator(std::vector<int> lines)
     if(g_quit||currentTask->getIsCancel()) return ;
 
     //TODO: 【乘梯应答】 dispatch --> elevator
+
+    fromFloor = from_floor;
+    toFloor = to_floor;
+
     auto p2 = elemanagerptr->create_param(lynx::elevator::TakeEleACK, from_floor, to_floor, elevator_id, getId());
     elevator->send(p2);
 
@@ -739,6 +749,9 @@ void DyForklift::goElevator(std::vector<int> lines)
         goSameFloorPath(lines_leave_elevator);//离开电梯口去目标
     }
     combined_logger->info("excute path finish");
+
+    fromFloor = -1;
+    toFloor = -1;
 
 //    //呼叫电梯到达楼层
 //    Elevator *elevator2;
