@@ -101,6 +101,9 @@ public:
     void setExtraParam(std::string key,std::string value){extra_params[key] = value;}
     std::string getExtraParam(std::string key){return extra_params[key];}
 
+    void setFromFloor(int _fromFloor){fromFloor = _fromFloor;}
+    void setToFloor(int _toFloor){toFloor = _toFloor;}
+
     int getFromFloor(){return fromFloor;}
     int getToFloor(){return toFloor;}
 protected:

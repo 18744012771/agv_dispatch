@@ -138,6 +138,12 @@ public:
     std::vector<int> getPathEnterElevator(std::vector<int> lines);
     std::vector<int> getPathOutElevator(std::vector<int> lines);
 
+    int getPathToElevator(std::vector<int> lines, int index, std::vector<int> &result);
+    int getPathLeaveElevator(std::vector<int> lines,int index,std::vector<int> &result);
+    int getPathInElevator(std::vector<int> lines, int index, std::vector<int> &result);
+    int getPathEnterElevator(std::vector<int> lines, int index, std::vector<int> &result);
+    int getPathOutElevator(std::vector<int> lines, int index, std::vector<int> &result);
+
     ~DyForklift(){}
 	
 	virtual bool pause();

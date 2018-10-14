@@ -110,20 +110,8 @@ void NewElevatorManager::onRead(int ele_id, std::string ele_name, const char *da
         if(!err.empty())break;
         auto eleptr = getEleById(p.elevator_no);
         auto agv = AgvManager::getInstance()->getAgvById(p.robot_no);
-        if(agv!=nullptr && eleptr!=nullptr&& eleptr->getOccuAgvId() == p.robot_no){
-            combined_logger->debug("p.cmd={0};p.robot_no={1}",p.cmd,p.robot_no);
 
-            bool b = (p.cmd == TakeEleENQ);
-            combined_logger->debug("p.cmd == TakeEleENQ?{0};",b);
-
-            if(b){
-                combined_logger->debug("get take ele enq");
-            }
-
-            if(p.cmd == TakeEleENQ){
-                combined_logger->debug("get take ele enq");
-            }
-
+        if(agv != nullptr && eleptr!=nullptr && eleptr->getOccuAgvId() == p.robot_no){
             if(p.cmd == TakeEleENQ && p.src_floor == agv->getToFloor()){
                 eleptr->setTakeEleENQ(true);
             }else if(p.src_floor == agv->getFromFloor() && p.dst_floor == agv->getToFloor()){
@@ -132,19 +120,19 @@ void NewElevatorManager::onRead(int ele_id, std::string ele_name, const char *da
                 else if(p.cmd == LeftCMDSet)eleptr->setLeftCMDSet(true);
                 else if(p.cmd == LeftEleSet)eleptr->setLeftEleSet(true);
                 else if(p.cmd == LeftEleENQ)eleptr->setLeftEleENQ(true);
-
                 else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
             }
+
         }
-        //        if( && ){
-        //            if(p.cmd == CallEleACK)eleptr->setCallEleACK(true);
-        //            else if(p.cmd == IntoEleSet)eleptr->setIntoEleSet(true);
-        //            else if(p.cmd == LeftCMDSet)eleptr->setLeftCMDSet(true);
-        //            else if(p.cmd == LeftEleSet)eleptr->setLeftEleSet(true);
-        //            else if(p.cmd == LeftEleENQ)eleptr->setLeftEleENQ(true);
-        //            else if(p.cmd == TakeEleENQ)eleptr->setTakeEleENQ(true);
-        //            else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
-        //        }
+//        if(agv!=nullptr && eleptr!=nullptr&& eleptr->getOccuAgvId() == p.robot_no && p.src_floor == agv->getFromFloor() && p.dst_floor == agv->getToFloor()){
+//            if(p.cmd == CallEleACK)eleptr->setCallEleACK(true);
+//            else if(p.cmd == IntoEleSet)eleptr->setIntoEleSet(true);
+//            else if(p.cmd == LeftCMDSet)eleptr->setLeftCMDSet(true);
+//            else if(p.cmd == LeftEleSet)eleptr->setLeftEleSet(true);
+//            else if(p.cmd == LeftEleENQ)eleptr->setLeftEleENQ(true);
+//            else if(p.cmd == TakeEleENQ)eleptr->setTakeEleENQ(true);
+//            else if(p.cmd == IntoEleENQ)eleptr->setIntoEleENQ(true);
+//        }
         temp+=8;
         templen -= 8;
     }
@@ -188,6 +176,11 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
 
     if(elevator_id == 1)elevator_id = 11;
     else elevator_id = 10;
+    auto agv = AgvManager::getInstance()->getAgvById(agv_id);
+    if(agv == nullptr){
+        combined_logger->error("agv id not exist!!!!!");
+        return ;
+    }
     //根据电梯等待区设置呼叫某个ID电梯
     NewElevatorManagerPtr elemanagerptr = NewElevatorManager::getInstance();
     NewElevator *elevator = elemanagerptr->getEleById(elevator_id);
@@ -215,6 +208,9 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     elevator->resetFlags();
 
     int needResendTimes = 0;
+
+    agv->setFromFloor(0);
+    agv->setToFloor(from_floor);
 
     auto p1 = elemanagerptr->create_param(lynx::elevator::CallEleENQ,0,from_floor,elevator_id,agv_id);
     //TODO: 【呼梯问询】 dispatch --> elevator
@@ -256,6 +252,11 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     if(g_quit) return ;
 
     //TODO: 【乘梯应答】 dispatch --> elevator
+
+
+    agv->setFromFloor(from_floor);
+    agv->setToFloor(to_floor);
+
     auto p2 = elemanagerptr->create_param(lynx::elevator::TakeEleACK, from_floor, to_floor, elevator_id, agv_id);
     elevator->send(p2);
 
@@ -360,6 +361,10 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     {
         combined_logger->debug("DyForklift,  excutePath, 离开电梯口去目标");
     }
+
+    agv->setFromFloor(-1);
+    agv->setToFloor(-1);
+
     combined_logger->info("excute path finish");
 }
 
