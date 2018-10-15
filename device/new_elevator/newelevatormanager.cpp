@@ -287,7 +287,7 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
 
     //go into elevator
     combined_logger->info("AGV START GO INTO ELEVATOR");
-    sleep(20);
+    sleep(10);
     combined_logger->info("AGV FINISH GO INTO ELEVATOR");
     elevator->StopSendThread();
 
@@ -307,7 +307,7 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
         }
 
         ++needResendTimes;
-        if(needResendTimes>300)
+        if(needResendTimes>600)
         {
             //do not recv task ele enqueue in 30 seconds,resend!
             elevator->send(p3);
@@ -326,7 +326,7 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
 
     //moni AGV出电梯
     combined_logger->info("AGV START GO OUT ELEVATOR");
-    sleep(20);
+    sleep(10);
     combined_logger->info("AGV FINISH GO OUT ELEVATOR");
 
     elevator->StopSendThread();//stop send 离开指令

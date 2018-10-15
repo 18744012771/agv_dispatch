@@ -34,7 +34,7 @@ void MapManager::checkTable()
             g_db.execDML("create table agv_block(id INTEGER,name char(64),spirits char(512));");
         }
         if (!g_db.tableExists("agv_group")) {
-            g_db.execDML("create table agv_group(id INTEGER,name char(64),spirits char(512));");
+            g_db.execDML("create table agv_group(id INTEGER,name char(64),spirits char(512),groupType INTEGER);");
         }
         if (!g_db.tableExists("agv_conflict")) {
             g_db.execDML("create table agv_conflict(id INTEGER,name char(64),aspirit INTEGER,bspirit INTEGER);");
