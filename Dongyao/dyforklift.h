@@ -107,7 +107,7 @@ public:
 
     void excutePath(std::vector<int> lines);
     void goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd);
-    void goElevator(std::vector<int> lines);
+    void goElevator(const std::vector<int> lines);
     void setQyhTcp(SessionPtr _qyhTcp);
 
     bool startReport(int interval);
@@ -128,7 +128,7 @@ public:
     void onTaskStart(AgvTaskPtr _task);
     void onTaskFinished(AgvTaskPtr _task);
 
-    void goSameFloorPath(std::vector<int> lines);
+    void goSameFloorPath(const std::vector<int> lines);
 
     //电梯逻辑
     bool isNeedTakeElevator(std::vector<int> lines);

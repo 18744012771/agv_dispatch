@@ -196,10 +196,26 @@ void AgvManager::foreachAgv(AgvEachCallback cb)
     }
 }
 
+void AgvManager::getStatusJson(Json::Value &json)
+{
+    UNIQUE_LCK lck(mtx);
+    Json::Value json_all_agv;
+    for (auto agv : agvs) {
+        Json::Value json_one_agv;
+        json_one_agv["id"] = agv->getId();
+        json_one_agv["name"] = agv->getName();
+        json_one_agv["floor"] = agv->getFloor();
+        json_one_agv["status"] = agv->status;
+        json_all_agv.append(json_one_agv);
+    }
+    if (json_all_agv.size() > 0)
+        json["agvs"] = json_all_agv;
+}
+
 void AgvManager::getPositionJson(Json::Value &json)
 {
     auto mapmanagerptr = MapManager::getInstance();
-    std::unique_lock<std::mutex> lck(mtx);
+    UNIQUE_LCK lck(mtx);
     Json::Value json_all_agv;
     for (auto agv : agvs) {
         bool online_flag = true;

@@ -26,7 +26,8 @@ Agv::Agv(int _id, std::string _name, std::string _ip, int _port) :
     theta(0),
     floor(-1),
     fromFloor(-1),
-    toFloor(-1)
+    toFloor(-1),
+	agvType(-1)
 {
 }
 

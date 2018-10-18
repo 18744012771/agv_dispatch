@@ -58,6 +58,26 @@ bool NewElevatorManager::init()
     return true;
 }
 
+void NewElevatorManager::setEnable(int id, bool enable)
+{
+	auto ele = getEleById(id);
+	if (ele != nullptr) {
+		ele->setIsEnabled(enable);
+
+		char buf[SQL_MAX_LENGTH];
+		snprintf(buf, SQL_MAX_LENGTH, "update agv_elevat set enabled=%d where id = %d;", enable?1:0, id);
+		try {
+			g_db.execDML(buf);
+		}
+		catch (CppSQLite3Exception e) {
+			combined_logger->error("update ele enable sqlerr code:{0} msg:{1}", e.errorCode(), e.errorMessage());
+		}
+		catch (std::exception e) {
+			combined_logger->error("update ele enable sqlerr code:{0}", e.what());
+		}
+	}
+}
+
 void NewElevatorManager::checkTable()
 {
     //检查表
@@ -366,6 +386,20 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     agv->setToFloor(-1);
 
     combined_logger->info("excute path finish");
+}
+
+void NewElevatorManager::interSetEnableELE(SessionPtr conn, const Json::Value &request)
+{
+	Json::Value response;
+	response["type"] = MSG_TYPE_RESPONSE;
+	response["todo"] = request["todo"];
+	response["queuenumber"] = request["queuenumber"];
+	response["result"] = RETURN_MSG_RESULT_SUCCESS;
+
+	int id = request["id"].asInt();
+	bool enable = request["enable"].asBool();
+	setEnable(id, enable);
+	conn->send(response);
 }
 
 void NewElevatorManager::test()

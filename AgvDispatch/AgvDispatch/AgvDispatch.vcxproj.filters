@@ -216,6 +216,12 @@
     <ClInclude Include="..\..\qingdao\qingdaonodetingmove.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\device\new_elevator\newelevator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\device\new_elevator\newelevatormanager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\agv.cpp">
@@ -402,6 +408,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\qingdao\qingdaonodetingmove.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\device\new_elevator\newelevator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\device\new_elevator\newelevatormanager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

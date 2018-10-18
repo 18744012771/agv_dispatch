@@ -65,7 +65,7 @@ void WebSocketSession::send(const Json::Value &json)
 {
     boost::system::error_code err;
 	std::string sss = json.toStyledString();
-    //combined_logger->info("SEND! session id={0}  len= {1} json={2}", this->_sessionID, sss.length(), sss.length());
+    //combined_logger->info("SEND! session id={0}  len= {1} json={2}", this->_sessionID, sss.length(), sss);
     ws.write(boost::asio::buffer(sss.c_str(), sss.length()),err);
 }
 

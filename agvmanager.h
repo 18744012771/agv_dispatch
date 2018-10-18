@@ -43,6 +43,8 @@ public:
 
     void getPositionJson(Json::Value &json);
 
+    void getStatusJson(Json::Value &json);
+
     void setServerAccepterID(int serverID);
 
     int getServerAccepterID(){return _serverID;}

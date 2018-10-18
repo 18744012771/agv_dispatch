@@ -432,15 +432,7 @@ void rosAgv::goStation(std::vector<int> lines,  bool stop)
             continue;
 
         start = static_cast<MapPoint *>(spirit_start);
-        start->getRealX();
-        start->getName();
-        start->getRealY();
-
         end = static_cast<MapPoint *>(spirit_end);
-        end->getRealX();
-        end->getName();
-        end->getRealY();
-
         combined_logger->info("rosAgv goStation start: " + start->getName());
         combined_logger->info("rosAgv goStation end: " + end->getName());
 

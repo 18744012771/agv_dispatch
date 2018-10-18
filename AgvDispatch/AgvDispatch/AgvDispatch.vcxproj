@@ -37,6 +37,8 @@
     <ClInclude Include="..\..\device\elevator\elevator.h" />
     <ClInclude Include="..\..\device\elevator\elevatorManager.h" />
     <ClInclude Include="..\..\device\elevator\elevator_protocol.h" />
+    <ClInclude Include="..\..\device\new_elevator\newelevator.h" />
+    <ClInclude Include="..\..\device\new_elevator\newelevatormanager.h" />
     <ClInclude Include="..\..\Dongyao\charge\chargemachine.h" />
     <ClInclude Include="..\..\Dongyao\dyforklift.h" />
     <ClInclude Include="..\..\Dongyao\dyforkliftthingcharge.h" />
@@ -102,6 +104,8 @@
     <ClCompile Include="..\..\device\elevator\elevator.cpp" />
     <ClCompile Include="..\..\device\elevator\elevatorManager.cpp" />
     <ClCompile Include="..\..\device\elevator\elevator_protocol.cpp" />
+    <ClCompile Include="..\..\device\new_elevator\newelevator.cpp" />
+    <ClCompile Include="..\..\device\new_elevator\newelevatormanager.cpp" />
     <ClCompile Include="..\..\Dongyao\charge\chargemachine.cpp" />
     <ClCompile Include="..\..\Dongyao\dyforklift.cpp" />
     <ClCompile Include="..\..\Dongyao\dyforkliftthingcharge.cpp" />

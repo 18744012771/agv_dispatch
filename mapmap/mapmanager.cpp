@@ -8,6 +8,7 @@
 #include "blockmanager.h"
 #include "conflictmanager.h"
 #include "../bezierarc.h"
+#include "../device/new_elevator/newelevatormanager.h"
 #include <algorithm>
 
 MapManager::MapManager() :mapModifying(false)
@@ -710,6 +711,15 @@ bool MapManager::pathPassable(MapPath *line, int agvId, std::vector<int> passabl
         }
     }
 
+	//增加电梯是否可用判断
+	if (pend->getLineId().length() > 0) {
+		int id = stringToInt(pend->getLineId());
+		auto ele = NewElevatorManager::getInstance()->getEleById(id);
+		if (ele != nullptr) {
+			if (!ele->getIsEnabled())return false;
+		}
+	}
+
     return true;
 }
 
@@ -952,6 +962,11 @@ std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation,
     if (endStation <= 0)return result;
     if (lastStation <= 0) lastStation = startStation;
     if (startStation <= 0) startStation = lastStation;
+
+	if (startStation == endStation) {
+		distance = 0;
+		return result;
+	}
 
     auto lastStationPtr = g_onemap.getSpiritById(lastStation);
     auto startStationPtr = g_onemap.getSpiritById(startStation);

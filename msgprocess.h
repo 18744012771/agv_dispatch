@@ -50,10 +50,13 @@ public:
     void interAddSubAgvStatus(SessionPtr conn, const Json::Value &request);
     void interAddSubTask(SessionPtr conn, const Json::Value &request);
     void interAddSubLog(SessionPtr conn, const Json::Value &request);
+	void interAddSubELE(SessionPtr conn, const Json::Value &request);
     void interRemoveSubAgvPosition(SessionPtr conn, const Json::Value &request);
     void interRemoveSubAgvStatus(SessionPtr conn,const Json::Value &request);
     void interRemoveSubTask(SessionPtr conn, const Json::Value &request);
     void interRemoveSubLog(SessionPtr conn, const Json::Value &request);
+	void interRemoveSubELE(SessionPtr conn, const Json::Value &request);
+
 
     void onSessionClosed(int id);
 
@@ -61,11 +64,13 @@ public:
     void addSubAgvStatus(int id);
     void addSubTask(int id);
     void addSubLog(int id);
+	void addSubELE(int id);
 
     void removeSubAgvPosition(int id);
     void removeSubAgvStatus(int id);
     void removeSubTask(int id);
     void removeSubLog(int id);
+	void removeSubELE(int id);
 private:
 
     void publisher_agv_position();
@@ -73,6 +78,8 @@ private:
     void publisher_agv_status();
 
     void publisher_task();
+
+	void publisher_ELE();
 
     MsgProcess();
 
@@ -87,6 +94,9 @@ private:
 
     std::mutex lsMtx;
     std::list<int> logSubers;
+
+	std::mutex eleMtx;
+	std::list<int> eleSubers;
 
     std::mutex errorMtx;
     int error_code;

@@ -6,6 +6,7 @@
 
 rosAgv::rosAgv(int id, std::string name, std::string ip, int port,int agvType, int agvClass, std::string lineName):
     RealAgv(id,name,ip,port/*,agvType,agvClass,lineName*/)
+
 {
     mChipmounter = nullptr;
 
@@ -508,7 +509,7 @@ void rosAgv::startShelftDown(string action)//3层升降货架AGV
 
 void rosAgv::startTask(string station, string action)//3层升降货架AGV test
 {
-    int16_t station_id;
+    int16_t station_id = 0;
     combined_logger->info("rosAgv, startTask ");
 
     if(station == "2510")

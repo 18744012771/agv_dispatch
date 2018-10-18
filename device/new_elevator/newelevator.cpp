@@ -1,6 +1,6 @@
 #include "newelevator.h"
 #include "newelevatormanager.h"
-#include "common.h"
+#include "../../common.h"
 NewElevator::NewElevator(int _id, std::string _name, std::string _ip, int _port, bool _enabled):
     tcp(nullptr),
     occuAgvId(0),

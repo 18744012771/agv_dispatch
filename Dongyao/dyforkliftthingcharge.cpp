@@ -64,14 +64,14 @@ void DyForkliftThingCharge::doing(AgvPtr agv)
     combined_logger->info("dothings-charge start");
 
     //开始充电
-    cm.chargeControl(charge_id, CHARGE_START);
-    do
+	int retry = 3;
+	do
     {
-        sleep(60);
         cm.chargeControl(charge_id, CHARGE_START);
         //等待充电完成
-        //sleep(120);
-    }while(CHARGE_FULL != cm.getStatus());
+		sleep(60);
+    }while(CHARGE_FULL != cm.getStatus() && retry-->0);
+
 }
 
 

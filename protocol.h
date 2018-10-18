@@ -123,15 +123,25 @@ typedef enum Msg_Todo
     MSG_TODO_AGV_MANAGE_STOP,//停止//id[4]
     MSG_TODO_QUERY_DEVICE_LOG, //查询设备日志 deviceid
     MSG_TODO_ELEVATOR_CONTROL, //控制电梯
+	
+	//new add: ele query
+	MSG_TODO_SUB_ELE_STATSU,//订阅电梯状态信息[将发送电梯连接状态、使能状态]
+	MSG_TODO_CANCEL_SUB_ELE_STATSU,//取消电梯状态信息订阅
+	
+	////new add: ele enable
+	MSG_TODO_ELE_ENABLE,//设置电梯使能
+
     //publish request and response
     MSG_TODO_PUB_AGV_POSITION,//发布的agv位置信息，该信息的queuebumber = 0
     MSG_TODO_PUB_AGV_STATUS,//发布的agv状态信息，该信息的queuebumber = 0
     MSG_TODO_PUB_LOG,//发布的日志信息，该信息的queuebumber = 0
     MSG_TODO_PUB_TASK,//发布的任务信息，该信息的queuebumber = 0
+	MSG_TODO_PUB_ELE,//发布电梯状态信息，该信息queuenumber = 0
 
     //notify
     MSG_TODO_NOTIFY_ALL_MAP_UPDATE,//通知消息 -- 地图更新
     MSG_TODO_NOTIFY_ALL_ERROR,
+
 }MSG_TODO;
 
 //typedef struct _NOTIFY_ERROR

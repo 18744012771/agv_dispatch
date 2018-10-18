@@ -112,7 +112,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
 
                         result_temp = mapmanagerptr->getBestPath(tempagv->getId(), tempagv->getLastStation(), tempagv->getNowStation(), aimStation, tempDis, CAN_CHANGE_DIRECTION);
 
-                        if (result_temp.size() > 0 && tempDis < minDis)
+                        if (tempDis < minDis)
                         {
                             minDis = tempDis;
                             bestAgv = tempagv;
@@ -127,7 +127,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
 
                         result_temp = mapmanagerptr->getBestPath(tempagv->getId(), tempagv->getLastStation(), tempagv->getNextStation(), aimStation, tempDis, CAN_CHANGE_DIRECTION);
 
-                        if (result_temp.size() > 0 && tempDis < minDis)
+                        if (tempDis < minDis)
                         {
                             minDis = tempDis;
                             bestAgv = tempagv;
@@ -181,7 +181,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
 
                             result_temp = mapmanagerptr->getBestPath(tempagv->getId(), tempagv->getLastStation(), tempagv->getNowStation(), haltStationTemp, tempDis, CAN_CHANGE_DIRECTION);
 
-                            if (result_temp.size() > 0 && tempDis < minDis)
+                            if (tempDis < minDis)
                             {
                                 minDis = tempDis;
                                 bestAgv = tempagv;
@@ -197,7 +197,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
 
                             result_temp = mapmanagerptr->getBestPath(tempagv->getId(), tempagv->getLastStation(), tempagv->getNextStation(), haltStation, tempDis, CAN_CHANGE_DIRECTION);
 
-                            if (result_temp.size() > 0 && tempDis < minDis)
+                            if (tempDis < minDis)
                             {
                                 minDis = tempDis;
                                 bestAgv = tempagv;
@@ -230,6 +230,13 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                             task->setPath(result);
                             task->setAgv(bestAgv->getId());
                             bestAgv->onTaskStart(task);
+							
+							//占用线路和站点
+							mapmanagerptr->addOccuStation(aimStation, bestAgv);
+							for (auto tline : result)
+							{
+								mapmanagerptr->addOccuLine(tline, bestAgv);
+							}
 
                             excuteTask(task);
                             return true;
@@ -256,7 +263,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
 
                 result = mapmanagerptr->getBestPath(agv->getId(), agv->getLastStation(), agv->getNowStation(), aimStation, distance, CAN_CHANGE_DIRECTION);
 
-                if (distance != DISTANCE_INFINITY && result.size() > 0)
+                if (distance != DISTANCE_INFINITY)
                 {
                     //拿去执行//从未分配队列中拿出去
                     combined_logger->info(" 从未分配队列中拿出去 ");
@@ -294,7 +301,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     result = mapmanagerptr->getBestPath(agv->getId(), agv->getLastStation(), agv->getNowStation(), haltStation, distance, CAN_CHANGE_DIRECTION);
 
                     //找到了空闲车辆去往避让点
-                    if (distance != DISTANCE_INFINITY && result.size() > 0)
+                    if (distance != DISTANCE_INFINITY)
                     {
                         combined_logger->info(" 找到了去往避让点{0} 的最优线路 agv {1}", haltStation, agv->getId());
                         if(GLOBAL_AGV_PROJECT == AGV_PROJECT_ANTING ||GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO||GLOBAL_AGV_PROJECT == AGV_PROJECT_QINGDAO ){
@@ -315,6 +322,13 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                             task->setPath(result);
                             task->setAgv(agv->getId());
                             agv->onTaskStart(task);
+
+							//占用线路和站点
+							mapmanagerptr->addOccuStation(aimStation, agv);
+							for (auto tline : result)
+							{
+								mapmanagerptr->addOccuLine(tline, agv);
+							}
 
                             excuteTask(task);
                             return true;
@@ -581,7 +595,8 @@ void TaskManager::finishTask(AgvTaskPtr task)
         agv->onTaskFinished(task);
         agv->setTask(nullptr);
         //TODO:
-        agv->status = Agv::AGV_STATUS_IDLE;
+		if(agv->status == Agv::AGV_STATUS_TASKING)
+			agv->status = Agv::AGV_STATUS_IDLE;
     }
     //
     doneTaskMtx.lock();
@@ -618,7 +633,7 @@ void TaskManager::excuteTask(AgvTaskPtr task)
 
             try
             {
-                if (station == 0)
+                if (station <= 0)
                 {
                     for (auto thing : node->getDoThings())
                     {
@@ -655,6 +670,7 @@ void TaskManager::excuteTask(AgvTaskPtr task)
                 //完成以后,从正在执行，返回到 分配队列中
                 task->setPath(std::vector<int>()); //清空路径
                 task->setDoingIndex(task->getDoingIndex() + 1);
+				
                 if (!task->getIsCancel())
                 {
                     doingTaskMtx.lock();

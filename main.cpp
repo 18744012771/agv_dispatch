@@ -121,6 +121,82 @@ void testAGV()
     std::cout << "testAGV end...." << std::endl;
 }
 
+void getWmsStorageJson()
+{
+    CppSQLite3DB wms_db;
+    try{
+        wms_db.open("wms.db");
+    }
+    catch (CppSQLite3Exception &e) {
+        combined_logger->error("wms db sqlite error {0}:{1};", e.errorCode(), e.errorMessage());
+        return ;
+    }
+
+    //
+    Json::Value fff;
+    try{
+        CppSQLite3Table table = wms_db.getTable("select storage_no,store_no,map_station_id  from C_STORAGE_DEF_T;");
+        if (table.numRows() <= 0 || table.numFields() != 3)
+        {
+            combined_logger->error("MapManager loadFromDb agv_station error!");
+            return ;
+        }
+        for (int row = 0; row < table.numRows(); row++)
+        {
+            table.setRow(row);
+
+            std::string storage_no = table.fieldValue(0);
+            std::string store_no = table.fieldValue(1);
+            if(table.fieldIsNull(2))continue;
+            int station_id = atoi(table.fieldValue(2));
+            std::stringstream ss;
+            ss<<"select realX,realY,realA from agv_station where id="<<station_id<<";";
+            CppSQLite3Table table_station = wms_db.getTable(ss.str().c_str());
+            if (table_station.numRows() <= 0 && table_station.numFields() != 3)
+            {
+                combined_logger->error("no station with id {0}",station_id);
+                continue;
+            }
+
+            table_station.setRow(0);
+            int realX = atoi(table_station.fieldValue(0));
+            int realY = atoi(table_station.fieldValue(1));
+            int realA = atoi(table_station.fieldValue(2));
+
+            int xx = realX;
+            int yy = realY;
+
+            if(realA>=-450 && realA<=450){
+                xx = realX;
+                yy = realY - 50;
+            }else if(realA>450 &&  realA<= 1350){
+                xx = realX - 50;
+                yy = realY - 100;
+            }else if(realA>1350 || realA<-1350){
+                xx = realX - 100;
+                yy = realY - 50;
+            }else{
+                xx = realX - 50;
+                yy = realY;
+            }
+
+            Json::Value vv;
+            vv["store_no"] = store_no;
+            vv["storage_no"] = storage_no;
+            vv["storage_x"] = xx;
+            vv["storage_y"] = yy;
+            vv["current_type"] = "type_null";
+            fff.append(vv);
+        }
+
+        combined_logger->debug(" jsons ==========={0}",fff.toStyledString());
+    }
+    catch (CppSQLite3Exception &e) {
+        combined_logger->error("wms db sqlite error {0}:{1};", e.errorCode(), e.errorMessage());
+        return ;
+    }
+}
+
 void quit(int sig)
 {
     g_quit = true;
@@ -134,6 +210,8 @@ int main(int argc, char *argv[])
 
     //0.日志输出
     initLog();
+
+    //getWmsStorageJson();
 
     //1.打开数据库
     try {

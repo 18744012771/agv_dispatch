@@ -8,6 +8,7 @@
 #include "taskmanager.h"
 #include "common.h"
 #include "device/devicemanager.h"
+#include "device/new_elevator/newelevatormanager.h"
 
 MsgProcess::MsgProcess()
 {
@@ -54,6 +55,17 @@ void MsgProcess::interAddSubLog(SessionPtr conn, const Json::Value &request) {
     addSubLog(conn->getSessionID());
     conn->send(response);
 }
+void MsgProcess::interAddSubELE(SessionPtr conn, const Json::Value &request)
+{
+    Json::Value response;
+    response["type"] = MSG_TYPE_RESPONSE;
+    response["todo"] = request["todo"];
+    response["queuenumber"] = request["queuenumber"];
+    response["result"] = RETURN_MSG_RESULT_SUCCESS;
+    UserLogManager::getInstance()->push(conn->getUserName() + " sub ele info");
+    addSubELE(conn->getSessionID());
+    conn->send(response);
+}
 void MsgProcess::interRemoveSubAgvPosition(SessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -94,7 +106,17 @@ void MsgProcess::interRemoveSubLog(SessionPtr conn, const Json::Value &request) 
     removeSubLog(conn->getSessionID());
     conn->send(response);
 }
-
+void MsgProcess::interRemoveSubELE(SessionPtr conn, const Json::Value &request)
+{
+    Json::Value response;
+    response["type"] = MSG_TYPE_RESPONSE;
+    response["todo"] = request["todo"];
+    response["queuenumber"] = request["queuenumber"];
+    response["result"] = RETURN_MSG_RESULT_SUCCESS;
+    UserLogManager::getInstance()->push(conn->getUserName() + " cancel sub ele");
+    removeSubELE(conn->getSessionID());
+    conn->send(response);
+}
 void MsgProcess::onSessionClosed(int id)
 {
     removeSubAgvPosition(id);
@@ -132,6 +154,14 @@ void MsgProcess::addSubLog(int id)
     }
 }
 
+void MsgProcess::addSubELE(int id)
+{
+    UNIQUE_LCK(eleMtx);
+    if (std::find(eleSubers.begin(), eleSubers.end(), id) == eleSubers.end()) {
+        eleSubers.push_back(id);
+    }
+}
+
 void MsgProcess::removeSubAgvPosition(int id)
 {
     UNIQUE_LCK(psMtx);
@@ -165,6 +195,15 @@ void MsgProcess::removeSubLog(int id)
     }
 }
 
+void MsgProcess::removeSubELE(int id)
+{
+    UNIQUE_LCK(eleMtx);
+    auto itr = std::find(eleSubers.begin(), eleSubers.end(), id);
+    if (itr != eleSubers.end()) {
+        eleSubers.erase(itr);
+    }
+}
+
 //100ms一次，发布AGV的位置
 void MsgProcess::publisher_agv_position()
 {
@@ -184,12 +223,11 @@ void MsgProcess::publisher_agv_position()
             aps["queuenumber"] = 0;
 
             //AgvManager::getInstance()->getPositionJson(aps);
-
+            UNIQUE_LCK(psMtx);
             if (agvPositionSubers.empty())continue;
             AgvManager::getInstance()->getPositionJson(aps);
-            if(aps["agvs"].isNull())continue;
+            if (aps["agvs"].isNull())continue;
             //执行发送
-            UNIQUE_LCK(psMtx);
             for (auto c : agvPositionSubers) {
                 SessionManager::getInstance()->sendSessionData(c, aps);
             }
@@ -200,8 +238,9 @@ void MsgProcess::publisher_agv_position()
 //每200ms发布一次小车状态
 void MsgProcess::publisher_agv_status()
 {
-    const int status_pub_interval = 500;//200ms
+    const int status_pub_interval = 1000;//200ms
     std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
+    auto agvmanagerptr = AgvManager::getInstance();
     while (!g_quit)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -211,13 +250,15 @@ void MsgProcess::publisher_agv_status()
             beginTime = endTime;
             //组装信息
             Json::Value response;
+            agvmanagerptr->getStatusJson(response);
+
             //TODO
+            UNIQUE_LCK(ssMtx);
             if (agvStatusSubers.empty())continue;
             //执行发送
-            //			UNIQUE_LCK(ssMtx);
-            //			for (auto c : agvStatusSubers) {
-            //				SessionManager::getInstance()->sendSessionData(c, response);
-            //			}
+            for (auto c : agvStatusSubers) {
+                SessionManager::getInstance()->sendSessionData(c, response);
+            }
         }
     }
 }
@@ -242,7 +283,7 @@ void MsgProcess::publisher_task()
             response["queuenumber"] = 0;
 
             auto tasks = TaskManager::getInstance()->getCurrentTasks();
-            if(tasks.size()<=0)continue;
+            if (tasks.size() <= 0)continue;
             Json::Value v_tasks;
             for (auto task : tasks) {
                 Json::Value v_task;
@@ -286,7 +327,7 @@ void MsgProcess::publisher_task()
                         for (auto pparam : pparams) {
                             v_params[kk] = pparam;
                         }
-                        if(!v_params.isNull())
+                        if (!v_params.isNull())
                             v_thing["params"] = v_params;
 
                         v_things.append(v_thing);
@@ -307,6 +348,47 @@ void MsgProcess::publisher_task()
             for (auto c : taskSubers) {
                 SessionManager::getInstance()->sendSessionData(c, response);
 
+            }
+        }
+    }
+}
+
+void MsgProcess::publisher_ELE()
+{
+    const int task_pub_interval = 2000;//2000ms
+    auto elemanagerptr = NewElevatorManager::getInstance();
+    std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
+    while (!g_quit)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+        std::chrono::milliseconds interval = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
+        if (interval.count() >= task_pub_interval) {
+            beginTime = endTime;
+
+            //组装信息
+            Json::Value response;
+            response["type"] = MSG_TYPE_PUBLISH;
+            response["todo"] = MSG_TODO_PUB_ELE;
+            response["queuenumber"] = 0;
+
+            
+            Json::Value v_eles;
+            auto eles = elemanagerptr->getAllEles();
+            for (auto ele : eles) {
+                if (ele == nullptr)continue;
+                Json::Value v_ele;
+                v_ele["id"] = ele->getId();
+                v_ele["connect"] = ele->getIsConnected();
+                v_ele["enable"] = ele->getIsEnabled();
+                v_eles.append(v_ele);
+            }
+            response["eles"] = v_eles;
+
+            UNIQUE_LCK(eleMtx);
+            if (eleSubers.size() <= 0)continue;
+            for (auto c : eleSubers) {
+                SessionManager::getInstance()->sendSessionData(c, response);
             }
         }
     }
@@ -350,12 +432,12 @@ void MsgProcess::removeSubSession(int session)
 void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
 {
     //request需要copy一个到线程中。
-    g_threadPool.enqueue([&, request,session] {
+    g_threadPool.enqueue([&, request, session] {
 
-//        TimeUsed t;
-//        t.start();
-		
-        //处理消息，如果有返回值，发送返回值
+        //        TimeUsed t;
+        //        t.start();
+
+                //处理消息，如果有返回值，发送返回值
         if ((session->getUserId() <= 0 || session->getUserRole() <= USER_ROLE_VISITOR)) {
             if (request["todo"].asInt() != MSG_TODO_USER_LOGIN) {
                 //未登录，却发送了 登录以外的 其它请求
@@ -373,10 +455,13 @@ void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
         typedef std::function<void(SessionPtr, const Json::Value &)> ProcessFunction;
 
         //TODO:
+        combined_logger->debug("recv request:{0}", request.toStyledString());
+
         UserManagerPtr userManager = UserManager::getInstance();
         MapManagerPtr mapManager = MapManager::getInstance();
         AgvManagerPtr agvManager = AgvManager::getInstance();
         DeviceManagerPtr deviceManager = DeviceManager::getInstance();
+        NewElevatorManagerPtr elemanagerptr = NewElevatorManager::getInstance();
         MsgProcessPtr msgProcess = shared_from_this();
         UserLogManagerPtr userLogManager = UserLogManager::getInstance();
         TaskManagerPtr taskManager = TaskManager::getInstance();
@@ -422,12 +507,15 @@ void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
         { MSG_TODO_TRAFFIC_RELEASE_LINE,std::bind(&MapManager::interTrafficReleaseLine,mapManager,std::placeholders::_1,std::placeholders::_2) },
         { MSG_TODO_AGV_MANAGE_STOP,std::bind(&AgvManager::interStop,agvManager,std::placeholders::_1,std::placeholders::_2) },
         { MSG_TODO_QUERY_DEVICE_LOG,std::bind(&DeviceManager::getDeviceLog,deviceManager,std::placeholders::_1,std::placeholders::_2) },
-        { MSG_TODO_ELEVATOR_CONTROL,std::bind(&DeviceManager::interElevatorControl,deviceManager,std::placeholders::_1,std::placeholders::_2) }
-		};
-		table[request["todo"].asInt()].f(session, request);
+        { MSG_TODO_ELEVATOR_CONTROL,std::bind(&DeviceManager::interElevatorControl,deviceManager,std::placeholders::_1,std::placeholders::_2) },
+        { MSG_TODO_SUB_ELE_STATSU,std::bind(&MsgProcess::interAddSubELE,msgProcess,std::placeholders::_1,std::placeholders::_2) },
+        { MSG_TODO_CANCEL_SUB_ELE_STATSU,std::bind(&MsgProcess::interRemoveSubELE,msgProcess,std::placeholders::_1,std::placeholders::_2) },
+        { MSG_TODO_ELE_ENABLE,std::bind(&NewElevatorManager::interSetEnableELE,elemanagerptr,std::placeholders::_1,std::placeholders::_2) }
+        };
+        table[request["todo"].asInt()].f(session, request);
 
-//        t.end();
-//        combined_logger->debug("msg process time used:{0} ms",t.getUsed()*1000.0);
+        //        t.end();
+        //        combined_logger->debug("msg process time used:{0} ms",t.getUsed()*1000.0);
     });
 }
 

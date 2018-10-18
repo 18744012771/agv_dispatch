@@ -8,6 +8,7 @@
 #include "../../utils/noncopyable.h"
 #include "../../protocol.h"
 #include "newelevator.h"
+#include "../../network/session.h"
 #include "../elevator/elevator_protocol.h"
 
 class NewElevatorManager;
@@ -27,6 +28,7 @@ public:
 
     ~NewElevatorManager();
 
+	void setEnable(int id,bool enable);
 
     lynx::elevator::Param create_param(int cmd, int from_floor,int to_floor, int elevator_id, int agv_id);
 
@@ -38,6 +40,10 @@ public:
     void notify(const lynx::elevator::Param& p);
 
     void test();
+
+	std::vector<NewElevator *> getAllEles() { return eles; }
+
+	void interSetEnableELE(SessionPtr conn, const Json::Value &request);
 private:
 
     void ttest(int agv_id,int from_floor,int to_floor,int elevator_id);
