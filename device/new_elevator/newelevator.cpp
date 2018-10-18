@@ -10,7 +10,9 @@ NewElevator::NewElevator(int _id, std::string _name, std::string _ip, int _port,
     name(_name),
     ip(_ip),
     port(_port),
-    firstConnect(true)
+    firstConnect(true),
+    currentOpenDoorFloor(-1),
+    resetOk(false)
 {
 
 }
@@ -27,44 +29,28 @@ void NewElevator::init()
     tcp->start();
 }
 
-bool NewElevator::send(const lynx::elevator::Param &param)
-{
-    return send((char *)param.serialize().data(),param.serialize().size());
-}
-
-void NewElevator::StopSendThread()
-{
-    send_cmd = false;
-}
-
-void NewElevator::StartSendThread(int cmd, int from_floor, int to_floor, int elevator_id, int agv_id)
+void NewElevator::KeepOpen(int floor)
 {
     send_cmd = true;
 
-    std::thread t = std::thread([&,cmd,from_floor,to_floor,elevator_id,agv_id](){
+    std::thread t = std::thread([&, floor]() {
         auto elemanagerptr = NewElevatorManager::getInstance();
+        unsigned char data[8];
+        elemanagerptr->getCmdData(floor, getId(), CallEleENQ, data);
+
         do
         {
-            combined_logger->info("Elevator 发送CMD :{0}", cmd);
-
-            auto p = elemanagerptr->create_param(cmd, from_floor, to_floor, elevator_id, agv_id);
-            if(cmd == lynx::elevator::TakeEleACK)
-            {
-                combined_logger->info("AGV发送乘梯应答....", cmd);
-            }
-            else if(cmd == lynx::elevator::LeftEleCMD)
-            {
-                combined_logger->info("AGV发送离开指令....", cmd);
-            }
-
-            elemanagerptr->notify(p);
-            sleep(5);
-            combined_logger->info("AGV发送CMD end", cmd);
-        }
-        while(send_cmd);
+            elemanagerptr->send((char *)data,8);
+            sleep(2);
+        } while (send_cmd);
     });
 
     t.detach();
+}
+
+void NewElevator::DropOpen()
+{
+    send_cmd = false;
 }
 
 bool NewElevator::send(const char *data,int len)

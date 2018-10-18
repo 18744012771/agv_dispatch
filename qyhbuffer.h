@@ -21,6 +21,8 @@ public:
 
     int find(char key,int start = 0);
 
+    int indexof(char *key,int key_len,int start = 0);
+
     std::string substr(int start = 0,int len = -1);
 
     //如果不够一个int，返回一个-1

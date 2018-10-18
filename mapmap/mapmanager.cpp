@@ -717,6 +717,7 @@ bool MapManager::pathPassable(MapPath *line, int agvId, std::vector<int> passabl
 		auto ele = NewElevatorManager::getInstance()->getEleById(id);
 		if (ele != nullptr) {
 			if (!ele->getIsEnabled())return false;
+            if (ele->getOccuAgvId() > 0 && ele->getOccuAgvId() != agvId)return false;
 		}
 	}
 

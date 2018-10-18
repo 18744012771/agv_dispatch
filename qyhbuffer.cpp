@@ -39,6 +39,28 @@ uint32_t QyhBuffer::size()
     return length();
 }
 
+int QyhBuffer::indexof(char *key, int key_len, int start)
+{
+    if (key == nullptr || key_len <= 0)return -1;
+    int ret = -1;
+    uint32_t len = buf.size();
+    for (uint32_t i = start; i < len; i++) {
+        if (buf[i] == key[0]) {
+            bool same = true;
+            for (int j = 1; j < key_len; ++j) {
+                if (buf[i + j] != key[j]) {
+                    same = false;
+                }
+            }
+            if(same){
+                ret = (int)i;
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
 int QyhBuffer::find(char key,int start)
 {
     int ret = -1;

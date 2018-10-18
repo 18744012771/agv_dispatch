@@ -1,4 +1,4 @@
-#ifndef AGV_H
+﻿#ifndef AGV_H
 #define AGV_H
 #include <string>
 #include <vector>
@@ -100,12 +100,6 @@ public:
 
     void setExtraParam(std::string key,std::string value){extra_params[key] = value;}
     std::string getExtraParam(std::string key){return extra_params[key];}
-
-    void setFromFloor(int _fromFloor){fromFloor = _fromFloor;}
-    void setToFloor(int _toFloor){toFloor = _toFloor;}
-
-    int getFromFloor(){return fromFloor;}
-    int getToFloor(){return toFloor;}
 protected:
     AgvTaskPtr currentTask;
     int id;
@@ -130,9 +124,6 @@ protected:
     std::vector<int> excutespaths;
 
     std::map<std::string,std::string> extra_params;
-
-    int fromFloor;
-    int toFloor;
 };
 
 #endif // AGV_H
