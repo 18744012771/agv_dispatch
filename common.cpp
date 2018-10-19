@@ -90,6 +90,15 @@ std::string longToString(long l)
     return out.str();
 }
 
+double stringToDouble(std::string str)
+{
+    std::stringstream out;
+    out<<str;
+    double i = 0.0;
+    out>>i;
+    return i;
+}
+
 
 int stringToInt(std::string str)
 {

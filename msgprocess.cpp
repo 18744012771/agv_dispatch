@@ -455,7 +455,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
         typedef std::function<void(SessionPtr, const Json::Value &)> ProcessFunction;
 
         //TODO:
-        combined_logger->debug("recv request:{0}", request.toStyledString());
+        //combined_logger->debug("recv request:{0}", request.toStyledString());
 
         UserManagerPtr userManager = UserManager::getInstance();
         MapManagerPtr mapManager = MapManager::getInstance();

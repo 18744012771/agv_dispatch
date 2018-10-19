@@ -52,6 +52,7 @@ std::string toHexString(const char *data, int len);
 std::string intToString(int i);
 std::string longToString(long l);
 int stringToInt(std::string str);
+double stringToDouble(std::string str);
 bool stringToBool(std::string str);
 
 std::vector<std::string> split(std::string src,std::string sp = " ");

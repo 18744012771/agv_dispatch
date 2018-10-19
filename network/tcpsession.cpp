@@ -99,6 +99,46 @@ void TcpSession::start()
     }
 
     std::thread([this](){
+
+        while (!g_quit) {
+            try{
+                if (!socket_.is_open()) {
+                    break;
+                }
+                boost::system::error_code error;
+                size_t length = socket_.read_some(boost::asio::buffer(read_buffer, MSG_READ_BUFFER_LENGTH), error);
+                if (error == boost::asio::error::eof) {
+                    combined_logger->info("session close cleany,session id:{0}", getSessionID());
+                    break;
+                }
+                else if (error) {
+                    combined_logger->info("session error!session id:{0},error:{1}", getSessionID(), error.message());
+                    break;
+                }
+                buffer.append(read_buffer, length);
+
+                if (_acceptID != AgvManager::getInstance()->getServerAccepterID())
+                {
+                    packageProcess();
+                }
+                else {
+                    int returnValue;
+                    do
+                    {
+                        returnValue = ProtocolProcess();
+                    } while (buffer.size() > 12 && (returnValue == 0 || returnValue == 2 || returnValue == 1));
+                }
+            }   
+            catch (...) {
+                break;
+            }
+        }
+        if (AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT && _agvPtr != nullptr)
+        {
+            std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
+        }
+        SessionManager::getInstance()->removeSession(shared_from_this());
+/*
         while(socket_.is_open()){
             boost::system::error_code error;
             size_t length = socket_.read_some(boost::asio::buffer(read_buffer,MSG_READ_BUFFER_LENGTH), error);
@@ -135,7 +175,7 @@ void TcpSession::start()
         if(AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT && _agvPtr != nullptr)
         {
             std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
-        }
+        }*/
     }).detach();
 }
 

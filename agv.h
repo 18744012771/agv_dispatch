@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <map>
+#include <atomic>
 #define CAR_LENGTH 200
 //3层升降货架是否有料信息KEY
 #define ALL_FLOOR_INFO_KEY         "all_floor_info"
@@ -69,16 +70,16 @@ public:
     void setName(std::string _name){name=_name;}
     void setIp(std::string _ip){ip=_ip;}
     void setPort(int _port){port=_port;}
-    void setX(int _x){x=_x;}
-    void setY(int _y){y=_y;}
-    void setTheta(int _theta){theta=_theta;}
+    void setX(double _x){x=_x;}
+    void setY(double _y){y=_y;}
+    void setTheta(double _theta){theta=_theta;}
     void setType(int _type){agvType = _type;}
     void setFloor(int _floor){floor = _floor;}
-    int getX(){return x;}
-    int getY(){return y;}
+    double getX(){return x;}
+    double getY(){return y;}
     int getFloor(){return floor;}
-    int getTheta(){return theta;}
-	int getLastStation() { return lastStation; }
+    double getTheta(){return theta;}
+    int getLastStation() { return lastStation; }
 	int getNowStation() { return nowStation; }
 	int getNextStation() { return nextStation; }
 
@@ -108,15 +109,15 @@ protected:
     int port;
     int agvType;
 
-    double x;
-    double y;
-    double theta;
-    int floor;
+    std::atomic<double> x;
+    std::atomic<double> y;
+    std::atomic<double> theta;
+    std::atomic_int floor;
 
 	//计算路径用的
-	int lastStation;//上一个站点
-	int nowStation;//当前所在站点
-	int nextStation;//下一个站点
+    std::atomic_int lastStation;//上一个站点
+    std::atomic_int nowStation;//当前所在站点
+    std::atomic_int nextStation;//下一个站点
 
     std::mutex stationMtx;
     std::vector<int> excutestations;

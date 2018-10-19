@@ -1,4 +1,4 @@
-#include "virtualrosagv.h"
+﻿#include "virtualrosagv.h"
 #include "mapmap/onemap.h"
 #include "mapmap/mapmanager.h"
 #include "mapmap/blockmanager.h"
@@ -312,7 +312,7 @@ void VirtualRosAgv::goStation(int station, bool stop)
         //4.判断是否到达下一站 如果到达，break
         if(currentT>=1.0){
             onArriveStation(station);
-            lastStation = nowStation;
+            lastStation = (int)nowStation;
             nowStation = station;
             floor = mapmanagerptr->getFloor(station);
             break;
@@ -332,7 +332,7 @@ void VirtualRosAgv::callMapChange(int station)
 {
     //模拟电梯运行，这里只做等待即可
     Sleep(5000);
-    lastStation = nowStation;
+    lastStation = (int)nowStation;
     nowStation = station;
     floor = MapManager::getInstance()->getFloor(station);
     combined_logger->debug("go elvator:current floor={0}", floor);

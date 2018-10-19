@@ -23,7 +23,7 @@ Agv::Agv(int _id, std::string _name, std::string _ip, int _port) :
     nextStation(0),
     x(0),
     y(0),
-    theta(0),
+    theta(0),print
     floor(-1),
     agvType(-1)
 {
@@ -85,7 +85,7 @@ void Agv::onArriveStation(int station)
 
     if(station>0){
         if(nowStation>0){
-            lastStation = nowStation;
+            lastStation = (int)nowStation;
             //free last station occu
             mapmanagerptr->freeStation(lastStation,shared_from_this());
             conflictmanagerptr->freeConflictOccu(lastStation,getId());
@@ -138,7 +138,7 @@ void Agv::onArriveStation(int station)
     }
 
     char buf[SQL_MAX_LENGTH];
-    snprintf(buf, SQL_MAX_LENGTH, "update agv_agv set lastStation=%d,nowStation=%d,nextStation=%d  where id = %d;", lastStation, nowStation, nextStation, id);
+    snprintf(buf, SQL_MAX_LENGTH, "update agv_agv set lastStation=%d,nowStation=%d,nextStation=%d  where id = %d;", (int)lastStation, (int)nowStation, (int)nextStation, id);
     try {
         g_db.execDML(buf);
     }
@@ -175,8 +175,8 @@ void Agv::onArriveStation(int station)
     }else{
         pause();
     }
-    conflictmanagerptr->printConflict();
-    mapmanagerptr->printGroup();
+    //conflictmanagerptr->printConflict();
+    //mapmanagerptr->printGroup();
 }
 
 void Agv::onLeaveStation(int stationid)
@@ -230,7 +230,7 @@ void Agv::onLeaveStation(int stationid)
     }
 
     char buf[SQL_MAX_LENGTH];
-    snprintf(buf, SQL_MAX_LENGTH, "update agv_agv set lastStation=%d,nowStation=%d,nextStation=%d  where id = %d;", lastStation, nowStation, nextStation,id);
+    snprintf(buf, SQL_MAX_LENGTH, "update agv_agv set lastStation=%d,nowStation=%d,nextStation=%d  where id = %d;", (int)lastStation, (int)nowStation, (int)nextStation,id);
     try {
         g_db.execDML(buf);
     }
@@ -254,8 +254,8 @@ void Agv::onLeaveStation(int stationid)
         pause();
     }
 
-    conflictmanagerptr->printConflict();
-    mapmanagerptr->printGroup();
+    //conflictmanagerptr->printConflict();
+    //mapmanagerptr->printGroup();
 }
 
 void Agv::onError(int code, std::string msg)

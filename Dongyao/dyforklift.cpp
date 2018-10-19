@@ -134,12 +134,7 @@ bool DyForklift::fork(int params)
 //    return resend(body.str().c_str());
 //}
 
-Pose4D DyForklift::getPos()
-{
-    return m_currentPos;
-}
-
-int DyForklift::nearestStation(int x, int y, int a, int floor)
+int DyForklift::nearestStation()
 {
     int minDis = -1;
     int min_station = -1;
@@ -149,7 +144,7 @@ int DyForklift::nearestStation(int x, int y, int a, int floor)
         MapPoint *point = mapmanager->getPointById(station);
         if (point == nullptr)continue;
         long dis = pow(x - point->getRealX(), 2) + pow(y - point->getRealY(), 2);
-        if ((min_station == -1 || minDis > dis) && point->getRealA() - a < 40)
+        if ((min_station == -1 || minDis > dis) && abs(-point->getRealA()/10 - theta) < 40)
         {
             minDis = dis;
             min_station = point->getId();
@@ -200,16 +195,15 @@ void DyForklift::onRead(const char *data, int len)
             std::vector<std::string> temp = split(all[3], ",");
             if (temp.size() == 4)
             {
-                m_currentPos = Pose4D(std::stof(temp[0]), std::stof(temp[1]), std::stof(temp[2]), stringToInt(temp[3]));
 
-                x = m_currentPos.m_x * 100;
-                y = -m_currentPos.m_y * 100;
-                theta = -m_currentPos.m_theta*57.3;
-                floor = m_currentPos.m_floor;
+                x = 100 * stringToDouble(temp[0]);
+                y = -100 * stringToDouble(temp[1]);
+                theta = -57.3 * stringToDouble(temp[2]);
+                floor = stringToInt(temp[3]);
                 if (AGV_STATUS_NOTREADY == status)
                 {
                     //find nearest station
-                    nowStation = nearestStation(m_currentPos.m_x * 100, -m_currentPos.m_y * 100, m_currentPos.m_theta, m_currentPos.m_floor);
+                    nowStation = nearestStation();
                     if (nowStation != -1) {
                         status = AGV_STATUS_IDLE;
                         onArriveStation(nowStation);
@@ -217,9 +211,8 @@ void DyForklift::onRead(const char *data, int len)
                 }
                 else
                 {
-                    arrve(m_currentPos.m_x * 100, -m_currentPos.m_y * 100);
+                    arrve();
                 }
-
             }
         }
 
@@ -308,7 +301,7 @@ void DyForklift::onRead(const char *data, int len)
         msgMtx.unlock();
 
         //TODO
-        pauseFlag = sendPause;
+        pauseFlag = (bool)sendPause;
         break;
     }
     default:
@@ -316,7 +309,7 @@ void DyForklift::onRead(const char *data, int len)
     }
 }
 //判断小车是否到达某一站点
-void DyForklift::arrve(int x, int y) {
+void DyForklift::arrve() {
 
     auto mapmanagerptr = MapManager::getInstance();
 
@@ -676,7 +669,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
 //移动至指定站点
 void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
 {
-    if (g_quit || !currentTask->getIsCancel())return;
+    if (g_quit || currentTask == nullptr || currentTask->getIsCancel())return;
 
     MapPoint *start;
     MapPoint *end;
@@ -709,7 +702,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
             else
             {
                 //add current pos
-                body << cmd << "|" << speed << "," << m_currentPos.m_x << "," << m_currentPos.m_y << "," << m_currentPos.m_theta*57.3 << "," << m_currentPos.m_floor << ",";
+                body << cmd << "|" << speed << "," << x/100.0 << "," << y/-100.0 << "," << -theta << "," << floor << ",";
                 //            \<<"|"<<speed<<dy_path->getP1x()/100.0<<","<<dy_path->getP1y()/100.0<<","<<dy_path->getP1a()<<","<<dy_path->getP1f()<<","<<dy_path->getPathType();
             }
         }

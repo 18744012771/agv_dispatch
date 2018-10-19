@@ -121,8 +121,8 @@ public:
     bool stopEmergency(int params);
 
     Pose4D getPos();
-    int nearestStation(int x, int y, int a, int floor);
-    void arrve(int x,int y);
+    int nearestStation();
+    void arrve();
     bool setInitPos(int station);
 
     void onTaskStart(AgvTaskPtr _task);
@@ -157,24 +157,19 @@ private:
     bool send(const std::string &msg);
 
     void init();
-    bool turnResult;
 
-    Pose4D m_currentPos;
-    int m_power;
+    std::atomic_int m_power;
     bool m_lift = false;
     std::map<int,  DyMsg> m_unRecvSend;
     std::map<int,  DyMsg> m_unFinishCmd;
     std::mutex msgMtx;
 
-//    int actionpoint, startpoint;
-//    bool actionFlag = false;
-//    bool startLift = false;
     int task_type;
 
     SessionPtr m_qTcp;
     WarnSt m_warn;
-    bool pauseFlag;
-    bool sendPause;//发送的是暂停的指令，还是继续的指令.true:send pause  false:send resume
+    std::atomic_bool pauseFlag;
+    std::atomic_bool sendPause;//发送的是暂停的指令，还是继续的指令.true:send pause  false:send resume
     bool firstConnect;
 };
 
