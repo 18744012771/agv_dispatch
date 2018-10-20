@@ -250,6 +250,9 @@ void MsgProcess::publisher_agv_status()
             beginTime = endTime;
             //组装信息
             Json::Value response;
+            response["type"] = MSG_TYPE_PUBLISH;
+            response["todo"] = MSG_TODO_PUB_AGV_STATUS;
+            response["queuenumber"] = 0;
             agvmanagerptr->getStatusJson(response);
 
             //TODO
