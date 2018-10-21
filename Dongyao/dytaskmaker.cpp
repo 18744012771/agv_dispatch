@@ -231,7 +231,7 @@ void DyTaskMaker::receiveTask(std::string str_task)
     combined_logger->info("receiveTask:{0}", str_task);
 
     std::vector<std::string> all = split(str_task);
-    //all助成部分:
+    //all组成部分:
     //[agvid] [优先级] [do] [where] [do] [where]
 
     //例如一个任务是指定 AGV 到A点取货，放到B点
@@ -313,6 +313,19 @@ void DyTaskMaker::receiveTask(std::string str_task)
             }else  if(all[i] == "move"){
                 AgvTaskNodePtr node(new AgvTaskNode());
                 int stationId = stringToInt(all[i+1]);
+                node->setStation(stationId);
+                nodes.push_back(node);
+                i+=2;
+            }else  if(all[i] == "wait"){
+                AgvTaskNodePtr node(new AgvTaskNode());
+
+                //获取可用的等待点
+                int stationId = MapManager::getInstance()->getWaitPoint(agvId);//TODO = MapManager::getInstance()->getBestPath();
+
+                if(stationId<0){
+                    //TODO:如果没有咋办！
+
+                }
                 node->setStation(stationId);
                 nodes.push_back(node);
                 i+=2;

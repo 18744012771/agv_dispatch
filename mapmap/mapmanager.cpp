@@ -92,6 +92,18 @@ MapPath *MapManager::getMapPathByStartEnd(int start, int end)
     return nullptr;
 }
 
+int MapManager::getWaitPoint(int agvId)
+{
+    auto ps = g_onemap.getStations();
+    for(auto p:ps){
+        auto pptr = g_onemap.getPointById(p);
+        if(pptr!=nullptr && pptr->getPointType() == MapPoint::Map_Point_Type_HALT){
+            if(station_occuagv[p] == 0 || station_occuagv[p] == agvId )return p;
+        }
+    }
+    return -1;
+}
+
 void MapManager::printGroup()
 {
     UNIQUE_LCK(groupMtx);

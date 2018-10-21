@@ -97,6 +97,8 @@ public:
     void interTrafficReleaseLine(SessionPtr conn, const Json::Value &request);
 
     void printGroup();
+
+    int getWaitPoint(int agvId);
 private:
     MapManager();
 
