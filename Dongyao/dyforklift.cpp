@@ -42,7 +42,7 @@ void DyForklift::init() {
                 continue;
             }
             std::map<int, DyMsg >::iterator iter;
-            if (msgMtx.try_lock())
+            if (unRecvMsgMtx.try_lock())
             {
                 for (iter = this->m_unRecvSend.begin(); iter != this->m_unRecvSend.end(); iter++)
                 {
@@ -61,7 +61,7 @@ void DyForklift::init() {
                     }
                 }
 
-                msgMtx.unlock();
+                unRecvMsgMtx.unlock();
             }
             sleep(1);
         }
@@ -264,6 +264,7 @@ void DyForklift::onRead(const char *data, int len)
         if (1 == stringToInt(body.substr(2)))
         {
             //command finish
+            UNIQUE_LCK lck(unFinishMsgMtx);
             std::map<int, DyMsg>::iterator iter = m_unFinishCmd.find(stringToInt(body.substr(0, 2)));
             if (iter != m_unFinishCmd.end())
             {
@@ -279,26 +280,26 @@ void DyForklift::onRead(const char *data, int len)
     case FORKLIFT_CHARGE:
     case FORKLIFT_INITPOS:
     {
-        msgMtx.lock();
+        unRecvMsgMtx.lock();
         //command response
         std::map<int, DyMsg>::iterator iter = m_unRecvSend.find(stringToInt(msg.substr(0, 6)));
         if (iter != m_unRecvSend.end())
         {
             m_unRecvSend.erase(iter);
         }
-        msgMtx.unlock();
+        unRecvMsgMtx.unlock();
         break;
     }
     case FORKLIFT_MOVE_NOLASER:
     {
-        msgMtx.lock();
+        unRecvMsgMtx.lock();
         //command response
         std::map<int, DyMsg>::iterator iter = m_unRecvSend.find(stringToInt(msg.substr(0, 6)));
         if (iter != m_unRecvSend.end())
         {
             m_unRecvSend.erase(iter);
         }
-        msgMtx.unlock();
+        unRecvMsgMtx.unlock();
 
         //TODO
         pauseFlag = (bool)sendPause;
@@ -490,7 +491,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
     //duoci chengzuo dianti de wenti s
     int agv_id = getId();
     int index = 0;
-    while (!g_quit && !currentTask->getIsCancel() && index < lines.size())
+    while (!g_quit && currentTask!=nullptr &&  !currentTask->getIsCancel() && index < lines.size())
     {
         std::vector<int> lines_to_elevator;//到达电梯口路径
         std::vector<int> lines_enter_elevator;//进入电梯路径
@@ -557,7 +558,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         elevator->setResetOk(false);
 
-        while(!g_quit){
+        while(!g_quit && currentTask != nullptr && !currentTask->getIsCancel()){
             elemanagerptr->resetElevatorState(elevator_id);
 
             sleep(3);
@@ -576,7 +577,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
             if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
         }
 
-        if (g_quit || currentTask->getIsCancel()) return;
+        if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
 
         //进电梯
         combined_logger->debug("==============START go into elevator");
@@ -597,12 +598,12 @@ void DyForklift::goElevator(const std::vector<int> lines)
         Sleep(2);
         elemanagerptr->resetElevatorState(elevator_id);
 
-        if (g_quit || currentTask->getIsCancel()) return;
-
+        if (g_quit || currentTask == nullptr|| currentTask->getIsCancel()) return;
+        Sleep(3);
         //呼梯
         elemanagerptr->call(elevator_id, to_floor);
         int timeout = 0;
-        while (!g_quit && !currentTask->getIsCancel()) {
+        while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
             sleep(1);
             if (elevator->getCurrentOpenDoorFloor() == to_floor)break;
             ++timeout;
@@ -613,7 +614,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
             }
         }
 
-        if (g_quit || currentTask->getIsCancel()) return;
+        if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
 
         setInitPos(endId);
 
@@ -630,7 +631,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
         Sleep(2);
         elemanagerptr->resetElevatorState(elevator_id);
 
-        if (g_quit || currentTask->getIsCancel()) return;
+        if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
 
         sleep(2);
 
@@ -798,7 +799,12 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
             }
             if (canResume)
                 resume();
+
+            if (g_quit || currentTask == nullptr || currentTask->getIsCancel())return;
         }
+        
+        if (g_quit || currentTask == nullptr || currentTask->getIsCancel())return;
+
     } while (this->nowStation != endId || !isFinish());
     combined_logger->info("nowStation = {0}, endId = {1}", this->nowStation, endId);
 }
@@ -832,12 +838,13 @@ bool DyForklift::send(const std::string &data)
     DyMsg msg;
     msg.msg = sendContent;
     msg.waitTime = 0;
-    msgMtx.lock();
+    unRecvMsgMtx.lock();
     m_unRecvSend[stoi(msg.msg.substr(1, 6))] = msg;
-    msgMtx.unlock();
+    unRecvMsgMtx.unlock();
     int msgType = stringToInt(msg.msg.substr(11, 2));
     if (FORKLIFT_STARTREPORT != msgType && FORKLIFT_HEART != msgType)
     {
+        UNIQUE_LCK lck(unFinishMsgMtx);
         m_unFinishCmd[msgType] = msg;
     }
     return res;
@@ -868,11 +875,13 @@ bool DyForklift::endReport()
 //判断小车命令是否执行结束
 bool DyForklift::isFinish()
 {
+    UNIQUE_LCK lck(unFinishMsgMtx);
     return !m_unFinishCmd.size();
 }
 
 bool DyForklift::isFinish(int cmd_type)
 {
+    UNIQUE_LCK lck(unFinishMsgMtx);
     std::map<int, DyMsg>::iterator iter = m_unFinishCmd.find(cmd_type);
     if (iter != m_unFinishCmd.end())
     {
@@ -1328,6 +1337,14 @@ void DyForklift::onTaskCanceled(AgvTaskPtr _task)
     }
 
     //TODO:
+    unRecvMsgMtx.lock();
+    m_unRecvSend.clear();
+    unRecvMsgMtx.unlock();
+
+    unFinishMsgMtx.lock();
+    m_unFinishCmd.clear();
+    unFinishMsgMtx.unlock();
+
     //occu current station or  current path
     auto conflictmanagerptr = ConflictManager::getInstance();
     conflictmanagerptr->freeAgvOccu(getId(), lastStation, nowStation, nextStation);

@@ -184,7 +184,7 @@ void NewElevatorManager::onRead(int ele_id, std::string ele_name, const char *da
     buffers[ele_id].append(data, len);
 
     while (!g_quit && buffers[ele_id].size() >= 8) {
-        char head[2] = { 0xAA,0x55 };
+        char head[2] = { (char)0xAA,(char)0x55 };
         int index = buffers[ele_id].indexof(head, 2);
         if (index < 0) {
             //未找到头，丢弃数据

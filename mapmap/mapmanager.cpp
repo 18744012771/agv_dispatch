@@ -127,7 +127,7 @@ void MapManager::addOccuStation(int station, AgvPtr occuAgv)
 {
     station_occuagv[station] = occuAgv->getId();
     combined_logger->debug("occu station:{0} agv:{1}", station, occuAgv->getId());
-    
+
     std::vector<int> groupIds = getGroup(station);
 
     for(auto groupId:groupIds)
@@ -242,6 +242,7 @@ int MapManager::getStationFloor(int station)
 {
     std::list<MapFloor *> floors = g_onemap.getFloors();//楼层
     for(auto f:floors){
+        if(f == nullptr)continue;
         std::list<int> fps = f->getPoints();
         for(auto fp:fps){
             if(station == fp){
@@ -350,6 +351,7 @@ bool MapManager::save()
         CppSQLite3Buffer bufSQL;
 
         for (auto spirit : spirits) {
+            if(spirit == nullptr)continue;
             if (spirit->getSpiritType() == MapSpirit::Map_Sprite_Type_Point) {
                 MapPoint *station = static_cast<MapPoint *>(spirit);
                 bufSQL.format("insert into agv_station(id,name,type, x,y,realX,realY,realA,labelXoffset,labelYoffset ,mapChange,locked,ip,port,agvType,lineId) values (%d, '%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s');", station->getId(), station->getName().c_str(), station->getPointType(), station->getX(), station->getY(),
@@ -622,6 +624,7 @@ bool MapManager::loadFromDb()
         int max_id = 0;
         auto ps = g_onemap.getAllElement();
         for (auto p : ps) {
+            if(p == nullptr)continue;
             if (p->getId() > max_id)max_id = p->getId();
         }
         g_onemap.setMaxId(max_id);
@@ -667,7 +670,7 @@ std::vector<int> MapManager::getBestPath(int agv, int lastStation, int startStat
 }
 
 bool MapManager::pathPassable(MapPath *line, int agvId, std::vector<int> passable_uturnPoints) {
-
+    if(line == nullptr)return false;
     auto pend = getPointById(line->getEnd());
     if(pend == nullptr)return false;
 
@@ -711,20 +714,21 @@ bool MapManager::pathPassable(MapPath *line, int agvId, std::vector<int> passabl
         }
     }
 
-	//增加电梯是否可用判断
-	if (pend->getLineId().length() > 0) {
-		int id = stringToInt(pend->getLineId());
-		auto ele = NewElevatorManager::getInstance()->getEleById(id);
-		if (ele != nullptr) {
-			if (!ele->getIsEnabled())return false;
+    //增加电梯是否可用判断
+    if (pend->getLineId().length() > 0) {
+        int id = stringToInt(pend->getLineId());
+        auto ele = NewElevatorManager::getInstance()->getEleById(id);
+        if (ele != nullptr) {
+            if (!ele->getIsEnabled())return false;
             if (ele->getOccuAgvId() > 0 && ele->getOccuAgvId() != agvId)return false;
-		}
-	}
+        }
+    }
 
     return true;
 }
 
 bool MapManager::pathPassable(MapPath *line, int agvId) {
+    if(line == nullptr)return false;
     //TODO: to delete
     if (line_occuagvs[line->getId()].size() > 1 || (line_occuagvs[line->getId()].size() == 1 && *(line_occuagvs[line->getId()].begin()) != agvId))
         return false;
@@ -777,6 +781,7 @@ int MapManager::getNearestHaltStation(int agvId, int aimStation)
     int minDistance = DISTANCE_INFINITY;
     auto ae = g_onemap.getAllElement();
     for(auto e:ae){
+        if(e == nullptr)continue;
         //MapSpirit ee;
         if(e->getSpiritType() == MapSpirit::Map_Sprite_Type_Point){
             if((static_cast<MapPoint *>(e))->getPointType() == MapPoint::Map_Point_Type_HALT)
@@ -964,10 +969,10 @@ std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation,
     if (lastStation <= 0) lastStation = startStation;
     if (startStation <= 0) startStation = lastStation;
 
-	if (startStation == endStation) {
-		distance = 0;
-		return result;
-	}
+    if (startStation == endStation) {
+        distance = 0;
+        return result;
+    }
 
     auto lastStationPtr = g_onemap.getSpiritById(lastStation);
     auto startStationPtr = g_onemap.getSpiritById(startStation);
@@ -1387,7 +1392,7 @@ void MapManager::check()
     //        changed = true;
     //    }
 
-    //check conflict
+    //    //check conflict
     //    auto conflicts = g_onemap.getConflictPairs();
     //    for(auto conflict:conflicts)
     //    {
@@ -1403,6 +1408,10 @@ void MapManager::check()
     //            g_onemap.removeSpiritById(conflict->getId());
     //            changed = true;
     //        }
+    //    }
+    //    if(changed){
+    //        save();
+    //        changed = false;
     //    }
 
     //    //remove reverselines in conflict!

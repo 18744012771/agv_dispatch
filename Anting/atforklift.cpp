@@ -1,4 +1,4 @@
-#include "atforklift.h"
+﻿#include "atforklift.h"
 #include "../common.h"
 #include "../mapmap/mappoint.h"
 #include "../mapmap/blockmanager.h"
@@ -137,7 +137,8 @@ int AtForklift::nearestStation(int x, int y, int a, int floor)
     for (auto station : stations) {
         MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(station);
         if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Point)continue;
-        MapPoint *point = static_cast<MapPoint *>(spirit);
+        MapPoint *point = MapManager::getInstance()->getPointById(station);
+        if (spirit == nullptr)continue;
         long dis = pow(x - point->getRealX(), 2) + pow(y - point->getRealY(), 2);
         if ((min_station == -1 || minDis > dis) && point->getRealA() - a < 30)
         {
@@ -353,7 +354,7 @@ bool AtForklift::move(float speed, float distance)
 void AtForklift::excutePath(std::vector<int> lines)
 {
     combined_logger->info("agv id:{0} excutePath now ", id);
-
+    auto mapmanagerptr =  MapManager::getInstance();
     std::stringstream ss;
     stationMtx.lock();
     excutestations.clear();
@@ -361,10 +362,8 @@ void AtForklift::excutePath(std::vector<int> lines)
     m_unRecvSend.clear();
     excutestations.push_back(nowStation);
     for (auto line : lines) {
-        MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(line);
-        if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Path)continue;
-
-        MapPath *path = static_cast<MapPath *>(spirit);
+        MapPath *path = mapmanagerptr->getPathById(line);
+        if(path == nullptr)continue;
         int endId = path->getEnd();
         excutestations.push_back(endId);
         excutespaths.push_back(line);
@@ -375,8 +374,11 @@ void AtForklift::excutePath(std::vector<int> lines)
     combined_logger->info("excutePath: {0}", ss.str());
 
     actionpoint = 0;
-    MapPoint *startstation = static_cast<MapPoint *>(MapManager::getInstance()->getMapSpiritById(excutestations.front()));
-    MapPoint *endstation = static_cast<MapPoint *>(MapManager::getInstance()->getMapSpiritById(excutestations.back()));
+    if(excutestations.size() == 0)return ;
+    MapPoint *startstation = mapmanagerptr->getPointById(excutestations.front());
+    MapPoint *endstation = mapmanagerptr->getPointById(excutestations.back());
+    if(startstation==nullptr)return ;
+    if(endstation==nullptr)return ;
     startpoint = startstation->getId();
     startLift = false;
 
@@ -610,10 +612,10 @@ void AtForklift::goStation(std::vector<int> lines, bool stop)
                 bs = mapmanagerptr->getBlocks(nextStation);
             }
             bool canResume = true;
-//            if (!blockmanagerptr->blockPassable(bs,getId())) {
-//                canResume = false;
-//                break;
-//            }
+            //            if (!blockmanagerptr->blockPassable(bs,getId())) {
+            //                canResume = false;
+            //                break;
+            //            }
             if(canResume)
                 resume();
 

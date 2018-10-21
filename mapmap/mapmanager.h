@@ -1,4 +1,4 @@
-#ifndef MAPMANAGER_H
+﻿#ifndef MAPMANAGER_H
 #define MAPMANAGER_H
 #include <map>
 #include <utility>
@@ -57,8 +57,8 @@ public:
     void freeLine(int line, AgvPtr occuAgv);
 
 
-//    bool tryAddBlockOccu(std::vector<int> blocks,int agvId,int spiritId);
-//    void freeBlockOccu(std::vector<int> blocks, int agvId, int spiritId);
+    //    bool tryAddBlockOccu(std::vector<int> blocks,int agvId,int spiritId);
+    //    void freeBlockOccu(std::vector<int> blocks, int agvId, int spiritId);
 
     //获取最优路径
     std::vector<int> getBestPath(int agv, int lastStation, int startStation, int endStation, int &distance, bool changeDirect = CAN_CHANGE_DIRECTION);
@@ -116,8 +116,8 @@ private:
     std::mutex groupMtx;
     std::map<int,std::pair<int, std::vector<int> > > group_occuagv;//一个区块，及当前区块占用agv
 
-//    std::mutex blockMtx;
-//    //std::map<int,std::pair<int, std::vector<int> > > block_occuagv;//一个区块，及当前区块占用agv
+    //    std::mutex blockMtx;
+    //    //std::map<int,std::pair<int, std::vector<int> > > block_occuagv;//一个区块，及当前区块占用agv
 
     std::vector<int> getPath(int agv, int lastStation, int startStation, int endStation, int &distance, bool changeDirect);
     std::vector<int> getPath(int from, int to, int &distance, bool changeDirect = CAN_CHANGE_DIRECTION);

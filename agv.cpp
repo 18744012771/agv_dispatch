@@ -125,16 +125,28 @@ void Agv::onArriveStation(int station)
     if(findIndex != -1){
         //之前的道路占用全部释放
         //之前的站点占用全部释放
-        auto line = paths[findIndex];
-        int start = line->getStart();
-        int lineId = line->getId();
-        //free start station
-        mapmanagerptr->freeStation(start,shared_from_this());
-        conflictmanagerptr->freeConflictOccu(start,getId());
+        for(int i=0;i<=findIndex;++i){
 
-        //free last line
-        mapmanagerptr->freeLine(lineId,shared_from_this());
-        conflictmanagerptr->freeConflictOccu(lineId,getId());
+            auto line = paths[i];
+            int start = line->getStart();
+            int end = line->getEnd();
+            int lineId = line->getId();
+
+            //free start station
+            mapmanagerptr->freeStation(start,shared_from_this());
+            conflictmanagerptr->freeConflictOccu(start,getId());
+
+            //free last line
+            mapmanagerptr->freeLine(lineId,shared_from_this());
+            conflictmanagerptr->freeConflictOccu(lineId,getId());
+
+
+            //free end station
+            if(i!=findIndex){
+                mapmanagerptr->freeStation(end,shared_from_this());
+                conflictmanagerptr->freeConflictOccu(end,getId());
+            }
+        }
     }
 
     char buf[SQL_MAX_LENGTH];
@@ -175,7 +187,7 @@ void Agv::onArriveStation(int station)
     }else{
         pause();
     }
-    //conflictmanagerptr->printConflict();
+    conflictmanagerptr->printConflict();
     //mapmanagerptr->printGroup();
 }
 
@@ -254,7 +266,7 @@ void Agv::onLeaveStation(int stationid)
         pause();
     }
 
-    //conflictmanagerptr->printConflict();
+    conflictmanagerptr->printConflict();
     //mapmanagerptr->printGroup();
 }
 

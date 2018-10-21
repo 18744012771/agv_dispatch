@@ -89,8 +89,8 @@ typedef struct WarnStatus
     {
         char buf[LOG_MSG_LENGTH];
         snprintf(buf, LOG_MSG_LENGTH, "定位丢失=%d 调度系统规划错误=%d 模式=%d 激光避障状态=%d 紧急停止状态=%d 触边状态=%d 触须状态=%d 温度保护状态=%d 驱动状态=%d 挡板状态=%d 电池状态=%d 定位激光连接状态=%d 避障激光连接状态=%d 串口连接状态=%d",
-                            iLocateSt, iSchedualPlanSt, iHandCtrSt,iObstacleLaserSt,iScramSt, iTouchEdgeSt, iTentacleSt, iTemperatureSt, iDriveSt, iBaffleSt, iBatterySt, iLocationLaserConnectSt,iObstacleLaserConnectSt,iSerialPortConnectSt
-                            );
+                 iLocateSt, iSchedualPlanSt, iHandCtrSt,iObstacleLaserSt,iScramSt, iTouchEdgeSt, iTentacleSt, iTemperatureSt, iDriveSt, iBaffleSt, iBatterySt, iLocationLaserConnectSt,iObstacleLaserConnectSt,iSerialPortConnectSt
+                 );
         return std::string(buf);
     }
 }WarnSt;
@@ -145,8 +145,8 @@ public:
     int getPathOutElevator(std::vector<int> lines, int index, std::vector<int> &result);
 
     ~DyForklift(){}
-	
-	virtual bool pause();
+
+    virtual bool pause();
     virtual bool resume();
 
     virtual void onTaskCanceled(AgvTaskPtr _task);
@@ -162,7 +162,8 @@ private:
     bool m_lift = false;
     std::map<int,  DyMsg> m_unRecvSend;
     std::map<int,  DyMsg> m_unFinishCmd;
-    std::mutex msgMtx;
+    std::mutex unRecvMsgMtx;
+    std::mutex unFinishMsgMtx;
 
     int task_type;
 

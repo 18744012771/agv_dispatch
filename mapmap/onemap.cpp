@@ -20,7 +20,8 @@ void OneMap::clear()
 
 void OneMap::addSpirit(MapSpirit *spirit)
 {
-    all_element.push_back(spirit);
+    if(spirit!=nullptr)
+        all_element.push_back(spirit);
 }
 
 void OneMap::removeSpirit(MapSpirit *spirit)
