@@ -65,8 +65,8 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
 
         if (runTimes <= 0)
         {
-//            AgvPtr agv = AgvManager::getInstance()->getAgvById(task->getAgv());
-//            agv->status = Agv::AGV_STATUS_IDLE;
+            //            AgvPtr agv = AgvManager::getInstance()->getAgvById(task->getAgv());
+            //            agv->status = Agv::AGV_STATUS_IDLE;
             finishTask(task);
             return true;
         }
@@ -80,6 +80,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
     {
         AgvTaskNodePtr node = nodes[index];
         int aimStation = node->getStation();
+
         AgvPtr agv = AgvManager::getInstance()->getAgvById(task->getAgv());
         if (agv != nullptr && aimStation == 0 && agv->getTask() == task)
         {
@@ -90,6 +91,12 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
         }
         else
         {
+            //dongtai guihua qu zuijin de feizhanyong de tingliudan
+            if(agv != nullptr && GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO &&  aimStation == DONGYAO_TASK_GO_HALT_STATION){
+                aimStation = MapManager::getInstance()->getWaitPoint(agv->getId());
+                if(aimStation <=0)aimStation = 258;
+            }
+
             if (agv == nullptr)
             {
                 //未分配AGV
@@ -230,13 +237,13 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                             task->setPath(result);
                             task->setAgv(bestAgv->getId());
                             bestAgv->onTaskStart(task);
-							
-							//占用线路和站点
-							mapmanagerptr->addOccuStation(aimStation, bestAgv);
-							for (auto tline : result)
-							{
-								mapmanagerptr->addOccuLine(tline, bestAgv);
-							}
+
+                            //占用线路和站点
+                            mapmanagerptr->addOccuStation(aimStation, bestAgv);
+                            for (auto tline : result)
+                            {
+                                mapmanagerptr->addOccuLine(tline, bestAgv);
+                            }
 
                             excuteTask(task);
                             return true;
@@ -323,12 +330,12 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                             task->setAgv(agv->getId());
                             agv->onTaskStart(task);
 
-							//占用线路和站点
-							mapmanagerptr->addOccuStation(aimStation, agv);
-							for (auto tline : result)
-							{
-								mapmanagerptr->addOccuLine(tline, agv);
-							}
+                            //占用线路和站点
+                            mapmanagerptr->addOccuStation(aimStation, agv);
+                            for (auto tline : result)
+                            {
+                                mapmanagerptr->addOccuLine(tline, agv);
+                            }
 
                             excuteTask(task);
                             return true;
@@ -595,8 +602,8 @@ void TaskManager::finishTask(AgvTaskPtr task)
         agv->onTaskFinished(task);
         agv->setTask(nullptr);
         //TODO:
-		if(agv->status == Agv::AGV_STATUS_TASKING)
-			agv->status = Agv::AGV_STATUS_IDLE;
+        if(agv->status == Agv::AGV_STATUS_TASKING)
+            agv->status = Agv::AGV_STATUS_IDLE;
     }
     //
     doneTaskMtx.lock();
@@ -670,7 +677,7 @@ void TaskManager::excuteTask(AgvTaskPtr task)
                 //完成以后,从正在执行，返回到 分配队列中
                 task->setPath(std::vector<int>()); //清空路径
                 task->setDoingIndex(task->getDoingIndex() + 1);
-				
+
                 if (!task->getIsCancel())
                 {
                     doingTaskMtx.lock();

@@ -223,49 +223,59 @@ int main(int argc, char *argv[])
     }
 
     //2.载入地图
+    combined_logger->debug("map manager load...");
     if (!MapManager::getInstance()->load()) {
         combined_logger->error("map manager load fail");
         return -2;
     }
 
+    combined_logger->debug("ConflictManager init...");
     ConflictManager::getInstance()->init();
 
     //3.初始化车辆及其链接
+    combined_logger->debug("AgvManager init...");
     if (!AgvManager::getInstance()->init()) {
         combined_logger->error("AgvManager init fail");
         return -3;
     }
 
     //4.初始化任务管理
+    combined_logger->debug("TaskManager init...");
     if (!TaskManager::getInstance()->init()) {
         combined_logger->error("TaskManager init fail");
         return -4;
     }
 
     //5.用户管理
+    combined_logger->debug("UserManager init...");
     UserManager::getInstance()->init();
 
     //6.初始化消息处理
+    combined_logger->debug("MsgProcess init...");
     if (!MsgProcess::getInstance()->init()) {
         combined_logger->error("MsgProcess init fail");
         return -5;
     }
 
     //7.初始化日志发布
+    combined_logger->debug("UserLogManager init...");
     UserLogManager::getInstance()->init();
 
     //8.初始化电梯
+    combined_logger->debug("NewElevatorManager init...");
     NewElevatorManager::getInstance()->init();
 
     //TODO:test 电梯
     //NewElevatorManager::getInstance()->test();
 
     //9.初始化任务生成
+    combined_logger->debug("TaskMaker init...");
     TaskMaker::getInstance()->init();
 
 
     //    10.初始化tcp/ip 接口
     //tcpip服务
+    combined_logger->debug("SessionManager init...");
     auto aID = SessionManager::getInstance()->addTcpAccepter(9999);
     SessionManager::getInstance()->openTcpAccepter(aID);
 
@@ -274,6 +284,7 @@ int main(int argc, char *argv[])
     SessionManager::getInstance()->openWebSocketAccepter(aID);
 #ifdef DY_TEST
     //agv server
+    combined_logger->debug("agv server init...");
     aID = SessionManager::getInstance()->addTcpAccepter(6789);
     SessionManager::getInstance()->openTcpAccepter(aID);
     AgvManager::getInstance()->setServerAccepterID(aID);

@@ -596,7 +596,13 @@ void DyForklift::goElevator(const std::vector<int> lines)
         //关门
         elemanagerptr->DropOpen(elevator_id);
         Sleep(2);
+
         elemanagerptr->resetElevatorState(elevator_id);
+        while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
+            sleep(2);
+            if(elevator->getResetOk())break;
+            elemanagerptr->resetElevatorState(elevator_id);
+        }
 
         if (g_quit || currentTask == nullptr|| currentTask->getIsCancel()) return;
         Sleep(3);
@@ -1322,6 +1328,15 @@ void DyForklift::onTaskCanceled(AgvTaskPtr _task)
 
     //release the end station occu and lines occs
     auto mapmanagerptr = MapManager::getInstance();
+
+    for(auto s:excutestations){
+        mapmanagerptr->freeStation(s, shared_from_this());
+    }
+
+    for(auto l:excutespaths){
+        mapmanagerptr->freeLine(l, shared_from_this());
+    }
+
     if (currentTask != nullptr) {
         auto nodes = currentTask->getTaskNodes();
         auto index = currentTask->getDoingIndex();

@@ -318,15 +318,7 @@ void DyTaskMaker::receiveTask(std::string str_task)
                 i+=2;
             }else  if(all[i] == "wait"){
                 AgvTaskNodePtr node(new AgvTaskNode());
-
-                //获取可用的等待点
-                int stationId = MapManager::getInstance()->getWaitPoint(agvId);//TODO = MapManager::getInstance()->getBestPath();
-
-                if(stationId<0){
-                    //TODO:如果没有咋办！
-
-                }
-                node->setStation(stationId);
+                node->setStation(DONGYAO_TASK_GO_HALT_STATION);
                 nodes.push_back(node);
                 i+=2;
             }

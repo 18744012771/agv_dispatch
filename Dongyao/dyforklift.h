@@ -11,6 +11,8 @@
 #define PRECMD_RANGE 500
 #define MAX_WAITTIMES 5
 
+#define DONGYAO_TASK_GO_HALT_STATION    -11
+
 class DyForklift;
 using DyForkliftPtr = std::shared_ptr<DyForklift>;
 

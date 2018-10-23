@@ -98,7 +98,8 @@ int MapManager::getWaitPoint(int agvId)
     for(auto p:ps){
         auto pptr = g_onemap.getPointById(p);
         if(pptr!=nullptr && pptr->getPointType() == MapPoint::Map_Point_Type_HALT){
-            if(station_occuagv[p] == 0 || station_occuagv[p] == agvId )return p;
+            combined_logger->debug("=============================================station {0} occuagv = {1}",pptr->getName(),station_occuagv[p]);
+            if(station_occuagv[p] <= 0 || station_occuagv[p] == agvId)return p;
         }
     }
     return -1;
@@ -1201,24 +1202,20 @@ void MapManager::getReverseLines()
         for (auto b : paths) {
             if (a == b)continue;
 
+            if(a == nullptr || b == nullptr) continue;
+
             int aEndId = a->getEnd();
             int aStartId = a->getStart();
             int bStartId = b->getStart();
             int bEndId = b->getEnd();
-            MapSpirit *aEnd =  getMapSpiritById(aEndId);
-            MapSpirit *bStart =  getMapSpiritById(bStartId);
-            MapSpirit *bEnd =  getMapSpiritById(bEndId);
-            MapSpirit *aStart =  getMapSpiritById(aStartId);
 
-            if(aEnd == nullptr || aEnd->getSpiritType() != MapSpirit::Map_Sprite_Type_Point
-                    ||bEnd == nullptr || bEnd->getSpiritType() != MapSpirit::Map_Sprite_Type_Point
-                    ||bStart == nullptr || bStart->getSpiritType() != MapSpirit::Map_Sprite_Type_Point
-                    ||aStart == nullptr || aStart->getSpiritType() != MapSpirit::Map_Sprite_Type_Point)continue;
+            MapPoint *pAEnd =  getPointById(aEndId);
+            MapPoint *pBStart = getPointById(bStartId);
+            MapPoint *pBEnd = getPointById(bEndId);
+            MapPoint *pAStart = getPointById(aStartId);
 
-            MapPoint *pAEnd = static_cast<MapPoint *>(aEnd);
-            MapPoint *pBStart = static_cast<MapPoint *>(bStart);
-            MapPoint *pBEnd = static_cast<MapPoint *>(bEnd);
-            MapPoint *pAStart = static_cast<MapPoint *>(aStart);
+            if(pAEnd == nullptr||pBStart == nullptr||pBEnd == nullptr||pAStart == nullptr)continue;
+
 
             auto lists = m_reverseLines[a->getId()];
 
@@ -1239,6 +1236,7 @@ void MapManager::getReverseLines()
 void MapManager::check()
 {
     //check lines!
+    combined_logger->debug("check lines...");
     bool changed = false;
     auto paths = g_onemap.getPaths();
     for(auto path:paths)
@@ -1257,6 +1255,7 @@ void MapManager::check()
     }
 
     //check floor!
+    combined_logger->debug("check floors...");
     auto floors = g_onemap.getFloors();
     for(auto floor:floors){
         auto points = floor->getPoints();
@@ -1280,6 +1279,7 @@ void MapManager::check()
     }
 
     //check group!
+    combined_logger->debug("check groups...");
     auto groups = g_onemap.getGroups();
     for(auto group:groups){
         auto ps = group->getSpirits();
@@ -1297,6 +1297,7 @@ void MapManager::check()
     }
 
     //check block!
+    combined_logger->debug("check blocks...");
     auto blocks = g_onemap.getBlocks();
     for(auto block:blocks){
         auto ps = block->getSpirits();
@@ -1404,27 +1405,30 @@ void MapManager::check()
     //        changed = true;
     //    }
 
-    //    //check conflict
-    //    auto conflicts = g_onemap.getConflictPairs();
-    //    for(auto conflict:conflicts)
-    //    {
-    //        int a = conflict->getA();
-    //        int b = conflict->getB();
-    //        auto aStation = g_onemap.getPointById(a);
-    //        auto aLine = g_onemap.getPathById(a);
-    //        auto bStation = g_onemap.getPointById(b);
-    //        auto bLine = g_onemap.getPathById(b);
+    //check conflict
+    combined_logger->debug("check conflicts...");
+    auto conflicts = g_onemap.getConflictPairs();
+    for(auto conflict:conflicts)
+    {
+        int a = conflict->getA();
+        int b = conflict->getB();
+        auto aStation = g_onemap.getPointById(a);
+        auto aLine = g_onemap.getPathById(a);
+        auto bStation = g_onemap.getPointById(b);
+        auto bLine = g_onemap.getPathById(b);
 
-    //        if((aStation == nullptr && aLine == nullptr)||(bStation == nullptr && bLine == nullptr))
-    //        {
-    //            g_onemap.removeSpiritById(conflict->getId());
-    //            changed = true;
-    //        }
-    //    }
-    //    if(changed){
-    //        save();
-    //        changed = false;
-    //    }
+        if((aStation == nullptr && aLine == nullptr)||(bStation == nullptr && bLine == nullptr))
+        {
+            g_onemap.removeSpiritById(conflict->getId());
+            changed = true;
+        }
+    }
+    if(changed){
+        save();
+        changed = false;
+    }
+
+    combined_logger->debug("check finish...");
 
     //    //remove reverselines in conflict!
     //    auto conflicts = g_onemap.getConflictPairs();
