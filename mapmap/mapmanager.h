@@ -47,6 +47,8 @@ public:
     //一个Agv占领一个站点
     void addOccuStation(int station, AgvPtr occuAgv);
 
+    void freeAllStationLines(AgvPtr occuAgv,int except);
+
     //线路的反向占用//这辆车行驶方向和线路方向相反
     void addOccuLine(int line, AgvPtr occuAgv);
 
@@ -112,7 +114,10 @@ private:
     std::map<int, std::vector<int> > m_adj;// lineA -- lines{ from line A can reach which lines}
     std::map<int, std::vector<int> > m_reverseLines;
 
+
+    std::mutex lineOccuMtx;
     std::map<int, std::vector<int> > line_occuagvs;//一条线路 及其上面的agv
+    std::mutex stationOccuMtx;
     std::map<int, int> station_occuagv;//一个站点，及当前占用改站点的agv
 
     std::mutex groupMtx;

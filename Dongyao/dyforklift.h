@@ -5,11 +5,13 @@
 #include "../agvtask.h"
 #include "../network/sessionmanager.h"
 
-#define PRECISION 30
+#define PRECISION 20
 #define ANGLE_PRECISION 30
 #define START_RANGE 300
 #define PRECMD_RANGE 500
 #define MAX_WAITTIMES 5
+
+#define DONGYAO_TASK_GO_HALT_STATION    -11         //执行时获取最近的空闲停留点
 
 class DyForklift;
 using DyForkliftPtr = std::shared_ptr<DyForklift>;
@@ -125,6 +127,8 @@ public:
     void arrve();
     bool setInitPos(int station);
 
+    bool tellAgvPos(int station);
+
     void onTaskStart(AgvTaskPtr _task);
     void onTaskFinished(AgvTaskPtr _task);
 
@@ -151,6 +155,10 @@ public:
 
     virtual void onTaskCanceled(AgvTaskPtr _task);
 private:
+    void checkCanGo();
+    void checkNeedPause();
+    void checkCanResume();
+
     static const int maxResendTime = 10;
 
     bool resend(const std::string &msg);

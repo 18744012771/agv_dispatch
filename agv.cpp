@@ -200,19 +200,10 @@ void Agv::onLeaveStation(int stationid)
     auto nextPath = mapmanagerptr->getPathByStartEnd(stationid,nextStation);
     bool addOccuResult = true;
     if(nextPath!=nullptr){
+        combined_logger->info("agv id:{0} try add conflict occu path id:{1} name:{2}",nextPath->getId(),nextPath->getName());
         addOccuResult = conflictmanagerptr->tryAddConflictOccu(nextPath->getId(),getId());
     }
 
-    nowStation = 0;
-    lastStation = stationid;
-
-    auto point = mapmanagerptr->getPointById(stationid);
-    if(point!=nullptr){
-        combined_logger->info("agv id:{0} leave station:{1}",getId(),point->getName());
-    }
-
-    //释放这个站点的占用
-    MapManager::getInstance()->freeStation(stationid,shared_from_this());
 
     bool b_getNextStation = false;
     stationMtx.lock();
@@ -229,6 +220,17 @@ void Agv::onLeaveStation(int stationid)
     if(!b_getNextStation){
         nextStation = 0;
     }
+
+    lastStation = stationid;
+    nowStation = 0;
+
+    auto point = mapmanagerptr->getPointById(stationid);
+    if(point!=nullptr){
+        combined_logger->info("agv id:{0} leave station:{1}",getId(),point->getName());
+    }
+
+    //释放这个站点的占用
+    MapManager::getInstance()->freeStation(stationid,shared_from_this());
 
     if(nextStation == 0){
         setFloor(mapmanagerptr->getFloor(lastStation));
@@ -298,6 +300,32 @@ void Agv::callMapChange(int station)
 
 void Agv::cancelTask()
 {
+    auto mapmanagerptr = MapManager::getInstance();
+
+    int nowOccu = 0;
+
+    //释放其他所有占用
+    if(nowStation>0){
+        nowOccu = nowStation;
+        //占据位置
+        MapManager::getInstance()->addOccuStation(nowOccu, shared_from_this());
+        //释放其他所有占用
+        MapManager::getInstance()->freeAllStationLines(shared_from_this(),nowOccu);
+    }else if(lastStation>0 && nextStation>0){
+        auto path = mapmanagerptr->getPathByStartEnd(lastStation,nextStation);
+        if(path!=nullptr)nowOccu = path->getId();
+        //占据位置
+        MapManager::getInstance()->addOccuLine(nowOccu, shared_from_this());
+        //释放其他所有占用
+        MapManager::getInstance()->freeAllStationLines(shared_from_this(),nowOccu);
+    }else if(lastStation>0){
+        nowOccu = lastStation;
+        //占据位置
+        MapManager::getInstance()->addOccuStation(nowOccu, shared_from_this());
+        //释放其他所有占用
+        MapManager::getInstance()->freeAllStationLines(shared_from_this(),nowOccu);
+    }
+
     onTaskCanceled(currentTask);
 }
 

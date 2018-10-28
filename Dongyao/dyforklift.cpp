@@ -320,7 +320,7 @@ void DyForklift::arrve() {
         auto point = mapmanagerptr->getPointById(nowStation);
         if (point != nullptr)
         {
-            if (func_dis(x, y, point->getRealX(), point->getRealY()) > 2 * PRECISION) {
+            if (func_dis(x, y, point->getRealX(), point->getRealY()) > PRECISION) {
                 //too far leave station
                 onLeaveStation(nowStation);
             }
@@ -352,6 +352,24 @@ void DyForklift::arrve() {
     stationMtx.unlock();
     if (arriveId != -1) {
         onArriveStation(arriveId);
+    }
+
+    //3.check conflict occu current station or path!
+    //per 100 ms
+    if(currentTask != nullptr && !currentTask->getIsCancel()){
+        //combined_logger->debug("agv {0} check conflick need paused! nowStation = {1},lastStation = {2},nextStation={3}",getId(),nowStation,lastStation,nextStation);
+        if(nowStation>0){
+            if(!ConflictManager::getInstance()->conflictPassable(nowStation,getId())){
+                pause();
+            }
+        }else{
+            auto nowPath = mapmanagerptr->getPathByStartEnd(lastStation,nextStation);
+            if(nowPath!=nullptr){
+                if(!ConflictManager::getInstance()->conflictPassable(nowPath->getId(),getId())){
+                    pause();
+                }
+            }
+        }
     }
 }
 
@@ -596,7 +614,13 @@ void DyForklift::goElevator(const std::vector<int> lines)
         //关门
         elemanagerptr->DropOpen(elevator_id);
         Sleep(2);
+
         elemanagerptr->resetElevatorState(elevator_id);
+        while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
+            sleep(2);
+            if(elevator->getResetOk())break;
+            elemanagerptr->resetElevatorState(elevator_id);
+        }
 
         if (g_quit || currentTask == nullptr|| currentTask->getIsCancel()) return;
         Sleep(3);
@@ -616,7 +640,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
 
-        setInitPos(endId);
+        tellAgvPos(endId);
 
         //出电梯
         combined_logger->debug("==============START go out elevator");
@@ -683,6 +707,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     std::stringstream body;
 
     int endId = 0;
+    bool firstPathEnd = false;
     for (auto line : lines) {
         MapPath *path = mapmanagerptr->getPathById(line);
         if (path == nullptr)continue;
@@ -692,6 +717,11 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
         if (start == nullptr)continue;
         end = mapmanagerptr->getPointById(endId);
         if (end == nullptr)continue;
+
+        if(!firstPathEnd){
+            nextStation = endId;
+            firstPathEnd = true;
+        }
 
         float speed = path->getSpeed();
         if (!body.str().length())
@@ -754,18 +784,35 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
             sleep(1);
 
             bool canResume = true;
-
             //could occu current station or path block?
+            //combined_logger->debug("agv {0} check conflick can resume! nowStation = {1},lastStation = {2},nextStation={3}",getId(),nowStation,lastStation,nextStation);
             if (nowStation > 0) {
+                //auto nowStationPtr = mapmanagerptr->getPointById(nowStation);
                 if (!conflictmanagerptr->tryAddConflictOccu(nowStation, getId())) {
+                    //combined_logger->debug("agv {0} paused,check current station {1},result={2}!",id,nowStationPtr->getName(),false);
                     canResume = false;
+                }else{
+                    //combined_logger->debug("agv {0} paused,check current station {1},result={2}!",id,nowStationPtr->getName(),true);
                 }
             }
             else {
-                auto path = mapmanagerptr->getPathByStartEnd(lastStation, nextStation);
-                if (path != nullptr) {
-                    if (!conflictmanagerptr->tryAddConflictOccu(path->getId(), getId())) {
-                        canResume = false;
+                if(lastStation>0){
+                    auto path = mapmanagerptr->getPathByStartEnd(lastStation, nextStation);
+                    if (path != nullptr) {
+                        if (!conflictmanagerptr->tryAddConflictOccu(path->getId(), getId())) {
+                            //combined_logger->debug("agv {0} paused,check current line {1},result={2}!",getId(),path->getName(),false);
+                            canResume = false;
+                        }else{
+                            //combined_logger->debug("agv {0} paused,check current line {1},result={2}!",getId(),path->getName(),true);
+                        }
+                    }else{
+                        //auto lastStationPtr = mapmanagerptr->getPointById(lastStation);
+                        if (!conflictmanagerptr->tryAddConflictOccu(lastStation, getId())) {
+                            //combined_logger->debug("agv {0} paused,check last station {1},result={2}!",id,lastStationPtr->getName(),false);
+                            canResume = false;
+                        }else{
+                            //combined_logger->debug("agv {0} paused,check last station {1},result={2}!",id,lastStationPtr->getName(),true);
+                        }
                     }
                 }
             }
@@ -774,7 +821,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
 
             //could occu next station or path block?
             int iip;
-            if (nowStation != 0) {
+            if (nowStation > 0) {
                 int pId = -1;
                 stationMtx.lock();
                 for (int i = 0; i < excutespaths.size(); ++i) {
@@ -792,9 +839,11 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
             }
 
             if (!conflictmanagerptr->conflictPassable(iip, getId())) {
+                //combined_logger->debug("agv {0} paused,check next station {1},result={2}!",id,iip,false);
                 canResume = false;
             }
             else {
+                //combined_logger->debug("agv {0} paused,check next station {1},result={2}!",id,iip,true);
                 canResume = conflictmanagerptr->tryAddConflictOccu(iip, getId());
             }
             if (canResume)
@@ -807,6 +856,29 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
 
     } while (this->nowStation != endId || !isFinish());
     combined_logger->info("nowStation = {0}, endId = {1}", this->nowStation, endId);
+}
+
+void DyForklift::checkCanGo()
+{
+    //
+
+
+}
+
+
+void DyForklift::checkNeedPause()
+{
+    //
+
+
+}
+
+
+void DyForklift::checkCanResume()
+{
+    //
+
+
 }
 
 void DyForklift::setQyhTcp(SessionPtr _qyhTcp)
@@ -902,16 +974,32 @@ bool DyForklift::charge(int params)
     return resend(body.str());
 }
 
+bool DyForklift::tellAgvPos(int station)
+{
+    auto mapmanagerptr = MapManager::getInstance();
+
+    MapPoint *point = mapmanagerptr->getPointById(station);
+
+    if(point == nullptr)return false;
+    std::stringstream body;
+    body << FORKLIFT_INITPOS;
+    body << point->getRealX() / 100.0 << "," << -point->getRealY() / 100.0 << "," << point->getRealA() / 10.0 / 57.3 << "," << MapManager::getInstance()->getFloor(station);
+    return resend(body.str());
+}
+
+//只在开机或者任务取消手动操作后，进行初始化位置。因为会释放掉所有线路和点的占用
 bool DyForklift::setInitPos(int station)
 {
-    MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(station);
-    if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Point)return false;
+    auto mapmanagerptr = MapManager::getInstance();
 
-    MapPoint *point = static_cast<MapPoint *>(spirit);
+    MapPoint *point = mapmanagerptr->getPointById(station);
+    if(point == nullptr)return false;
 
     setPosition(0, station, 0);
     //占据初始位置
-    MapManager::getInstance()->addOccuStation(station, shared_from_this());
+    mapmanagerptr->addOccuStation(station, shared_from_this());
+    //释放其他所有占用
+    mapmanagerptr->freeAllStationLines(shared_from_this(),station);
 
     std::stringstream body;
     body << FORKLIFT_INITPOS;
@@ -1320,23 +1408,6 @@ void DyForklift::onTaskCanceled(AgvTaskPtr _task)
     body << FORKLIFT_NOLASER_CLEAR_TASK;
     resend(body.str());
 
-    //release the end station occu and lines occs
-    auto mapmanagerptr = MapManager::getInstance();
-    if (currentTask != nullptr) {
-        auto nodes = currentTask->getTaskNodes();
-        auto index = currentTask->getDoingIndex();
-        if (index < nodes.size())
-        {
-            auto node = nodes[index];
-            mapmanagerptr->freeStation(node->getStation(), shared_from_this());
-            auto paths = currentTask->getPath();
-            for (auto p : paths) {
-                mapmanagerptr->freeLine(p, shared_from_this());
-            }
-        }
-    }
-
-    //TODO:
     unRecvMsgMtx.lock();
     m_unRecvSend.clear();
     unRecvMsgMtx.unlock();

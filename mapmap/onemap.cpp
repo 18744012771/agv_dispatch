@@ -1,5 +1,5 @@
 ﻿#include "onemap.h"
-
+#include <algorithm>
 OneMap::OneMap():
     max_id(0)
 {
@@ -16,6 +16,11 @@ void OneMap::clear()
     for(auto f:all_element)delete f;
     all_element.clear();
     max_id = 0;
+}
+
+void OneMap::sort()
+{
+    //std::sort(all_element.begin(),all_element.end(),MapSpiritPtrCompare());
 }
 
 void OneMap::addSpirit(MapSpirit *spirit)
@@ -66,6 +71,7 @@ MapSpirit *OneMap::getSpiritById(int id)
 
 MapPoint *OneMap::getPointById(int id)
 {
+    if(all_element.size()<=0)return nullptr;
     for (auto p : all_element) {
         if (p->getId() == id && p->getSpiritType() == MapSpirit::Map_Sprite_Type_Point) {
             return static_cast<MapPoint *>(p);

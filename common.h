@@ -24,8 +24,8 @@
 
 #define  CAN_CHANGE_DIRECTION  false
 
-#define  DISTANCE_INFINITY INT_MAX
-#define  DISTANCE_INFINITY_DOUBLE   ((std::numeric_limits<double>::max)())
+#define  DISTANCE_INFINITY (INT_MAX/1000)
+#define  DISTANCE_INFINITY_DOUBLE   ((std::numeric_limits<double>::max)()/1000.0)
 #define DB_File ("agv.db")
 
 #define AGV_TYPE_VIRTUAL_ROS_AGV        -1

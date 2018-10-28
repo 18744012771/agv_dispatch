@@ -159,7 +159,7 @@ void NewElevatorManager::processReadMsg(const char *data, int len)
     if (data[0] != (char)0xAA)return;
     if (data[1] != (char)0x55)return;
 
-    combined_logger->debug("process read msg========{0}",toHexString(data,len));
+    //combined_logger->debug("process read msg========{0}",toHexString(data,len));
 
     if (data[4] == (char)TakeEleENQ && data[3] == (char)0x01) {
         int eleid = data[5];
@@ -179,7 +179,7 @@ void NewElevatorManager::processReadMsg(const char *data, int len)
 
 void NewElevatorManager::onRead(int ele_id, std::string ele_name, const char *data, int len)
 {
-    combined_logger->info("ele:{0};name:{1};read:{2}", ele_id, ele_name, toHexString(data, len));
+    //combined_logger->info("ele:{0};name:{1};read:{2}", ele_id, ele_name, toHexString(data, len));
 
     buffers[ele_id].append(data, len);
 

@@ -1,6 +1,7 @@
 #include "conflictmanager.h"
 #include "../common.h"
 #include "mapmanager.h"
+#include "../agvmanager.h"
 
 ConflictManager::ConflictManager()
 {
@@ -53,12 +54,16 @@ void ConflictManager::calcc(std::vector<int> &agv1spirits,std::vector<int> &agv2
 
 void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId)
 {
-    UNIQUE_LCK(stationPathMtx);
+
+    stationPathMtx.lock();
     agvStationsPaths[agvId] = spirits;
+    stationPathMtx.unlock();
 
-    UNIQUE_LCK(conflictMtx);
+    conflictMtx.lock();
     conflicts.clear();
+    conflictMtx.unlock();
 
+    stationPathMtx.lock();
     for(auto itr = agvStationsPaths.begin();itr!=agvStationsPaths.end();++itr)
     {
         for(auto pos = agvStationsPaths.begin();pos != agvStationsPaths.end();++pos)
@@ -96,6 +101,35 @@ void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId
             }
         }
     }
+    stationPathMtx.unlock();
+
+    //TODO:
+    std::map<int,int> agvoccus;
+
+    auto agvmanagerptr = AgvManager::getInstance();
+    auto mapmanagerptr = MapManager::getInstance();
+
+    stationPathMtx.lock();
+    for(auto itr = agvStationsPaths.begin();itr!=agvStationsPaths.end();++itr)
+    {
+        auto agvptr = agvmanagerptr->getAgvById(itr->first);
+        if(agvptr==nullptr)continue;
+        if(agvptr->getNowStation() >0){
+            agvoccus[agvptr->getId()] = agvptr->getNowStation();
+        }else{
+            auto currentPath = mapmanagerptr->getPathByStartEnd(agvptr->getLastStation(),agvptr->getNextStation());
+            if(currentPath==nullptr)continue;
+            agvoccus[agvptr->getId()] = currentPath->getId();
+        }
+    }
+    stationPathMtx.unlock();
+
+    for(auto itr = agvoccus.begin();itr!=agvoccus.end();++itr)
+    {
+        tryAddConflictOccu(itr->second,itr->first);
+    }
+
+    printConflict();
 }
 
 void ConflictManager::freeAgvOccu(int agvId,int lastStation,int nowStation,int nextStation)
@@ -173,8 +207,13 @@ bool ConflictManager::tryAddConflictOccu(int spirit,int agvId)
 {
     UNIQUE_LCK(conflictMtx);
     for(auto itr = conflicts.begin();itr!=conflicts.end();++itr){
-        if(!itr->tryLock(agvId,spirit))return false;
+        if(!itr->checkLock(agvId,spirit))return false;
     }
+
+    for(auto itr = conflicts.begin();itr!=conflicts.end();++itr){
+        if(!itr->lock(agvId,spirit))return false;
+    }
+
     return true;
 }
 //void ConflictManager::freeConflictOccu(std::vector<int> spirits,int agvId)

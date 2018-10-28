@@ -20,6 +20,16 @@ public:
 
     void clear();
 
+    void sort();
+
+    struct MapSpiritPtrCompare
+    {
+        bool operator()(const MapSpirit *a,const MapSpirit *b){
+            return a->getName() < b->getName();
+        }
+    };
+    //static bool compareElement(MapSpirit *a,MapSpirit *b);
+
     //注册一个新的元素 获取一个ID
     int getNextId();
 
