@@ -3,6 +3,9 @@
 
 #include "virtualagv.h"
 
+class VirtualRosAgv;
+using VirtualRosAgvPtr = std::shared_ptr<VirtualRosAgv>;
+
 class VirtualRosAgv : public VirtualAgv
 {
 public:
@@ -35,6 +38,8 @@ public:
     virtual bool pause();
 
     virtual bool resume();
+
+    virtual bool setInitPos(int station);
 
 private:
     bool isStop;
