@@ -131,6 +131,9 @@ typedef enum Msg_Todo
 	////new add: ele enable
 	MSG_TODO_ELE_ENABLE,//设置电梯使能
 
+    ////new add: init agv position
+    MSG_TODO_AGV_INIT_POSITION,//agvId  and stationId
+
     //publish request and response
     MSG_TODO_PUB_AGV_POSITION,//发布的agv位置信息，该信息的queuebumber = 0
     MSG_TODO_PUB_AGV_STATUS,//发布的agv状态信息，该信息的queuebumber = 0

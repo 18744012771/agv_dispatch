@@ -40,9 +40,25 @@ void Agv::init()
 void Agv::setPosition(int _lastStation, int _nowStation, int _nextStation) {
 
     auto mapmanagerptr = MapManager::getInstance();
+
     if (_nowStation > 0) {
+
+        MapPoint *point = mapmanagerptr->getPointById(_nowStation);
+
+        if(point == nullptr)return ;
+
+        x = point->getRealX();
+
+        y = point->getRealY();
+
+        theta = point->getRealA();
+
         onArriveStation(_nowStation);
+
         mapmanagerptr->addOccuStation(_nowStation,shared_from_this());
+
+        mapmanagerptr->freeAllStationLines(shared_from_this(),_nowStation);
+
     }else if(_lastStation>0 && _nextStation>0){
         auto line = mapmanagerptr->getPathByStartEnd(_lastStation,_nextStation);
         if(line!=nullptr){
@@ -79,9 +95,6 @@ void Agv::onArriveStation(int station)
     if(point == nullptr)return ;
     combined_logger->info("agv id:{0} arrive station:{1}",getId(),point->getName());
     bool addOccuResult = conflictmanagerptr->tryAddConflictOccu(station,getId());
-
-    x = point->getX();
-    y = point->getY();
 
     if(station>0){
         if(nowStation>0){

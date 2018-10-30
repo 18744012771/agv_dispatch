@@ -5,7 +5,7 @@
 #include "../agvtask.h"
 #include "../network/sessionmanager.h"
 
-#define PRECISION 20
+#define PRECISION 30
 #define ANGLE_PRECISION 30
 #define START_RANGE 300
 #define PRECMD_RANGE 500

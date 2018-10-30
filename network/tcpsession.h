@@ -8,6 +8,7 @@
 #include "../agv.h"
 
 using boost::asio::ip::tcp;
+using boost::asio::deadline_timer;
 
 class TcpSession : public Session
 {
@@ -37,6 +38,8 @@ private:
     int json_len;
 
     AgvPtr _agvPtr;
+
+    int timeout;
 };
 
 

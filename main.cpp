@@ -150,7 +150,7 @@ void getWmsStorageJson()
             if(table.fieldIsNull(2))continue;
             int station_id = atoi(table.fieldValue(2));
             std::stringstream ss;
-            ss<<"select realX,realY,realA from agv_station where id="<<station_id<<";";
+            ss<<"select realX,realY,realA from agv_station where id=\'"<<station_id<<"\';";
             CppSQLite3Table table_station = wms_db.getTable(ss.str().c_str());
             if (table_station.numRows() <= 0 && table_station.numFields() != 3)
             {
@@ -161,24 +161,24 @@ void getWmsStorageJson()
             table_station.setRow(0);
             int realX = atoi(table_station.fieldValue(0));
             int realY = atoi(table_station.fieldValue(1));
-            int realA = atoi(table_station.fieldValue(2));
+//            int realA = atoi(table_station.fieldValue(2));
 
             int xx = realX;
             int yy = realY;
 
-            if(realA>=-450 && realA<=450){
-                xx = realX;
-                yy = realY - 50;
-            }else if(realA>450 &&  realA<= 1350){
-                xx = realX - 50;
-                yy = realY - 100;
-            }else if(realA>1350 || realA<-1350){
-                xx = realX - 100;
-                yy = realY - 50;
-            }else{
-                xx = realX - 50;
-                yy = realY;
-            }
+//            if(realA>=-450 && realA<=450){
+//                xx = realX;
+//                yy = realY - 50;
+//            }else if(realA>450 &&  realA<= 1350){
+//                xx = realX - 50;
+//                yy = realY - 100;
+//            }else if(realA>1350 || realA<-1350){
+//                xx = realX - 100;
+//                yy = realY - 50;
+//            }else{
+//                xx = realX - 50;
+//                yy = realY;
+//            }
 
             Json::Value vv;
             vv["store_no"] = store_no;
@@ -186,6 +186,7 @@ void getWmsStorageJson()
             vv["storage_x"] = xx;
             vv["storage_y"] = yy;
             vv["current_type"] = "type_null";
+            vv["station_id"] = station_id;
             fff.append(vv);
         }
 

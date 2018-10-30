@@ -103,7 +103,7 @@ void NewElevatorManager::setEnable(int id, bool enable)
         ele->setIsEnabled(enable);
 
         char buf[SQL_MAX_LENGTH];
-        snprintf(buf, SQL_MAX_LENGTH, "update agv_elevat set enabled=%d where id = %d;", enable ? 1 : 0, id);
+        snprintf(buf, SQL_MAX_LENGTH, "update agv_elevator set enabled=%d where id = %d;", enable ? 1 : 0, id);
         try {
             g_db.execDML(buf);
         }

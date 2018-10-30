@@ -42,6 +42,20 @@ bool VirtualRosAgv::resume()
     return true;
 }
 
+bool VirtualRosAgv::setInitPos(int station)
+{
+    auto mapmanagerptr = MapManager::getInstance();
+
+    MapPoint *point = mapmanagerptr->getPointById(station);
+    if(point == nullptr)return false;
+
+    setPosition(0, station, 0);
+    //占据初始位置
+    mapmanagerptr->addOccuStation(station, shared_from_this());
+    //释放其他所有占用
+    mapmanagerptr->freeAllStationLines(shared_from_this(),station);
+}
+
 void VirtualRosAgv::excutePath(std::vector<int> lines)
 {
     auto conflictmanagerptr = ConflictManager::getInstance();

@@ -391,6 +391,42 @@ void AgvManager::interDelete(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
+void AgvManager::interInitPosition(SessionPtr conn, const Json::Value &request)
+{
+    Json::Value response;
+    response["type"] = MSG_TYPE_RESPONSE;
+    response["todo"] = request["todo"];
+    response["queuenumber"] = request["queuenumber"];
+    response["result"] = RETURN_MSG_RESULT_SUCCESS;
+
+    int agvId = request["agvId"].asInt();
+    int stationId = request["stationId"].asInt();
+
+    if(AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT)
+    {
+        AgvPtr agv = getAgvById(agvId);
+        if(agv!=nullptr && agv->type() == DyForklift::Type){
+            DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
+            forklift->setInitPos(stationId);
+        }else{
+            response["result"] = RETURN_MSG_RESULT_FAIL;
+            response["error_code"] = RETURN_MSG_ERROR_CODE_UNKNOW;
+        }
+    }else if(AGV_PROJECT_QINGDAO == GLOBAL_AGV_PROJECT)
+    {
+        AgvPtr agv = getAgvById(agvId);
+        if(agv!=nullptr && agv->type() == VirtualRosAgv::Type){
+            VirtualRosAgvPtr forklift = std::static_pointer_cast<VirtualRosAgv>(agv);
+            forklift->setInitPos(stationId);
+        }else{
+            response["result"] = RETURN_MSG_RESULT_FAIL;
+            response["error_code"] = RETURN_MSG_ERROR_CODE_UNKNOW;
+        }
+    }
+    conn->send(response);
+
+}
+
 void AgvManager::interStop(SessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
@@ -406,7 +442,7 @@ void AgvManager::interStop(SessionPtr conn, const Json::Value &request)
     if(AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT)
     {
         AgvPtr agv = getAgvById(id);
-        if(agv==nullptr && agv->type() == DyForklift::Type){
+        if(agv!=nullptr && agv->type() == DyForklift::Type){
             DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
             forklift->stopEmergency(params);
         }else{

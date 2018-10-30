@@ -54,6 +54,7 @@ public:
     void interDelete(SessionPtr conn, const Json::Value &request);
     void interModify(SessionPtr conn, const Json::Value &request);
     void interStop(SessionPtr conn, const Json::Value &request);
+    void interInitPosition(SessionPtr conn, const Json::Value &request);
 protected:
     AgvManager();
 private:

@@ -12,7 +12,8 @@ using std::max;
 TcpSession::TcpSession(tcp::socket socket, int sessionId, int acceptId):
     Session(sessionId,acceptId),
     socket_(std::move(socket)),
-    json_len(0)
+    json_len(0),
+    timeout(2*60*60)
 {
     combined_logger->debug("new connection from {0}:{1} sessionId={2} ", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port(),sessionId);
 }
@@ -99,9 +100,11 @@ void TcpSession::start()
     }
 
     std::thread([this](){
-
+        typedef boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVTIMEO> rcv_timeout_option;
         while (!g_quit) {
             try{
+                socket_.set_option(rcv_timeout_option{timeout});
+
                 if (!socket_.is_open()) {
                     break;
                 }
@@ -128,7 +131,7 @@ void TcpSession::start()
                         returnValue = ProtocolProcess();
                     } while (buffer.size() > 12 && (returnValue == 0 || returnValue == 2 || returnValue == 1));
                 }
-            }   
+            }
             catch (...) {
                 break;
             }
@@ -298,6 +301,7 @@ bool TcpSession::attach()
             //start report
             agv->startReport(100);
             setAGVPtr(agv);
+            timeout = 3;
             return true;
         }
         else

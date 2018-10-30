@@ -196,9 +196,21 @@ void DyForklift::onRead(const char *data, int len)
             if (temp.size() == 4)
             {
 
-                x = 100 * stringToDouble(temp[0]);
-                y = -100 * stringToDouble(temp[1]);
-                theta = -57.3 * stringToDouble(temp[2]);
+                double x_new = 100 * stringToDouble(temp[0]);
+                double y_new = -100 * stringToDouble(temp[1]);
+                double theta_new = -57.3 * stringToDouble(temp[2]);
+
+                if(abs(x_new - x)>=100 || abs(y_new-y)>100 || abs(theta_new-theta)>30){
+                    combined_logger->debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!tiaobian!!!!!!!!!!!!!!!!!!1");
+                    combined_logger->debug("oldX={0},oldy={1},old_theta={2}",x,y,theta);
+                    combined_logger->debug("newX={0},newY={1},new_theta={2}",x_new,y_new,theta_new);
+                    combined_logger->debug("recv data={}",std::string(data,len));
+                    combined_logger->debug("recv data={}",data,len);
+                }
+
+                x = x_new;
+                y = y_new;
+                theta = theta_new;
                 floor = stringToInt(temp[3]);
                 if (AGV_STATUS_NOTREADY == status)
                 {
@@ -996,6 +1008,7 @@ bool DyForklift::setInitPos(int station)
     if(point == nullptr)return false;
 
     setPosition(0, station, 0);
+
     //占据初始位置
     mapmanagerptr->addOccuStation(station, shared_from_this());
     //释放其他所有占用

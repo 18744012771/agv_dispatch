@@ -227,8 +227,6 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                             {
                                 mapmanagerptr->addOccuLine(tline, bestAgv);
                             }
-
-
                             //在前面增加一个 去往躲避点的节点，
                             AgvTaskNodePtr node_node(new AgvTaskNode());
                             node_node->setStation(haltStation);
