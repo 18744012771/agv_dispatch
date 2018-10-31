@@ -51,7 +51,7 @@ void Agv::setPosition(int _lastStation, int _nowStation, int _nextStation) {
 
         y = point->getRealY();
 
-        theta = point->getRealA();
+        theta = -0.1 * point->getRealA();
 
         onArriveStation(_nowStation);
 

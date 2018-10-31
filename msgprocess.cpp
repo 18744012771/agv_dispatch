@@ -123,6 +123,7 @@ void MsgProcess::onSessionClosed(int id)
     removeSubAgvStatus(id);
     removeSubTask(id);
     removeSubLog(id);
+    removeSubELE(id);
 }
 
 void MsgProcess::addSubAgvPosition(int id)
@@ -403,6 +404,7 @@ bool MsgProcess::init()
     g_threadPool.enqueue(std::bind(&MsgProcess::publisher_agv_position, this));
     g_threadPool.enqueue(std::bind(&MsgProcess::publisher_agv_status, this));
     g_threadPool.enqueue(std::bind(&MsgProcess::publisher_task, this));
+    g_threadPool.enqueue(std::bind(&MsgProcess::publisher_ELE, this));
     //日志发布时每次产生一个日志，发布一个日志
     return true;
 }
