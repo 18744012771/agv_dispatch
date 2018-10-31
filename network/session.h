@@ -9,6 +9,7 @@
 #include <jsoncpp/json/json.h>
 #endif
 
+class TimeUsed;
 class Session;
 using SessionPtr = std::shared_ptr<Session>;
 
@@ -47,6 +48,9 @@ public:
 
     std::string getUserName(){return username;}
 
+    double getUsed();
+
+    int getTimeOut(){return timeout;}
 protected:
     int _sessionID = -1;
     int _acceptID = -1;
@@ -56,6 +60,9 @@ protected:
     int user_role = 0;
     std::string username;
 
+    int timeout;//recv time out,seconds
+
+    TimeUsed *t;//jishiqi
 };
 
 #endif // SESSION_H

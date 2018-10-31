@@ -52,7 +52,10 @@ private:
 
     SessionManager();
 
+    std::mutex mapSessionMtx;
     std::unordered_map<int, SessionPtr> _mapSessionPtr;
+
+    std::mutex mapAcceptorMtx;
     std::unordered_map<int, AcceptorPtr > _mapAcceptorPtr;
 };
 

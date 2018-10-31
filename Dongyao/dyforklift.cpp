@@ -760,28 +760,60 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     currentEndStation = endId;
 
     while (!g_quit && currentTask != nullptr && !currentTask->getIsCancel()) {
-        //can start the path?
+        usleep(500000);
         bool canGo = true;
-        for (auto line : lines) {
-            auto linePtr = mapmanagerptr->getPathById(line);
-            if (linePtr == nullptr)continue;
-            if (!conflictmanagerptr->conflictPassable(line, getId())) {
+        if (nowStation > 0) {
+            if (!conflictmanagerptr->tryAddConflictOccu(nowStation, getId())) {
                 canGo = false;
-                break;
             }
-            if (canGo) {
-                if (!conflictmanagerptr->conflictPassable(linePtr->getEnd(), getId())) {
-                    canGo = false;
+        }
+        else {
+            if(lastStation>0){
+                auto path = mapmanagerptr->getPathByStartEnd(lastStation, nextStation);
+                if (path != nullptr) {
+                    if (!conflictmanagerptr->tryAddConflictOccu(path->getId(), getId())) {
+                        canGo = false;
+                    }
+                }else{
+                    if (!conflictmanagerptr->tryAddConflictOccu(lastStation, getId())) {
+                        canGo = false;
+                    }
                 }
             }
-            break;
         }
-        if (canGo)break;
-        usleep(500000);
+
+        if (!canGo)continue;
+
+        //could occu next station or path block?
+        int iip;
+        if (nowStation > 0) {
+            int pId = -1;
+            stationMtx.lock();
+            for (int i = 0; i < excutespaths.size(); ++i) {
+                auto path = mapmanagerptr->getPathById(excutespaths[i]);
+                if (path != nullptr && path->getStart() == nowStation) {
+                    pId = path->getId();
+                    break;
+                }
+            }
+            stationMtx.unlock();
+            iip = pId;
+        }
+        else {
+            iip = nextStation;
+        }
+
+        if (!conflictmanagerptr->conflictPassable(iip, getId())) {
+            canGo = false;
+        }
+        else {
+            canGo = conflictmanagerptr->tryAddConflictOccu(iip, getId());
+        }
+        if (canGo)
+            break;
     }
 
     if (g_quit || currentTask == nullptr || currentTask->getIsCancel())return;
-
 
     resend(body.str());
 

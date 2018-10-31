@@ -12,15 +12,13 @@ using std::max;
 TcpSession::TcpSession(tcp::socket socket, int sessionId, int acceptId):
     Session(sessionId,acceptId),
     socket_(std::move(socket)),
-    json_len(0),
-    timeout(2*60*60)
+    json_len(0)
 {
     combined_logger->debug("new connection from {0}:{1} sessionId={2} ", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port(),sessionId);
 }
 
 TcpSession::~TcpSession()
 {
-    //close();
 }
 
 void TcpSession::send(const Json::Value &json)
@@ -86,12 +84,11 @@ bool TcpSession::doSend(const char *data,int len)
 
 void TcpSession::close()
 {
-    socket_.close();
+    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_send);
 }
 
 void TcpSession::start()
 {
-
     if(GLOBAL_AGV_PROJECT == AGV_PROJECT_ANTING || GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO){
         if(getAcceptID() == AgvManager::getInstance()->getServerAccepterID()){
             //this is a agv connection
@@ -100,24 +97,25 @@ void TcpSession::start()
     }
 
     std::thread([this](){
-        typedef boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVTIMEO> rcv_timeout_option;
         while (!g_quit) {
             try{
-                socket_.set_option(rcv_timeout_option{timeout});
-
                 if (!socket_.is_open()) {
                     break;
                 }
                 boost::system::error_code error;
                 size_t length = socket_.read_some(boost::asio::buffer(read_buffer, MSG_READ_BUFFER_LENGTH), error);
                 if (error == boost::asio::error::eof) {
-                    combined_logger->info("session close cleany,session id:{0}", getSessionID());
+                    combined_logger->info("session closed,session id:{0}", getSessionID());
                     break;
                 }
                 else if (error) {
                     combined_logger->info("session error!session id:{0},error:{1}", getSessionID(), error.message());
                     break;
                 }
+
+                //reset the recv time tou timer
+                t->start();
+
                 buffer.append(read_buffer, length);
 
                 if (_acceptID != AgvManager::getInstance()->getServerAccepterID())
@@ -141,44 +139,7 @@ void TcpSession::start()
             std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
         }
         SessionManager::getInstance()->removeSession(shared_from_this());
-/*
-        while(socket_.is_open()){
-            boost::system::error_code error;
-            size_t length = socket_.read_some(boost::asio::buffer(read_buffer,MSG_READ_BUFFER_LENGTH), error);
-            if (error == boost::asio::error::eof){
-                combined_logger->info("session close cleany,session id:{0}",getSessionID());
-                if(AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT && _agvPtr != nullptr)
-                {
-                    std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
-                }
-                break;
-            }
-            else if (error){
-                combined_logger->info("session error!session id:{0},error:{1}",getSessionID(),error.message());
-                if(AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT && _agvPtr != nullptr)
-                {
-                    std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
-                }
-                break;
-            }
-            buffer.append(read_buffer,length);
 
-            if(_acceptID !=  AgvManager::getInstance()->getServerAccepterID())
-            {
-                packageProcess();
-            }else{
-                int returnValue;
-                do
-                {
-                    returnValue = ProtocolProcess();
-                }while(buffer.size() >12 && (returnValue == 0||returnValue == 2||returnValue == 1 ));
-            }
-        }
-        SessionManager::getInstance()->removeSession(shared_from_this());
-        if(AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT && _agvPtr != nullptr)
-        {
-            std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
-        }*/
     }).detach();
 }
 
@@ -301,7 +262,7 @@ bool TcpSession::attach()
             //start report
             agv->startReport(100);
             setAGVPtr(agv);
-            timeout = 3;
+            timeout = 2;//time out === 2 second!!!!
             return true;
         }
         else

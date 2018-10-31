@@ -26,6 +26,7 @@ public:
     virtual void start();
 
     inline void setAGVPtr(AgvPtr agv){_agvPtr = agv;}
+
     inline AgvPtr getAgvPtr(){return _agvPtr;}
 private:
     bool attach();
@@ -38,8 +39,6 @@ private:
     int json_len;
 
     AgvPtr _agvPtr;
-
-    int timeout;
 };
 
 

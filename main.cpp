@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
     AgvManager::getInstance()->setServerAccepterID(aID);
 #endif
     combined_logger->info("server init OK!");
-
+    SessionManager::getInstance()->run();
     while (!g_quit) {
         usleep(50000);
     }
