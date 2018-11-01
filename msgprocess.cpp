@@ -442,7 +442,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
         //        TimeUsed t;
         //        t.start();
 
-                //处理消息，如果有返回值，发送返回值
+        //处理消息，如果有返回值，发送返回值
         if ((session->getUserId() <= 0 || session->getUserRole() <= USER_ROLE_VISITOR)) {
             if (request["todo"].asInt() != MSG_TODO_USER_LOGIN) {
                 //未登录，却发送了 登录以外的 其它请求
@@ -517,7 +517,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
         { MSG_TODO_CANCEL_SUB_ELE_STATSU,std::bind(&MsgProcess::interRemoveSubELE,msgProcess,std::placeholders::_1,std::placeholders::_2) },
         { MSG_TODO_ELE_ENABLE,std::bind(&NewElevatorManager::interSetEnableELE,elemanagerptr,std::placeholders::_1,std::placeholders::_2) },
         { MSG_TODO_AGV_INIT_POSITION,std::bind(&AgvManager::interInitPosition,agvManager,std::placeholders::_1,std::placeholders::_2) }
-        };
+    };
         table[request["todo"].asInt()].f(session, request);
 
         //        t.end();

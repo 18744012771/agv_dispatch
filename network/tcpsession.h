@@ -8,7 +8,6 @@
 #include "../agv.h"
 
 using boost::asio::ip::tcp;
-using boost::asio::deadline_timer;
 
 class TcpSession : public Session
 {

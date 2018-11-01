@@ -2,7 +2,7 @@
 #define SESSION_H
 
 #include <memory>
-
+#include <atomic>
 #ifdef WIN32
 #include <json/json.h>
 #else
@@ -51,6 +51,8 @@ public:
     double getUsed();
 
     int getTimeOut(){return timeout;}
+
+    bool isAlive(){return alive;}
 protected:
     int _sessionID = -1;
     int _acceptID = -1;
@@ -63,6 +65,8 @@ protected:
     int timeout;//recv time out,seconds
 
     TimeUsed *t;//jishiqi
+
+    std::atomic_bool alive;
 };
 
 #endif // SESSION_H

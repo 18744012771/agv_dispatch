@@ -200,7 +200,7 @@ void Agv::onArriveStation(int station)
     }else{
         pause();
     }
-    conflictmanagerptr->printConflict();
+    //conflictmanagerptr->printConflict();
     //mapmanagerptr->printGroup();
 }
 
@@ -281,7 +281,7 @@ void Agv::onLeaveStation(int stationid)
         pause();
     }
 
-    conflictmanagerptr->printConflict();
+    //conflictmanagerptr->printConflict();
     //mapmanagerptr->printGroup();
 }
 

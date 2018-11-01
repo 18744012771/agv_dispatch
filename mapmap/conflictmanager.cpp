@@ -51,7 +51,6 @@ void ConflictManager::calcc(std::vector<int> &agv1spirits,std::vector<int> &agv2
     }
 }
 
-
 void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId)
 {
 
@@ -74,30 +73,24 @@ void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId
             std::vector<int> agv1spirits = itr->second;
             std::vector<int> agv2spirits = pos->second;
 
-            for(int i=0;i<agv1spirits.size();)
+            //TODO: fix conflicts bug
+            for(int i=0;i<agv1spirits.size();++i)
             {
-                bool hasConflict = false;
-                int j=agv2spirits.size() - 1;
-                for(;j>=0;--j){
+                for(int j=agv2spirits.size()-1;j>=0;--j)
+                {
                     if(checkConflict(agv1spirits[i],agv2spirits[j])){
-                        hasConflict = true;
-                        break;
+                        std::vector<int> ic;
+                        std::vector<int> jc;
+                        ic.push_back(agv1spirits[i]);
+                        jc.push_back(agv2spirits[j]);
+                        int ii = i;
+                        int jj = j;
+                        calcc(agv1spirits,agv2spirits,ii,jj,ic,jc);
+                        std::reverse(jc.begin(),jc.end());
+                        Conflict c(agv1,ic,agv2,jc);
+                        conflicts.push_back(c);
                     }
                 }
-
-                if(hasConflict){
-                    std::vector<int> ic;
-                    std::vector<int> jc;
-
-                    ic.push_back(agv1spirits[i]);
-                    jc.push_back(agv2spirits[j]);
-
-                    calcc(agv1spirits,agv2spirits,i,j,ic,jc);
-                    std::reverse(jc.begin(),jc.end());
-                    Conflict c(agv1,ic,agv2,jc);
-                    conflicts.push_back(c);
-                }
-                ++i;
             }
         }
     }
@@ -129,7 +122,7 @@ void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId
         tryAddConflictOccu(itr->second,itr->first);
     }
 
-    printConflict();
+    //printConflict();
 }
 
 void ConflictManager::freeAgvOccu(int agvId,int lastStation,int nowStation,int nextStation)

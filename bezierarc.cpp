@@ -88,7 +88,7 @@ BezierArc::POSITION_POSE BezierArc::BezierArcPoint(PointF p1, PointF p2, PointF 
 
     PointF slope = 3*(1-t)*(1-t)*(p2-p1)+6*(1-t)*t*(p3-p2)+3*t*t*(p4-p3);
 
-    pp.angle = (atan2(slope.y(),slope.x()) * 180 / M_PI);
+    pp.angle = -(atan2(slope.y(),slope.x()) * 180 / M_PI);
     return pp;
 }
 
@@ -110,7 +110,7 @@ BezierArc::POSITION_POSE BezierArc::BezierArcPoint(PointF p1, PointF p2, PointF 
 
     PointF slope = 2*(1-t)*(p2-p1)+2*t*(p3-p2);
 
-    pp.angle = (atan2(slope.y(),slope.x()) * 180 / M_PI);
+    pp.angle = -(atan2(slope.y(),slope.x()) * 180 / M_PI);
     return pp;
 }
 

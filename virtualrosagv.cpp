@@ -232,22 +232,58 @@ void VirtualRosAgv::goStation(int station, bool stop)
         combined_logger->info("path_length=0 error");
     }
 
-    while(!g_quit && currentTask!=nullptr && !currentTask->getIsCancel()){
-        //can start the path?
+    while (!g_quit && currentTask != nullptr && !currentTask->getIsCancel()) {
+        usleep(500000);
         bool canGo = true;
-        if(!conflictmanagerptr->conflictPassable(path->getId(),getId())){
-            canGo = false;
-        }
-
-        if(canGo){
-            if(!conflictmanagerptr->conflictPassable(path->getEnd(),getId()))
-            {
+        if (nowStation > 0) {
+            if (!conflictmanagerptr->tryAddConflictOccu(nowStation, getId())) {
                 canGo = false;
             }
         }
+        else {
+            if(lastStation>0){
+                auto path = mapmanagerptr->getPathByStartEnd(lastStation, nextStation);
+                if (path != nullptr) {
+                    if (!conflictmanagerptr->tryAddConflictOccu(path->getId(), getId())) {
+                        canGo = false;
+                    }
+                }else{
+                    if (!conflictmanagerptr->tryAddConflictOccu(lastStation, getId())) {
+                        canGo = false;
+                    }
+                }
+            }
+        }
 
-        if(canGo)break;
-        usleep(500000);
+        if (!canGo)continue;
+
+        //could occu next station or path block?
+        int iip;
+        if (nowStation > 0) {
+            int pId = -1;
+            stationMtx.lock();
+            for (int i = 0; i < excutespaths.size(); ++i) {
+                auto path = mapmanagerptr->getPathById(excutespaths[i]);
+                if (path != nullptr && path->getStart() == nowStation) {
+                    pId = path->getId();
+                    break;
+                }
+            }
+            stationMtx.unlock();
+            iip = pId;
+        }
+        else {
+            iip = nextStation;
+        }
+
+        if (!conflictmanagerptr->conflictPassable(iip, getId())) {
+            canGo = false;
+        }
+        else {
+            canGo = conflictmanagerptr->tryAddConflictOccu(iip, getId());
+        }
+        if (canGo)
+            break;
     }
     if(g_quit || currentTask == nullptr || currentTask->getIsCancel())return ;
 
@@ -258,18 +294,71 @@ void VirtualRosAgv::goStation(int station, bool stop)
         if(isPaused){
             //TODO:check can resume
             bool canResume = true;
-            if(!conflictmanagerptr->conflictPassable(path->getId(),getId())){
-                canResume = false;
-            }
 
-            if(canResume){
-                if(!conflictmanagerptr->conflictPassable(path->getEnd(),getId()))
-                {
+            //could occu current station or path block?
+            //combined_logger->debug("agv {0} check conflick can resume! nowStation = {1},lastStation = {2},nextStation={3}",getId(),nowStation,lastStation,nextStation);
+            if (nowStation > 0) {
+                //auto nowStationPtr = mapmanagerptr->getPointById(nowStation);
+                if (!conflictmanagerptr->tryAddConflictOccu(nowStation, getId())) {
+                    //combined_logger->debug("agv {0} paused,check current station {1},result={2}!",id,nowStationPtr->getName(),false);
                     canResume = false;
+                }else{
+                    //combined_logger->debug("agv {0} paused,check current station {1},result={2}!",id,nowStationPtr->getName(),true);
+                }
+            }
+            else {
+                if(lastStation>0){
+                    auto path = mapmanagerptr->getPathByStartEnd(lastStation, nextStation);
+                    if (path != nullptr) {
+                        if (!conflictmanagerptr->tryAddConflictOccu(path->getId(), getId())) {
+                            //combined_logger->debug("agv {0} paused,check current line {1},result={2}!",getId(),path->getName(),false);
+                            canResume = false;
+                        }else{
+                            //combined_logger->debug("agv {0} paused,check current line {1},result={2}!",getId(),path->getName(),true);
+                        }
+                    }else{
+                        //auto lastStationPtr = mapmanagerptr->getPointById(lastStation);
+                        if (!conflictmanagerptr->tryAddConflictOccu(lastStation, getId())) {
+                            //combined_logger->debug("agv {0} paused,check last station {1},result={2}!",id,lastStationPtr->getName(),false);
+                            canResume = false;
+                        }else{
+                            //combined_logger->debug("agv {0} paused,check last station {1},result={2}!",id,lastStationPtr->getName(),true);
+                        }
+                    }
                 }
             }
 
-            if(canResume)resume();
+            if (!canResume)continue;
+
+            //could occu next station or path block?
+            int iip;
+            if (nowStation > 0) {
+                int pId = -1;
+                stationMtx.lock();
+                for (int i = 0; i < excutespaths.size(); ++i) {
+                    auto path = mapmanagerptr->getPathById(excutespaths[i]);
+                    if (path != nullptr && path->getStart() == nowStation) {
+                        pId = path->getId();
+                        break;
+                    }
+                }
+                stationMtx.unlock();
+                iip = pId;
+            }
+            else {
+                iip = nextStation;
+            }
+
+            if (!conflictmanagerptr->conflictPassable(iip, getId())) {
+                //combined_logger->debug("agv {0} paused,check next station {1},result={2}!",id,iip,false);
+                canResume = false;
+            }
+            else {
+                //combined_logger->debug("agv {0} paused,check next station {1},result={2}!",id,iip,true);
+                canResume = conflictmanagerptr->tryAddConflictOccu(iip, getId());
+            }
+            if (canResume)
+                resume();
 
             Sleep(500);
             continue;

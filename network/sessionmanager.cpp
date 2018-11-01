@@ -65,6 +65,7 @@ void SessionManager::run()
             mapSessionMtx.lock();
             for (auto &ms : _mapSessionPtr)
             {
+                if(!ms.second->isAlive())continue;
                 //combined_logger->debug("session{0} time used={1}",ms.first,ms.second->getUsed());
                 if(ms.second->getUsed() > 1.0*ms.second->getTimeOut())
                 {
@@ -92,7 +93,6 @@ void SessionManager::kickSession(int sID)
     }
     combined_logger->info("kickSession SessionID. SessionID={0}",sID);
     iter->second->close();
-    removeSession(iter->second);
 }
 
 void SessionManager::sendSessionData(int sID, const Json::Value &response)

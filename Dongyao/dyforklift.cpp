@@ -921,16 +921,15 @@ void DyForklift::checkNeedPause()
 void DyForklift::checkCanResume()
 {
     //
-
-
 }
 
 void DyForklift::setQyhTcp(SessionPtr _qyhTcp)
 {
-    m_qTcp = _qyhTcp;
-    if (m_qTcp == nullptr) {
+    if (_qyhTcp == nullptr) {
         status = Agv::AGV_STATUS_UNCONNECT;
-    }
+        m_qTcp = nullptr;
+    }else
+        m_qTcp = _qyhTcp;
 }
 //发送消息给小车
 bool DyForklift::send(const std::string &data)

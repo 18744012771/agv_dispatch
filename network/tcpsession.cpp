@@ -36,26 +36,32 @@ void TcpSession::send(const Json::Value &json)
     memcpy_s(send_buffer +5, length + 1, msg.c_str(),msg.length());
 
     int per_send_length = MSG_READ_BUFFER_LENGTH;
+    const int resendTime = 3;
+    bool sendRet = false;
 
     if(length+5<per_send_length){
-        //if(length+5 !=  boost::asio::write(socket_, boost::asio::buffer(data, len)));
-        if(length+5 != boost::asio::write(socket_,boost::asio::buffer(send_buffer,length+5)))
-        {
+        for(int i=0;i<resendTime;++i){
+            if(doSend(send_buffer,length+5)){
+                sendRet = true;
+                break;
+            }
+        }
+        if(!sendRet){
             combined_logger->warn("send error ") ;
         }
     }else{
         int packindex = 0;
         char *per_send_buffer = new char[per_send_length];
-        int resendTime = 3;
+
         while(true){
             int this_time_send_length = (length +5) - packindex * per_send_length;
             if(this_time_send_length<=0)break;
             if(this_time_send_length > per_send_length)this_time_send_length = per_send_length;
 
             memcpy(per_send_buffer,send_buffer+packindex*per_send_length,this_time_send_length);
-            bool sendRet = false;
+            sendRet = false;
             for(int i=0;i<resendTime;++i){
-                if(this_time_send_length == socket_.write_some(boost::asio::buffer(per_send_buffer,this_time_send_length))){
+                if(doSend(per_send_buffer,this_time_send_length)){
                     sendRet = true;
                     break;
                 }
@@ -78,17 +84,24 @@ void TcpSession::send(const Json::Value &json)
 bool TcpSession::doSend(const char *data,int len)
 {
     if(!data || len<=0)return false;
-
-    return len == boost::asio::write(socket_, boost::asio::buffer(data, len));
+    if(!alive)return false;
+    if(!socket_.is_open())return false;
+    try{
+        return len == boost::asio::write(socket_, boost::asio::buffer(data, len));
+    }catch(...){
+        return false;
+    }
 }
 
 void TcpSession::close()
 {
+    alive = false;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_send);
 }
 
 void TcpSession::start()
 {
+
     if(GLOBAL_AGV_PROJECT == AGV_PROJECT_ANTING || GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO){
         if(getAcceptID() == AgvManager::getInstance()->getServerAccepterID()){
             //this is a agv connection
@@ -97,7 +110,8 @@ void TcpSession::start()
     }
 
     std::thread([this](){
-        while (!g_quit) {
+
+        while (!g_quit && alive) {
             try{
                 if (!socket_.is_open()) {
                     break;
@@ -134,12 +148,12 @@ void TcpSession::start()
                 break;
             }
         }
+        alive = false;
         if (AGV_PROJECT_DONGYAO == GLOBAL_AGV_PROJECT && _agvPtr != nullptr)
         {
             std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
         }
         SessionManager::getInstance()->removeSession(shared_from_this());
-
     }).detach();
 }
 
@@ -256,13 +270,17 @@ bool TcpSession::attach()
         if(agv)
         {
             agv->setPosition(0, 0, 0);
-            agv->status = Agv::AGV_STATUS_NOTREADY;
+            if(agv->getTask() == nullptr)
+                agv->status = Agv::AGV_STATUS_NOTREADY;
+            else
+                agv->status = Agv::AGV_STATUS_TASKING;
+
             agv->setQyhTcp(shared_from_this());
             agv->setPort(socket_.remote_endpoint().port());
             //start report
             agv->startReport(100);
             setAGVPtr(agv);
-            timeout = 2;//time out === 2 second!!!!
+            timeout = 50;//time out === 2 second!!!!
             return true;
         }
         else
