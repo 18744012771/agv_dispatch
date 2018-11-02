@@ -50,7 +50,8 @@ public:
         AGV_STATUS_ERROR = 4,//故障
         AGV_STATUS_GO_CHARGING = 5,//返回充电中
         AGV_STATUS_CHARGING = 6,//正在充电
-        AGV_STATUS_NOTREADY = 7 //刚连接，尚未上报位置
+        AGV_STATUS_NOTREADY = 7, //刚连接，尚未上报位置
+        AGV_STATUS_ESTOP = 8//emegency stop
     };
 
     //状态
@@ -82,6 +83,14 @@ public:
     int getLastStation() { return lastStation; }
 	int getNowStation() { return nowStation; }
 	int getNextStation() { return nextStation; }
+    bool getIsCharging(){return isChanging;}
+    bool getIsManualControl(){return isManualControl;}
+    bool getIsEmergencyStop(){return isEmergencyStop;}
+
+
+    void setIsCharging(bool _isChanging){isChanging = _isChanging;}
+    void setIsManualControl(bool _isManualControl){isManualControl = _isManualControl;}
+    void setIsEmergencyStop(bool _isEmergencyStop){isEmergencyStop = _isEmergencyStop;}
 
     void onArriveStation(int station);
     void onLeaveStation(int stationid);
@@ -125,6 +134,10 @@ protected:
     std::vector<int> excutespaths;
 
     std::map<std::string,std::string> extra_params;
+
+    std::atomic_bool isChanging;            //
+    std::atomic_bool isManualControl;       //
+    std::atomic_bool isEmergencyStop;       //
 };
 
 #endif // AGV_H

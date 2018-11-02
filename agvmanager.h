@@ -4,8 +4,8 @@
 #include <vector>
 #include <memory>
 #include <mutex>
-#include <functional>
-#include "utils/noncopyable.h"
+#include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
 #include "protocol.h"
 #include "network/session.h"
 
@@ -15,7 +15,7 @@ using AgvPtr = std::shared_ptr<Agv>;
 class AgvManager;
 using AgvManagerPtr = std::shared_ptr<AgvManager>;
 
-class AgvManager: public noncopyable,public std::enable_shared_from_this<AgvManager>
+class AgvManager: public boost::noncopyable,public std::enable_shared_from_this<AgvManager>
 {
 public:
     typedef std::function< void(AgvPtr) >  AgvEachCallback;

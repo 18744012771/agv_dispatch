@@ -5,7 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <functional>
-#include "../utils/noncopyable.h"
+#include <boost/noncopyable.hpp>
 #include "../protocol.h"
 #include "../network/session.h"
 
@@ -20,7 +20,7 @@ using DevicePtr = std::shared_ptr<Device>;
 class DeviceManager;
 using DeviceManagerPtr = std::shared_ptr<DeviceManager>;
 
-class DeviceManager: public noncopyable,public std::enable_shared_from_this<DeviceManager>
+class DeviceManager: public boost::noncopyable,public std::enable_shared_from_this<DeviceManager>
 {
 public:
     typedef std::function< void(DevicePtr) >  DeviceEachCallback;

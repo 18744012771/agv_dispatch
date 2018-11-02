@@ -4,6 +4,7 @@
 #include <atomic>            
 #include <mutex>
 #include <condition_variable>
+#include <iostream>
 
 static const std::string empty_string;
 
@@ -370,7 +371,7 @@ void Elevator::StartSendThread(int cmd, int from_floor, int to_floor, int elevat
 {
     send_cmd = true;
 
-    thread t = std::thread([&,cmd,from_floor,to_floor,elevator_id,agv_id](){
+    g_threads.create_thread([&,cmd,from_floor,to_floor,elevator_id,agv_id](){
         do
         {
             combined_logger->info("Elevator 发送CMD :{0}", cmd);
@@ -390,9 +391,7 @@ void Elevator::StartSendThread(int cmd, int from_floor, int to_floor, int elevat
             combined_logger->info("AGV发送CMD end", cmd);
         }
         while(send_cmd);
-    });
-
-    t.detach();
+    })->detach();
 }
 
 void Elevator::StopSendThread()

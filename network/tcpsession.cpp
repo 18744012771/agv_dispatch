@@ -109,7 +109,7 @@ void TcpSession::start()
         }
     }
 
-    std::thread([this](){
+    g_threads.create_thread([this](){
 
         while (!g_quit && alive) {
             try{
@@ -154,7 +154,7 @@ void TcpSession::start()
             std::static_pointer_cast<DyForklift>(_agvPtr)->setQyhTcp(nullptr);
         }
         SessionManager::getInstance()->removeSession(shared_from_this());
-    }).detach();
+    })->detach();
 }
 
 int TcpSession::ProtocolProcess()

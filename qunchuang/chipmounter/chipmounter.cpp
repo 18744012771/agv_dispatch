@@ -1,6 +1,5 @@
 ﻿#include "chipmounter.h"
-//#include "netinet/in.h"
-//#include <boost/lexical_cast.hpp>
+#include <iostream>
 
 chipmounter::chipmounter(int _id, std::string _name, std::string _ip, int _port) :
     Device(_id,_name,_ip, _port)

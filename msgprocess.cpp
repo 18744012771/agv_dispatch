@@ -401,10 +401,10 @@ void MsgProcess::publisher_ELE()
 bool MsgProcess::init()
 {
     //启动3个pulish的线程
-    g_threadPool.enqueue(std::bind(&MsgProcess::publisher_agv_position, this));
-    g_threadPool.enqueue(std::bind(&MsgProcess::publisher_agv_status, this));
-    g_threadPool.enqueue(std::bind(&MsgProcess::publisher_task, this));
-    g_threadPool.enqueue(std::bind(&MsgProcess::publisher_ELE, this));
+    g_threads.create_thread(std::bind(&MsgProcess::publisher_agv_position, this));
+    g_threads.create_thread(std::bind(&MsgProcess::publisher_agv_status, this));
+    g_threads.create_thread(std::bind(&MsgProcess::publisher_task, this));
+    g_threads.create_thread(std::bind(&MsgProcess::publisher_ELE, this));
     //日志发布时每次产生一个日志，发布一个日志
     return true;
 }
@@ -437,7 +437,7 @@ void MsgProcess::removeSubSession(int session)
 void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
 {
     //request需要copy一个到线程中。
-    g_threadPool.enqueue([&, request, session] {
+    g_threads.create_thread([&, request, session] {
 
         //        TimeUsed t;
         //        t.start();
@@ -529,7 +529,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
 void MsgProcess::publishOneLog(USER_LOG log)
 {
     //异步发布
-    g_threadPool.enqueue([&, log] {
+    g_threads.create_thread([&, log] {
         if (logSubers.empty())return;
 
         Json::Value response;

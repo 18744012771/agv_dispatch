@@ -2,7 +2,7 @@
 #define ACCEPTOR_H
 
 #include <boost/asio.hpp>
-#include <thread>
+#include <boost/thread.hpp>
 
 using boost::asio::ip::tcp;
 
@@ -25,7 +25,7 @@ protected:
     tcp::acceptor acceptor_;
     int id;
     boost::asio::io_context& _io_context;
-    std::thread t;
+    boost::thread *t;
 };
 
 #endif // ACCEPTOR_H

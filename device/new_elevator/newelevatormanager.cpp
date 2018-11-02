@@ -1,4 +1,5 @@
-﻿#include "newelevatormanager.h"
+﻿#include <iostream>
+#include "newelevatormanager.h"
 #include "../../common.h"
 #include "../../agvmanager.h"
 #include "../../agv.h"

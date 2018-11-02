@@ -3,17 +3,15 @@
 #include <mutex>
 #include <map>
 #include <atomic>
-
+#include <boost/noncopyable.hpp>
 #include "agvtask.h"
-#include "utils/noncopyable.h"
-
 #include "network/session.h"
 
 class TaskManager;
 
 using TaskManagerPtr = std::shared_ptr<TaskManager>;
 
-class TaskManager :  public noncopyable,public std::enable_shared_from_this<TaskManager>
+class TaskManager :  public boost::noncopyable,public std::enable_shared_from_this<TaskManager>
 {
 public:
     static TaskManagerPtr getInstance(){

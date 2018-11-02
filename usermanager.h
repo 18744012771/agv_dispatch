@@ -1,14 +1,14 @@
 ﻿#pragma once
 
+#include <boost/noncopyable.hpp>
 #include "common.h"
 #include "protocol.h"
-#include "utils/noncopyable.h"
 #include "network/session.h"
 
 class UserManager;
 using UserManagerPtr = std::shared_ptr<UserManager>;
 
-class UserManager :public noncopyable, public std::enable_shared_from_this<UserManager>
+class UserManager :public boost::noncopyable, public std::enable_shared_from_this<UserManager>
 {
 public:
     static UserManagerPtr getInstance()

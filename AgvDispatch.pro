@@ -18,6 +18,7 @@ unix{
 LIBS += -lsqlite3
 LIBS += -ljsoncpp
 LIBS += -lboost_system
+LIBS += -lboost_thread
 }
 
 win32{
@@ -44,10 +45,8 @@ HEADERS += \
     taskmanager.h \
     sqlite3/CppSQLite3.h \
     protocol.h \
-    utils/noncopyable.h \
     msgprocess.h \
     usermanager.h \
-    utils/threadpool.h \
     userlogmanager.h \
     usermanager.h \
     taskmaker.h \
@@ -60,44 +59,6 @@ HEADERS += \
     mapmap/mapspirit.h \
     mapmap/onemap.h \
     base64.h \
-    utils/Log/spdlog/async_logger.h \
-    utils/Log/spdlog/common.h \
-    utils/Log/spdlog/formatter.h \
-    utils/Log/spdlog/logger.h \
-    utils/Log/spdlog/spdlog.h \
-    utils/Log/spdlog/tweakme.h \
-    utils/Log/spdlog/contrib/sinks/step_file_sink.h \
-    utils/Log/spdlog/details/async_log_helper.h \
-    utils/Log/spdlog/details/async_logger_impl.h \
-    utils/Log/spdlog/details/file_helper.h \
-    utils/Log/spdlog/details/log_msg.h \
-    utils/Log/spdlog/details/logger_impl.h \
-    utils/Log/spdlog/details/mpmc_blocking_q.h \
-    utils/Log/spdlog/details/null_mutex.h \
-    utils/Log/spdlog/details/os.h \
-    utils/Log/spdlog/details/pattern_formatter_impl.h \
-    utils/Log/spdlog/details/registry.h \
-    utils/Log/spdlog/details/spdlog_impl.h \
-    utils/Log/spdlog/sinks/android_sink.h \
-    utils/Log/spdlog/sinks/ansicolor_sink.h \
-    utils/Log/spdlog/sinks/base_sink.h \
-    utils/Log/spdlog/sinks/dist_sink.h \
-    utils/Log/spdlog/sinks/file_sinks.h \
-    utils/Log/spdlog/sinks/msvc_sink.h \
-    utils/Log/spdlog/sinks/null_sink.h \
-    utils/Log/spdlog/sinks/ostream_sink.h \
-    utils/Log/spdlog/sinks/sink.h \
-    utils/Log/spdlog/sinks/stdout_sinks.h \
-    utils/Log/spdlog/sinks/syslog_sink.h \
-    utils/Log/spdlog/sinks/wincolor_sink.h \
-    utils/Log/spdlog/sinks/windebug_sink.h \
-    utils/Log/spdlog/fmt/fmt.h \
-    utils/Log/spdlog/fmt/ostr.h \
-    utils/Log/spdlog/fmt/bundled/format.h \
-    utils/Log/spdlog/fmt/bundled/ostream.h \
-    utils/Log/spdlog/fmt/bundled/posix.h \
-    utils/Log/spdlog/fmt/bundled/printf.h \
-    utils/Log/spdlog/fmt/bundled/time.h \
     agvImpl/ros/agv/rosAgv.h \
     agvImpl/ros/agv/linepath.h \
     mapmap/mapmanager.h \

@@ -2,8 +2,8 @@
 #define USERLOGMANAGER_H
 
 #include <boost/lockfree/queue.hpp>
+#include <boost/noncopyable.hpp>
 #include "common.h"
-#include "utils/noncopyable.h"
 #include "protocol.h"
 #include "network/session.h"
 
@@ -14,7 +14,7 @@ using UserLogManagerPtr = std::shared_ptr<UserLogManager>;
 //用户日志管理器，所有的用户日志，需要记录数据库
 //对日志要发布给订阅日志的用户
 
-class UserLogManager : public noncopyable, public std::enable_shared_from_this<UserLogManager>
+class UserLogManager : public boost::noncopyable, public std::enable_shared_from_this<UserLogManager>
 {
 public:
     static UserLogManagerPtr getInstance()

@@ -1,7 +1,7 @@
 #ifndef CONFLICTMANAGER_H
 #define CONFLICTMANAGER_H
 #include "../common.h"
-#include "../utils/noncopyable.h"
+#include <boost/noncopyable.hpp>
 #include "conflict.h"
 
 #include <map>
@@ -9,7 +9,7 @@
 class ConflictManager;
 using ConflictManagerPtr = std::shared_ptr<ConflictManager>;
 
-class ConflictManager: public noncopyable, public std::enable_shared_from_this<ConflictManager>
+class ConflictManager: public boost::noncopyable, public std::enable_shared_from_this<ConflictManager>
 {
 public:
     static ConflictManagerPtr getInstance() {

@@ -10,7 +10,7 @@
 #include <utility>
 #include <atomic>
 #include <boost/asio.hpp>
-#include "../utils/noncopyable.h"
+#include <boost/noncopyable.hpp>
 #include "session.h"
 #include "acceptor.h"
 
@@ -20,7 +20,7 @@ using boost::asio::ip::tcp;
 class SessionManager;
 using SessionManagerPtr = std::shared_ptr<SessionManager>;
 
-class SessionManager: public noncopyable,public std::enable_shared_from_this<SessionManager>
+class SessionManager: public boost::noncopyable,public std::enable_shared_from_this<SessionManager>
 {
 public:
     static SessionManagerPtr getInstance(){

@@ -1,5 +1,6 @@
 ﻿#include "chargemachine.h"
 #include <limits>
+#include <iostream>
 chargemachine::chargemachine()
 {
 

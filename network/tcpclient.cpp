@@ -1,5 +1,6 @@
 #include "tcpclient.h"
 #include <iostream>
+#include "common.h"
 
 TcpClient::TcpClient(std::string _ip, int _port, ClientReadCallback _readcallback, ClientConnectCallback _connectcallback, ClientDisconnectCallback _disconnectcallback):
     ip(_ip),
@@ -8,7 +9,7 @@ TcpClient::TcpClient(std::string _ip, int _port, ClientReadCallback _readcallbac
     readcallback(_readcallback),
     connectcallback(_connectcallback),
     disconnectcallback(_disconnectcallback),
-    //    s(io_context),
+    t(nullptr),
     quit(false)
 {
 }
@@ -16,7 +17,7 @@ TcpClient::TcpClient(std::string _ip, int _port, ClientReadCallback _readcallbac
 
 void TcpClient::start()
 {
-    t =  std::thread(std::bind(&TcpClient::threadProcess,this));
+    t = g_threads.create_thread(std::bind(&TcpClient::threadProcess,this));
 }
 
 TcpClient::~TcpClient()
@@ -24,8 +25,8 @@ TcpClient::~TcpClient()
     need_reconnect = false;
     quit = true;
     doClose();
-    if(t.joinable())
-        t.join();
+    if(t && t->joinable())
+        t->join();
 }
 
 

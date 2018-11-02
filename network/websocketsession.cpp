@@ -57,7 +57,7 @@ void WebSocketSession::read()
 
 void WebSocketSession::start()
 {
-    std::thread(std::bind(&WebSocketSession::read,this)).detach();
+    g_threads.create_thread(std::bind(&WebSocketSession::read,this))->detach();
 }
 
 

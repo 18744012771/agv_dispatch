@@ -315,9 +315,6 @@ bool MapManager::isSameFloorStation(int station_1, int station_2)
     int floor_1 = getStationFloor(station_1);
     int floor_2 = getStationFloor(station_2);
 
-    std::cout<<"是否同一楼层站点, floor_1 : " << floor_1 <<std::endl;
-    std::cout<<"是否同一楼层站点, floor_2 : " << floor_2 <<std::endl;
-
     if(floor_1 > 0  && floor_1 == floor_2 )
         return true;
     else

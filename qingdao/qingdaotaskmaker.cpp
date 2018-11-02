@@ -1,4 +1,5 @@
-﻿#include "qingdaotaskmaker.h"
+﻿#include <iostream>
+#include "qingdaotaskmaker.h"
 #include "../taskmanager.h"
 #include "qingdaonodetingput.h"
 #include "qingdaonodetingget.h"
@@ -21,8 +22,8 @@ void QingdaoTaskMaker::init()
     //nothing to do
     //start a thread make task! every 10 seconds
     //TODO:test dongyao ditu
-    std::thread([&](){
-        auto mapmanagerptr = MapManager::getInstance();
+    g_threads.create_thread([&](){
+        //auto mapmanagerptr = MapManager::getInstance();
         auto taskmanagerptr = TaskManager::getInstance();
 
         std::vector<int> xianbianku;
@@ -118,7 +119,7 @@ void QingdaoTaskMaker::init()
                 TaskManager::getInstance()->addTask(task);
             }
         }
-    }).detach();
+    })->detach();
 }
 
 void QingdaoTaskMaker::makeTask(SessionPtr conn, const Json::Value &request)

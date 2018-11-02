@@ -11,9 +11,8 @@
 #include <memory>
 #include <limits>
 #include <limits.h>
-#include "utils/Log/spdlog/spdlog.h"
-#include "utils/Log/spdlog/fmt/ostr.h"
-#include "utils/threadpool.h"
+#include <spdlog/spdlog.h>
+#include <boost/thread/thread.hpp>
 #include "sqlite3/CppSQLite3.h"
 
 #ifdef WIN32
@@ -110,7 +109,7 @@ private:
     std::chrono::steady_clock::time_point e;
 };
 
-extern ThreadPool g_threadPool;
+extern boost::thread_group g_threads;
 extern CppSQLite3DB g_db;
 
 #ifndef _WIN32

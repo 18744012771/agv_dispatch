@@ -1,4 +1,6 @@
-﻿#include "taskmanager.h"
+﻿#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include "taskmanager.h"
 #include "taskmaker.h"
 #include "mapmap/mapmanager.h"
 #include "agvmanager.h"
@@ -6,7 +8,6 @@
 #include "network/sessionmanager.h"
 #include "msgprocess.h"
 #include "userlogmanager.h"
-#include "utils/Log/spdlog/spdlog.h"
 #include "common.h"
 #include "agvImpl/ros/agv/rosAgv.h"
 #include "qunchuang/chipmounter/chipmounter.h"
@@ -27,13 +28,7 @@ void initLog()
     try
     {
         std::vector<spdlog::sink_ptr> sinks;
-
-        //控制台
-#ifdef WIN32
-        auto color_sink = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
-#else
-        auto color_sink = std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>();
-#endif
+        auto color_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         sinks.push_back(color_sink);
 
         //日志文件
@@ -43,22 +38,6 @@ void initLog()
         combined_logger = std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
         combined_logger->flush_on(spdlog::level::trace);
         combined_logger->set_level(spdlog::level::trace);
-
-        //flush interval
-        //        int q_size = 2000;
-        //        spdlog::set_async_mode(q_size, spdlog::async_overflow_policy::block_retry,
-        //                               nullptr,
-        //                               std::chrono::seconds(1));
-
-        ////test
-        //combined_logger->info("=============log test==================");
-        //combined_logger->trace("test log 1");
-        //combined_logger->debug("test log 2");
-        //combined_logger->info("test log 3");
-        //combined_logger->warn("test log 4");
-        //combined_logger->error("test log 5");
-        //combined_logger->critical("test log 6");
-        //combined_logger->info("=============log test==================");
     }
     catch (const spdlog::spdlog_ex& ex)
     {
@@ -66,10 +45,9 @@ void initLog()
     }
 }
 
-
 void testAGV()
 {
-    g_threadPool.enqueue([&] {
+    g_threads.create_thread([&] {
         // test ros agv
         //rosAgvPtr agv(new rosAgv(1,"robot_0","192.168.8.206",7070));
         rosAgvPtr agv(new rosAgv(1, "robot_0", "192.168.8.211", 7070));
@@ -161,24 +139,24 @@ void getWmsStorageJson()
             table_station.setRow(0);
             int realX = atoi(table_station.fieldValue(0));
             int realY = atoi(table_station.fieldValue(1));
-//            int realA = atoi(table_station.fieldValue(2));
+            //            int realA = atoi(table_station.fieldValue(2));
 
             int xx = realX;
             int yy = realY;
 
-//            if(realA>=-450 && realA<=450){
-//                xx = realX;
-//                yy = realY - 50;
-//            }else if(realA>450 &&  realA<= 1350){
-//                xx = realX - 50;
-//                yy = realY - 100;
-//            }else if(realA>1350 || realA<-1350){
-//                xx = realX - 100;
-//                yy = realY - 50;
-//            }else{
-//                xx = realX - 50;
-//                yy = realY;
-//            }
+            //            if(realA>=-450 && realA<=450){
+            //                xx = realX;
+            //                yy = realY - 50;
+            //            }else if(realA>450 &&  realA<= 1350){
+            //                xx = realX - 50;
+            //                yy = realY - 100;
+            //            }else if(realA>1350 || realA<-1350){
+            //                xx = realX - 100;
+            //                yy = realY - 50;
+            //            }else{
+            //                xx = realX - 50;
+            //                yy = realY;
+            //            }
 
             Json::Value vv;
             vv["store_no"] = store_no;
@@ -201,7 +179,7 @@ void getWmsStorageJson()
 void quit(int sig)
 {
     g_quit = true;
-    _exit(0);
+    g_threads.interrupt_all();
 }
 
 int main(int argc, char *argv[])
@@ -273,7 +251,6 @@ int main(int argc, char *argv[])
     combined_logger->debug("TaskMaker init...");
     TaskMaker::getInstance()->init();
 
-
     //    10.初始化tcp/ip 接口
     //tcpip服务
     combined_logger->debug("SessionManager init...");
@@ -292,9 +269,9 @@ int main(int argc, char *argv[])
 #endif
     combined_logger->info("server init OK!");
     SessionManager::getInstance()->run();
-    while (!g_quit) {
-        usleep(50000);
-    }
+    while(!g_quit)sleep(1);
+
+    g_threads.join_all();
 
     spdlog::drop_all();
 

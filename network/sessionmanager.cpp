@@ -56,7 +56,7 @@ void SessionManager::openWebSocketAccepter(int aID)
 
 void SessionManager::run()
 {
-    std::thread([&]
+    g_threads.create_thread([&]
     {
         std::vector<int> toKickSessions;
 
@@ -79,7 +79,7 @@ void SessionManager::run()
             }
             usleep(100000);
         }
-    }).detach();
+    })->detach();
 }
 
 void SessionManager::kickSession(int sID)

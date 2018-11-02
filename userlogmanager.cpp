@@ -19,7 +19,7 @@ void UserLogManager::init()
 {
     checkTable();
 
-    g_threadPool.enqueue([this]{
+    g_threads.create_thread([this]{
         while(!g_quit){
 
             if (logQueue.empty()) {
@@ -37,9 +37,9 @@ void UserLogManager::init()
                 ss<<"insert into agv_log (log_time,log_msg) values ('"<<log.time<<"' ,'"<<log.msg<<"' );";
                 g_db.execDML(ss.str().c_str());
             }catch(CppSQLite3Exception &e){
-                std::cerr << e.errorCode() << ":" << e.errorMessage();
+                combined_logger->error("user log manager thread sqlite error!code:{0},info{1}",e.errorCode(),e.errorMessage());
             }catch(std::exception e){
-                std::cerr << e.what();
+                combined_logger->error("user log manager thread sqlite error!info{0}",e.what());
             }
             //2.发布
             MsgProcess::getInstance()->publishOneLog(log);

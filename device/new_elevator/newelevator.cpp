@@ -33,7 +33,7 @@ void NewElevator::KeepOpen(int floor)
 {
     send_cmd = true;
 
-    std::thread t = std::thread([&, floor]() {
+    g_threads.create_thread([&, floor]() {
         auto elemanagerptr = NewElevatorManager::getInstance();
         unsigned char data[8];
         elemanagerptr->getCmdData(floor, getId(), CallEleENQ, data);
@@ -43,9 +43,7 @@ void NewElevator::KeepOpen(int floor)
             elemanagerptr->send((char *)data,8);
             sleep(2);
         } while (send_cmd);
-    });
-
-    t.detach();
+    })->detach();
 }
 
 void NewElevator::DropOpen()

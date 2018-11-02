@@ -1,6 +1,5 @@
 ﻿
-#include <thread>
-
+#include <boost/thread.hpp>
 #include "agv.h"
 #include "mapmap/mapmanager.h"
 #include "agvtask.h"

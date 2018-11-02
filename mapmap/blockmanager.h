@@ -1,7 +1,7 @@
 #ifndef BLOCKMANAGER_H
 #define BLOCKMANAGER_H
 #include "../common.h"
-#include "../utils/noncopyable.h"
+#include <boost/noncopyable.hpp>
 
 class BlockManager;
 using BlockManagerPtr = std::shared_ptr<BlockManager>;
@@ -43,7 +43,7 @@ private:
     std::vector<AgvOccuSpirits> agv_spirits;
 };
 
-//class BlockManager: public noncopyable, public std::enable_shared_from_this<BlockManager>
+//class BlockManager: public boost::noncopyable, public std::enable_shared_from_this<BlockManager>
 //{
 //public:
 //    static BlockManagerPtr getInstance() {

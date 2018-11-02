@@ -34,7 +34,7 @@ DyForklift::DyForklift(int id, std::string name, std::string ip, int port) :
 void DyForklift::init() {
 
 #ifdef RESEND
-    std::thread([&] {
+    g_threads.create_thread([&] {
         while (!g_quit) {
             if (m_qTcp == nullptr) {
                 //已经掉线了
@@ -65,10 +65,10 @@ void DyForklift::init() {
             }
             sleep(1);
         }
-    }).detach();
+    })->detach();
 #endif
     //#ifdef HEART
-    //    g_threadPool.enqueue([&, this] {
+    //    g_threadPool.create_thread([&, this] {
     //        while (true) {
     //            heart();
     //            usleep(500000);
@@ -199,19 +199,22 @@ void DyForklift::onRead(const char *data, int len)
                 double x_new = 100 * stringToDouble(temp[0]);
                 double y_new = -100 * stringToDouble(temp[1]);
                 double theta_new = -57.3 * stringToDouble(temp[2]);
-
+                static std::string lastRecvData = "";
                 if(abs(x_new - x)>=100 || abs(y_new-y)>100 || abs(theta_new-theta)>30){
                     combined_logger->debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!tiaobian!!!!!!!!!!!!!!!!!!1");
                     combined_logger->debug("oldX={0},oldy={1},old_theta={2}",x,y,theta);
                     combined_logger->debug("newX={0},newY={1},new_theta={2}",x_new,y_new,theta_new);
+                    combined_logger->debug("last time recv data={}",lastRecvData);
                     combined_logger->debug("recv data={}",std::string(data,len));
-                    combined_logger->debug("recv data={}",data,len);
                 }
+
+                lastRecvData = std::string(data,len);
 
                 x = x_new;
                 y = y_new;
                 theta = theta_new;
                 floor = stringToInt(temp[3]);
+
                 if (AGV_STATUS_NOTREADY == status)
                 {
                     //find nearest station
@@ -252,6 +255,37 @@ void DyForklift::onRead(const char *data, int len)
         tempWarn.iLocationLaserConnectSt = stringToInt(warn.at(11));         //定位激光连接状态    0： 正常 1:异常
         tempWarn.iObstacleLaserConnectSt = stringToInt(warn.at(12));         //避障激光连接状态    0： 正常 1：异常
         tempWarn.iSerialPortConnectSt = stringToInt(warn.at(13));            //串口连接状态       0： 正常 1：异常
+
+        isManualControl = (tempWarn.iHandCtrSt == 1);
+        isEmergencyStop = (tempWarn.iScramSt == 1);
+
+        //set status
+        if(isManualControl && !isEmergencyStop){
+            status = AGV_STATUS_HANDING;
+        }else if(isEmergencyStop){
+            status = AGV_STATUS_ESTOP;
+        }
+
+
+        //recover status
+        if(status == AGV_STATUS_ESTOP && !isEmergencyStop){
+            if(currentTask!=nullptr && !currentTask->getIsCancel())
+            {
+                status = AGV_STATUS_TASKING;
+            }else{
+                status = AGV_STATUS_IDLE;
+            }
+        }
+
+        if(status == AGV_STATUS_HANDING && !isManualControl){
+            if(currentTask!=nullptr && !currentTask->getIsCancel())
+            {
+                status = AGV_STATUS_TASKING;
+            }else{
+                status = AGV_STATUS_IDLE;
+            }
+        }
+
         if (tempWarn == m_warn)
         {
         }

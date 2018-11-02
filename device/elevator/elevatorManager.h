@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
-#include "../../utils/noncopyable.h"
+#include <boost/noncopyable.hpp>
 #include "../../protocol.h"
 #include "../../network/tcpsession.h"
 #include "elevator.h"
@@ -15,7 +15,7 @@ using ElevatorPtr = std::shared_ptr<Elevator>;
 class ElevatorManager;
 using ElevatorManagerPtr = std::shared_ptr<ElevatorManager>;
 
-class ElevatorManager: public noncopyable,public std::enable_shared_from_this<ElevatorManager>
+class ElevatorManager: public boost::noncopyable,public std::enable_shared_from_this<ElevatorManager>
 {
 public:
     bool init();

@@ -38,7 +38,7 @@ void QunChuangTaskMaker::makeTask(SessionPtr conn, const Json::Value &request)
 void QunChuangTaskMaker::makeTask(std::string from ,std::string to,std::string dispatch_id,int ceid,std::string line_id, int agv_id, int all_floor_info)
 {
     //combined_logger->info("makeTask 创建一个取货+送货任务, from: %s, to: %s", from, to);
-    std::cout << "makeTask 创建一个取货+送货任务, dispatch_id:" + dispatch_id + " from: " + from + "  to: " + to <<"  all_floor_info: " << all_floor_info<< std::endl;
+    //std::cout << "makeTask 创建一个取货+送货任务, dispatch_id:" + dispatch_id + " from: " + from + "  to: " + to <<"  all_floor_info: " << all_floor_info<< std::endl;
 
     auto fromSpirit = MapManager::getInstance()->getMapSpiritByName(from);
     auto toSpirit = MapManager::getInstance()->getMapSpiritByName(to);

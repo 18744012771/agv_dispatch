@@ -365,7 +365,7 @@ bool TaskManager::init()
     }
 
     //启动一个分配任务的线程
-    g_threadPool.enqueue([&] {
+    g_threads.create_thread([&] {
         while (!g_quit)
         {
             toDisMtx.lock();
@@ -610,7 +610,7 @@ void TaskManager::excuteTask(AgvTaskPtr task)
     doingTaskMtx.lock();
     doingTask.push_back(task);
     doingTaskMtx.unlock();
-    g_threadPool.enqueue([&, task] {
+    g_threads.create_thread([&, task] {
         task->setStatus(AgvTask::AGV_TASK_STATUS_EXCUTING);
         std::vector<AgvTaskNodePtr> nodes = task->getTaskNodes();
         int index = task->getDoingIndex();

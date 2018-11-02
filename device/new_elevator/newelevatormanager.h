@@ -6,7 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <numeric>
-#include "../../utils/noncopyable.h"
+#include <boost/noncopyable.hpp>
 #include "../../protocol.h"
 #include "newelevator.h"
 #include "../../network/session.h"
@@ -52,7 +52,7 @@ enum CMD {
 
 #define TAKE_ELE_TIME_OUT       60
 
-class NewElevatorManager : public noncopyable,public std::enable_shared_from_this<NewElevatorManager>
+class NewElevatorManager : public boost::noncopyable,public std::enable_shared_from_this<NewElevatorManager>
 {
 public:
 

@@ -4,7 +4,7 @@
 #include <memory>
 #include <list>
 #include <mutex>
-#include "utils/noncopyable.h"
+#include <boost/noncopyable.hpp>
 #include "protocol.h"
 #include "network/session.h"
 
@@ -17,7 +17,7 @@ typedef enum{
     ENUM_NOTIFY_ALL_TYPE_ERROR,
 }ENUM_NOTIFY_ALL_TYPE;
 
-class MsgProcess : public noncopyable,public std::enable_shared_from_this<MsgProcess>
+class MsgProcess : public boost::noncopyable,public std::enable_shared_from_this<MsgProcess>
 {
 public:
 

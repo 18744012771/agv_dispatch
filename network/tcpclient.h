@@ -2,8 +2,8 @@
 #define TCPCLIENT_H
 
 #include <memory>
-#include <functional>
-#include <thread>
+#include <boost/function.hpp>
+#include <boost/thread.hpp>
 #include <boost/asio.hpp>
 
 using boost::asio::ip::tcp;
@@ -54,10 +54,9 @@ private:
 
     boost::asio::io_service io_context;
 
-//    tcp::socket s;
     boost::shared_ptr<tcp::socket> s;
 
-    std::thread t;
+    boost::thread *t;
 };
 
 #endif // TCPCLIENT_H

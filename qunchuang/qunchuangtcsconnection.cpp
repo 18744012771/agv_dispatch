@@ -8,6 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
+#include <iostream>
 #include "msg.h"
 
 using namespace lynx;

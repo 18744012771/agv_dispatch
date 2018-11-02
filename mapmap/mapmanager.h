@@ -6,10 +6,11 @@
 #include <exception>
 #include <atomic>
 #include <vector>
+#include <queue>
+#include <boost/noncopyable.hpp>
 #include "onemap.h"
 #include "../agv.h"
 #include "../common.h"
-#include "../utils/noncopyable.h"
 #include "../network/tcpsession.h"
 #include "../Anting/station_pos.h"
 
@@ -18,7 +19,7 @@ class MapManager;
 using MapManagerPtr = std::shared_ptr<MapManager>;
 
 //地图 由两部分助成： 点AgvStation 和 点之间的连线AgvLine
-class MapManager : public noncopyable, public std::enable_shared_from_this<MapManager>
+class MapManager : public boost::noncopyable, public std::enable_shared_from_this<MapManager>
 {
 public:
 

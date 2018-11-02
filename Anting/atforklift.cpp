@@ -19,7 +19,7 @@ AtForklift::AtForklift(int id, std::string name, std::string ip, int port) :
 void AtForklift::init() {
 
 #ifdef RESEND
-    g_threadPool.enqueue([&, this] {
+    g_threadPool.create_thread([&, this] {
         while (true) {
             std::map<int, DyMsg >::iterator iter;
             if (msgMtx.try_lock())
@@ -47,7 +47,7 @@ void AtForklift::init() {
     });
 #endif
 #ifdef HEART
-    g_threadPool.enqueue([&, this] {
+    g_threadPool.create_thread([&, this] {
         while (true) {
             heart();
             usleep(500000);
