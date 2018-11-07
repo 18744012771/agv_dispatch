@@ -77,3 +77,10 @@ void NewElevator::onDisconnect()
 {
     isConnected = false;
 }
+
+bool NewElevator::isCurrentOpenDoor(int floor)
+{
+    //查询电梯
+
+
+}

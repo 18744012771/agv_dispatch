@@ -49,13 +49,13 @@ public:
 	std::vector<AgvTaskPtr> getCurrentTasks();
 
     //用户接口
-    void interCreate(SessionPtr conn, const Json::Value &request);
-    void interQueryStatus(SessionPtr conn, const Json::Value &request);
-    void interCancel(SessionPtr conn, const Json::Value &request);
-    void interListUndo(SessionPtr conn, const Json::Value &request);
-    void interListDoing(SessionPtr conn, const Json::Value &request);
-    void interListDoneToday(SessionPtr conn, const Json::Value &request);
-    void interListDuring(SessionPtr conn, const Json::Value &request);
+    void interCreate(ClientSessionPtr conn, const Json::Value &request);
+    void interQueryStatus(ClientSessionPtr conn, const Json::Value &request);
+    void interCancel(ClientSessionPtr conn, const Json::Value &request);
+    void interListUndo(ClientSessionPtr conn, const Json::Value &request);
+    void interListDoing(ClientSessionPtr conn, const Json::Value &request);
+    void interListDoneToday(ClientSessionPtr conn, const Json::Value &request);
+    void interListDuring(ClientSessionPtr conn, const Json::Value &request);
 protected:
     TaskManager();
 private:

@@ -3,7 +3,7 @@
 #include <boost/noncopyable.hpp>
 #include "common.h"
 #include "protocol.h"
-#include "network/session.h"
+#include "network/clientsession.h"
 
 class UserManager;
 using UserManagerPtr = std::shared_ptr<UserManager>;
@@ -19,19 +19,19 @@ public:
 
     void init();
 
-    void interLogin(SessionPtr conn, const Json::Value &request);
+    void interLogin(ClientSessionPtr conn, const Json::Value &request);
 
-    void interLogout(SessionPtr conn, const Json::Value &request);
+    void interLogout(ClientSessionPtr conn, const Json::Value &request);
 
-    void interChangePassword(SessionPtr conn, const Json::Value &request);
+    void interChangePassword(ClientSessionPtr conn, const Json::Value &request);
 
-    void interList(SessionPtr conn, const Json::Value &request);
+    void interList(ClientSessionPtr conn, const Json::Value &request);
 
-    void interRemove(SessionPtr conn, const Json::Value &request);
+    void interRemove(ClientSessionPtr conn, const Json::Value &request);
 
-    void interAdd(SessionPtr conn, const Json::Value &request);
+    void interAdd(ClientSessionPtr conn, const Json::Value &request);
 
-    void interModify(SessionPtr conn, const Json::Value &request);
+    void interModify(ClientSessionPtr conn, const Json::Value &request);
 
 	virtual ~UserManager();
 private:

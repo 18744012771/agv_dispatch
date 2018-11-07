@@ -4,12 +4,13 @@
 #include "../agv.h"
 #include "../agvtask.h"
 #include "../network/sessionmanager.h"
+#include "../network/agvsession.h"
 
 #define PRECISION 30
 #define ANGLE_PRECISION 30
 #define START_RANGE 300
 #define PRECMD_RANGE 500
-#define MAX_WAITTIMES 5
+#define MAX_WAITTIMES 50
 
 #define DONGYAO_TASK_GO_HALT_STATION    -11         //执行时获取最近的空闲停留点
 
@@ -110,7 +111,9 @@ public:
     void excutePath(std::vector<int> lines);
     void goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd);
     void goElevator(const std::vector<int> lines);
-    void setQyhTcp(SessionPtr _qyhTcp);
+    void setQyhTcp(AgvSessionPtr _qyhTcp);
+
+    AgvSessionPtr getQyhTcp(){return m_qTcp;}
 
     bool startReport(int interval);
     bool endReport();
@@ -175,7 +178,7 @@ private:
 
     int task_type;
 
-    SessionPtr m_qTcp;
+    AgvSessionPtr m_qTcp;
     WarnSt m_warn;
     std::atomic_bool pauseFlag;
     std::atomic_bool sendPause;//发送的是暂停的指令，还是继续的指令.true:send pause  false:send resume

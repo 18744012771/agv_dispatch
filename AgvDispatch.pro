@@ -32,7 +32,6 @@ LIBS+=D:\thirdparty\jsoncpp\lib\x64\Debug\jsoncpp.lib
 LIBS+=D:\thirdparty\boost\install\lib\libboost_system-vc141-mt-gd-x64-1_67.lib
 LIBS+=D:\thirdparty\boost\install\lib\libboost_date_time-vc141-mt-gd-x64-1_67.lib
 LIBS+=D:\thirdparty\boost\install\lib\libboost_regex-vc141-mt-gd-x64-1_67.lib
-
 }
 
 HEADERS += \
@@ -85,14 +84,6 @@ HEADERS += \
     Dongyao/dyforkliftthingfork.h \
     Dongyao/charge/chargemachine.h \
     qyhbuffer.h \
-    network/sessionmanager.h \
-    network/tcpacceptor.h \
-    network/tcpclient.h \
-    network/session.h \
-    network/websocketsession.h \
-    network/acceptor.h \
-    network/websocketacceptor.h \
-    network/tcpsession.h \
     Anting/attaskmaker.h \
     Anting/atforklift.h \
     Anting/atforkliftthingfork.h \
@@ -106,7 +97,17 @@ HEADERS += \
     mapmap/conflictmanager.h \
     mapmap/mapconflictpair.h \
     device/new_elevator/newelevatormanager.h \
-    device/new_elevator/newelevator.h
+    device/new_elevator/newelevator.h \
+    network/agvserver.h \
+    network/agvsession.h \
+    network/clientserver.h \
+    network/clientsession.h \
+    network/server.h \
+    network/session.h \
+    network/sessionmanager.h \
+    network/tcpclient.h
+
+
 SOURCES += \
     agv.cpp \
     agvmanager.cpp \
@@ -152,14 +153,6 @@ SOURCES += \
     Dongyao/dyforkliftthingfork.cpp \
     Dongyao/charge/chargemachine.cpp \
     qyhbuffer.cpp \
-    network/sessionmanager.cpp \
-    network/tcpacceptor.cpp \
-    network/tcpclient.cpp \
-    network/session.cpp \
-    network/websocketsession.cpp \
-    network/acceptor.cpp \
-    network/websocketacceptor.cpp \
-    network/tcpsession.cpp \
     Anting/atforklift.cpp \
     Anting/atforkliftthingfork.cpp \
     Anting/attaskmaker.cpp \
@@ -172,4 +165,12 @@ SOURCES += \
     mapmap/conflictmanager.cpp \
     mapmap/mapconflictpair.cpp \
     device/new_elevator/newelevatormanager.cpp \
-    device/new_elevator/newelevator.cpp
+    device/new_elevator/newelevator.cpp \
+    network/agvserver.cpp \
+    network/agvsession.cpp \
+    network/clientserver.cpp \
+    network/clientsession.cpp \
+    network/server.cpp \
+    network/session.cpp \
+    network/sessionmanager.cpp \
+    network/tcpclient.cpp

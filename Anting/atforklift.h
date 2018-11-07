@@ -4,6 +4,7 @@
 #include "../agv.h"
 #include "../agvtask.h"
 #include "../network/sessionmanager.h"
+#include "../network/agvsession.h"
 
 #define AT_PRECISION 60
 #define AT_MOVE_HEIGHT 400
@@ -57,7 +58,7 @@ public:
     void excutePath(std::vector<int> lines);
     void goStation(std::vector<int> lines,  bool stop);
 
-    void setQyhTcp(SessionPtr _qyhTcp);
+    void setQyhTcp(AgvSessionPtr _qyhTcp);
 
     bool startReport(int interval);
     bool endReport();
@@ -107,7 +108,7 @@ private:
     bool startLift = false;
     int task_type;
 
-    SessionPtr m_qTcp;
+    AgvSessionPtr m_qTcp;
 
     bool pausedFlag;//是否暂停了
     bool sendPause;//发送的是暂停的指令，还是继续的指令

@@ -67,7 +67,7 @@ void DeviceManager::foreachDevice(DeviceEachCallback cb)
     }
 }
 
-void DeviceManager::getDeviceLog(SessionPtr conn, const Json::Value &request)
+void DeviceManager::getDeviceLog(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -120,7 +120,7 @@ DevicePtr DeviceManager::getDeviceByIP(std::string ip)
 }
 
 
-void DeviceManager::interElevatorControl(SessionPtr conn, const Json::Value &request)
+void DeviceManager::interElevatorControl(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;

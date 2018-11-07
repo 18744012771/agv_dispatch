@@ -11,7 +11,7 @@
 #include "onemap.h"
 #include "../agv.h"
 #include "../common.h"
-#include "../network/tcpsession.h"
+#include "../network/clientsession.h"
 #include "../Anting/station_pos.h"
 
 
@@ -91,13 +91,13 @@ public:
     std::list<int> getOccuSpirit(int agvId);
 
     //用户接口
-    void interSetMap(SessionPtr conn, const Json::Value &request);
-    void interGetMap(SessionPtr conn, const Json::Value &request);
+    void interSetMap(ClientSessionPtr conn, const Json::Value &request);
+    void interGetMap(ClientSessionPtr conn, const Json::Value &request);
 
-    void interTrafficControlStation(SessionPtr conn, const Json::Value &request);
-    void interTrafficControlLine(SessionPtr conn, const Json::Value &request);
-    void interTrafficReleaseStation(SessionPtr conn, const Json::Value &request);
-    void interTrafficReleaseLine(SessionPtr conn, const Json::Value &request);
+    void interTrafficControlStation(ClientSessionPtr conn, const Json::Value &request);
+    void interTrafficControlLine(ClientSessionPtr conn, const Json::Value &request);
+    void interTrafficReleaseStation(ClientSessionPtr conn, const Json::Value &request);
+    void interTrafficReleaseLine(ClientSessionPtr conn, const Json::Value &request);
 
     void printGroup();
 

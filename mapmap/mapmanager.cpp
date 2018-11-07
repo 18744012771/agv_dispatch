@@ -1735,7 +1735,7 @@ std::vector<int> MapManager::getStations(int floor)
     return allstation;
 }
 
-void MapManager::interSetMap(SessionPtr conn, const Json::Value &request)
+void MapManager::interSetMap(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -1957,7 +1957,7 @@ void MapManager::interSetMap(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void MapManager::interGetMap(SessionPtr conn, const Json::Value &request)
+void MapManager::interGetMap(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -2132,7 +2132,7 @@ void MapManager::interGetMap(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void MapManager::interTrafficControlStation(SessionPtr conn, const Json::Value &request)
+void MapManager::interTrafficControlStation(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -2187,7 +2187,7 @@ void MapManager::interTrafficControlStation(SessionPtr conn, const Json::Value &
     conn->send(response);
 }
 
-void MapManager::interTrafficReleaseLine(SessionPtr conn, const Json::Value &request)
+void MapManager::interTrafficReleaseLine(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -2243,7 +2243,7 @@ void MapManager::interTrafficReleaseLine(SessionPtr conn, const Json::Value &req
 }
 
 
-void MapManager::interTrafficReleaseStation(SessionPtr conn, const Json::Value &request)
+void MapManager::interTrafficReleaseStation(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -2298,7 +2298,7 @@ void MapManager::interTrafficReleaseStation(SessionPtr conn, const Json::Value &
     conn->send(response);
 }
 
-void MapManager::interTrafficControlLine(SessionPtr conn, const Json::Value &request)
+void MapManager::interTrafficControlLine(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;

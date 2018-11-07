@@ -55,7 +55,7 @@ void UserLogManager::push(const std::string &s)
     logQueue.push(log);
 }
 
-void UserLogManager::interLogDuring(SessionPtr conn,const Json::Value &request)
+void UserLogManager::interLogDuring(ClientSessionPtr conn,const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;

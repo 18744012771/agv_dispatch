@@ -7,7 +7,7 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include "protocol.h"
-#include "network/session.h"
+#include "network/clientsession.h"
 
 class Agv;
 using AgvPtr = std::shared_ptr<Agv>;
@@ -45,16 +45,16 @@ public:
 
     void getStatusJson(Json::Value &json);
 
-    void setServerAccepterID(int serverID);
+    //void setServerAccepterID(int serverID);
 
-    int getServerAccepterID(){return _serverID;}
+    //int getServerAccepterID(){return _serverID;}
     //用户接口
-    void interList(SessionPtr conn, const Json::Value &request);
-    void interAdd(SessionPtr conn, const Json::Value &request);
-    void interDelete(SessionPtr conn, const Json::Value &request);
-    void interModify(SessionPtr conn, const Json::Value &request);
-    void interStop(SessionPtr conn, const Json::Value &request);
-    void interInitPosition(SessionPtr conn, const Json::Value &request);
+    void interList(ClientSessionPtr conn, const Json::Value &request);
+    void interAdd(ClientSessionPtr conn, const Json::Value &request);
+    void interDelete(ClientSessionPtr conn, const Json::Value &request);
+    void interModify(ClientSessionPtr conn, const Json::Value &request);
+    void interStop(ClientSessionPtr conn, const Json::Value &request);
+    void interInitPosition(ClientSessionPtr conn, const Json::Value &request);
 protected:
     AgvManager();
 private:
@@ -62,7 +62,7 @@ private:
 
     std::mutex mtx;
     std::vector<AgvPtr> agvs;
-    int _serverID;
+    //int _serverID;
 };
 
 #endif // AGVMANAGER_H

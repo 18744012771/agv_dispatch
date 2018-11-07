@@ -48,19 +48,16 @@ void DyForklift::init() {
                 {
                     iter->second.waitTime++;
                     combined_logger->info("lastsend:{0}, waitTime:{1}", iter->first, iter->second.waitTime);
-                    //TODO waitTime>n resend
                     if (iter->second.waitTime > MAX_WAITTIMES)
                     {
                         //TODO 判断连接是否有效
-                        if (m_qTcp)
+                        if (m_qTcp && m_qTcp->alive())
                         {
-                            int ret = m_qTcp->doSend(iter->second.msg.c_str(), iter->second.msg.length());
-                            combined_logger->info("resend:{0}, waitTime:{1}, result:{2}", iter->first, iter->second.waitTime, ret ? "success" : "fail");
+                            m_qTcp->write(iter->second.msg.c_str(), iter->second.msg.length());
                             iter->second.waitTime = 0;
                         }
                     }
                 }
-
                 unRecvMsgMtx.unlock();
             }
             sleep(1);
@@ -624,21 +621,24 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         while(!g_quit && currentTask != nullptr && !currentTask->getIsCancel()){
             elemanagerptr->resetElevatorState(elevator_id);
-
             sleep(3);
-
             if (elevator->getResetOk())
                 break;
         }
 
         combined_logger->info("DyForklift,  excutePath, from_floor: {0}, to_floor: {1}", from_floor, to_floor);
 
-        //呼梯
         elevator->setCurrentOpenDoorFloor(-1);
-        while (!g_quit && !currentTask->getIsCancel()) {
-            elemanagerptr->call(elevator_id, from_floor);
-            sleep(2);
-            if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
+        elemanagerptr->queryElevatorState(elevator_id);
+        sleep(1);
+        if (elevator->getCurrentOpenDoorFloor() != from_floor){
+            //呼梯
+            elevator->setCurrentOpenDoorFloor(-1);
+            while (!g_quit && !currentTask->getIsCancel()) {
+                elemanagerptr->call(elevator_id, from_floor);
+                sleep(2);
+                if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
+            }
         }
 
         if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
@@ -659,8 +659,6 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         //关门
         elemanagerptr->DropOpen(elevator_id);
-        Sleep(2);
-
         elemanagerptr->resetElevatorState(elevator_id);
         while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
             sleep(2);
@@ -957,7 +955,7 @@ void DyForklift::checkCanResume()
     //
 }
 
-void DyForklift::setQyhTcp(SessionPtr _qyhTcp)
+void DyForklift::setQyhTcp(AgvSessionPtr _qyhTcp)
 {
     if (_qyhTcp == nullptr) {
         status = Agv::AGV_STATUS_UNCONNECT;
@@ -969,21 +967,19 @@ void DyForklift::setQyhTcp(SessionPtr _qyhTcp)
 bool DyForklift::send(const std::string &data)
 {
     std::string sendContent = transToFullMsg(data);
+    if (sendContent.length() < 13)return false;
 
     if (FORKLIFT_HEART != stringToInt(sendContent.substr(11, 2)))
     {
         combined_logger->info("send to agv{0}:{1}", id, sendContent);
     }
-    if (nullptr == m_qTcp)
+    if (nullptr == m_qTcp || !m_qTcp->alive())
     {
-        combined_logger->info("tcp is not available");
         return false;
     }
-    bool res = m_qTcp->doSend(sendContent.c_str(), sendContent.length());
-    if (!res) {
-        combined_logger->info("send to agv msg fail!");
-    }
-    if (sendContent.length() < 13)return res;
+
+    m_qTcp->write(sendContent.c_str(), sendContent.length());
+
     DyMsg msg;
     msg.msg = sendContent;
     msg.waitTime = 0;
@@ -991,12 +987,12 @@ bool DyForklift::send(const std::string &data)
     m_unRecvSend[stoi(msg.msg.substr(1, 6))] = msg;
     unRecvMsgMtx.unlock();
     int msgType = stringToInt(msg.msg.substr(11, 2));
-    if (FORKLIFT_STARTREPORT != msgType && FORKLIFT_HEART != msgType)
+    if (FORKLIFT_HEART != msgType)
     {
         UNIQUE_LCK lck(unFinishMsgMtx);
         m_unFinishCmd[msgType] = msg;
     }
-    return res;
+    return false;
 }
 
 //开始上报

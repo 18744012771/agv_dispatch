@@ -9,7 +9,7 @@
 #include <boost/noncopyable.hpp>
 #include "../../protocol.h"
 #include "newelevator.h"
-#include "../../network/session.h"
+#include "../../network/clientsession.h"
 #include "../../qyhbuffer.h"
 
 class NewElevatorManager;
@@ -76,6 +76,9 @@ public:
     //重置电梯
     void resetElevatorState(int elevator_id);
 
+    //chaxun dianti zhuangtai
+    void queryElevatorState(int elevator_id);
+
     //电梯使能
     void setEnable(int id, bool enable);
 
@@ -93,7 +96,7 @@ public:
 
 	std::vector<NewElevator *> getAllEles() { return eles; }
 
-	void interSetEnableELE(SessionPtr conn, const Json::Value &request);
+    void interSetEnableELE(ClientSessionPtr conn, const Json::Value &request);
 
     void getCmdData(int floor, int ele_id, int cmd, unsigned char(&data)[8]);
 private:

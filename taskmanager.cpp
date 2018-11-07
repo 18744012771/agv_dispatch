@@ -113,6 +113,11 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                         //combined_logger->error(" tempagv->status != Agv::AGV_STATUS_IDLE return... ");
                         return;
                     }
+//                    if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO){
+//                        DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
+//                        auto session = forklift->getQyhTcp();
+//                        if(session == nullptr||session->getUsed()>=2.0)return ;
+//                    }
                     if (tempagv->getNowStation() != 0)
                     {
                         int tempDis;
@@ -720,12 +725,12 @@ std::vector<AgvTaskPtr> TaskManager::getCurrentTasks()
     return tasks;
 }
 
-void TaskManager::interCreate(SessionPtr conn, const Json::Value &request)
+void TaskManager::interCreate(ClientSessionPtr conn, const Json::Value &request)
 {
     TaskMaker::getInstance()->makeTask(conn, request);
 }
 
-void TaskManager::interQueryStatus(SessionPtr conn, const Json::Value &request)
+void TaskManager::interQueryStatus(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -748,7 +753,7 @@ void TaskManager::interQueryStatus(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void TaskManager::interCancel(SessionPtr conn, const Json::Value &request)
+void TaskManager::interCancel(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -771,7 +776,7 @@ void TaskManager::interCancel(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void TaskManager::interListUndo(SessionPtr conn, const Json::Value &request)
+void TaskManager::interListUndo(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -800,7 +805,7 @@ void TaskManager::interListUndo(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void TaskManager::interListDoing(SessionPtr conn, const Json::Value &request)
+void TaskManager::interListDoing(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -828,7 +833,7 @@ void TaskManager::interListDoing(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void TaskManager::interListDoneToday(SessionPtr conn, const Json::Value &request)
+void TaskManager::interListDoneToday(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -881,7 +886,7 @@ void TaskManager::interListDoneToday(SessionPtr conn, const Json::Value &request
     conn->send(response);
 }
 
-void TaskManager::interListDuring(SessionPtr conn, const Json::Value &request)
+void TaskManager::interListDuring(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;

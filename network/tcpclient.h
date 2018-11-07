@@ -52,7 +52,7 @@ private:
 
     bool quit;
 
-    boost::asio::io_service io_context;
+    boost::asio::io_context io_context;
 
     boost::shared_ptr<tcp::socket> s;
 

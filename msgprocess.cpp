@@ -15,47 +15,47 @@ MsgProcess::MsgProcess()
 
 }
 
-void MsgProcess::interAddSubAgvPosition(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interAddSubAgvPosition(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " sub AGV position info");
-    addSubAgvPosition(conn->getSessionID());
+    addSubAgvPosition(conn);
     conn->send(response);
 }
-void MsgProcess::interAddSubAgvStatus(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interAddSubAgvStatus(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " sub AGV status info");
-    addSubAgvStatus(conn->getSessionID());
+    addSubAgvStatus(conn);
     conn->send(response);
 }
-void MsgProcess::interAddSubTask(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interAddSubTask(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " sub task info");
-    addSubTask(conn->getSessionID());
+    addSubTask(conn);
     conn->send(response);
 }
-void MsgProcess::interAddSubLog(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interAddSubLog(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " sub log info");
-    addSubLog(conn->getSessionID());
+    addSubLog(conn);
     conn->send(response);
 }
-void MsgProcess::interAddSubELE(SessionPtr conn, const Json::Value &request)
+void MsgProcess::interAddSubELE(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -63,50 +63,50 @@ void MsgProcess::interAddSubELE(SessionPtr conn, const Json::Value &request)
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " sub ele info");
-    addSubELE(conn->getSessionID());
+    addSubELE(conn);
     conn->send(response);
 }
-void MsgProcess::interRemoveSubAgvPosition(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interRemoveSubAgvPosition(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " cancel AGV position info");
-    removeSubAgvPosition(conn->getSessionID());
+    removeSubAgvPosition(conn);
     conn->send(response);
 }
-void MsgProcess::interRemoveSubAgvStatus(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interRemoveSubAgvStatus(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " cancel AGV status info");
-    removeSubAgvStatus(conn->getSessionID());
+    removeSubAgvStatus(conn);
     conn->send(response);
 }
-void MsgProcess::interRemoveSubTask(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interRemoveSubTask(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " cancel task info");
-    removeSubTask(conn->getSessionID());
+    removeSubTask(conn);
     conn->send(response);
 }
-void MsgProcess::interRemoveSubLog(SessionPtr conn, const Json::Value &request) {
+void MsgProcess::interRemoveSubLog(ClientSessionPtr conn, const Json::Value &request) {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
     response["todo"] = request["todo"];
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " cancel sub log");
-    removeSubLog(conn->getSessionID());
+    removeSubLog(conn);
     conn->send(response);
 }
-void MsgProcess::interRemoveSubELE(SessionPtr conn, const Json::Value &request)
+void MsgProcess::interRemoveSubELE(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -114,10 +114,10 @@ void MsgProcess::interRemoveSubELE(SessionPtr conn, const Json::Value &request)
     response["queuenumber"] = request["queuenumber"];
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
     UserLogManager::getInstance()->push(conn->getUserName() + " cancel sub ele");
-    removeSubELE(conn->getSessionID());
+    removeSubELE(conn);
     conn->send(response);
 }
-void MsgProcess::onSessionClosed(int id)
+void MsgProcess::onSessionClosed(ClientSessionPtr id)
 {
     removeSubAgvPosition(id);
     removeSubAgvStatus(id);
@@ -126,28 +126,28 @@ void MsgProcess::onSessionClosed(int id)
     removeSubELE(id);
 }
 
-void MsgProcess::addSubAgvPosition(int id)
+void MsgProcess::addSubAgvPosition(ClientSessionPtr id)
 {
     UNIQUE_LCK(psMtx);
     if (std::find(agvPositionSubers.begin(), agvPositionSubers.end(), id) == agvPositionSubers.end()) {
         agvPositionSubers.push_back(id);
     }
 }
-void MsgProcess::addSubAgvStatus(int id)
+void MsgProcess::addSubAgvStatus(ClientSessionPtr id)
 {
     UNIQUE_LCK(ssMtx);
     if (std::find(agvStatusSubers.begin(), agvStatusSubers.end(), id) == agvStatusSubers.end()) {
         agvStatusSubers.push_back(id);
     }
 }
-void MsgProcess::addSubTask(int id)
+void MsgProcess::addSubTask(ClientSessionPtr id)
 {
     UNIQUE_LCK(tsMtx);
     if (std::find(taskSubers.begin(), taskSubers.end(), id) == taskSubers.end()) {
         taskSubers.push_back(id);
     }
 }
-void MsgProcess::addSubLog(int id)
+void MsgProcess::addSubLog(ClientSessionPtr id)
 {
     UNIQUE_LCK(lsMtx);
     if (std::find(logSubers.begin(), logSubers.end(), id) == logSubers.end()) {
@@ -155,7 +155,7 @@ void MsgProcess::addSubLog(int id)
     }
 }
 
-void MsgProcess::addSubELE(int id)
+void MsgProcess::addSubELE(ClientSessionPtr id)
 {
     UNIQUE_LCK(eleMtx);
     if (std::find(eleSubers.begin(), eleSubers.end(), id) == eleSubers.end()) {
@@ -163,7 +163,7 @@ void MsgProcess::addSubELE(int id)
     }
 }
 
-void MsgProcess::removeSubAgvPosition(int id)
+void MsgProcess::removeSubAgvPosition(ClientSessionPtr id)
 {
     UNIQUE_LCK(psMtx);
     auto itr = std::find(agvPositionSubers.begin(), agvPositionSubers.end(), id);
@@ -171,7 +171,7 @@ void MsgProcess::removeSubAgvPosition(int id)
         agvPositionSubers.erase(itr);
     }
 }
-void MsgProcess::removeSubAgvStatus(int id)
+void MsgProcess::removeSubAgvStatus(ClientSessionPtr id)
 {
     UNIQUE_LCK(ssMtx);
     auto itr = std::find(agvStatusSubers.begin(), agvStatusSubers.end(), id);
@@ -179,7 +179,7 @@ void MsgProcess::removeSubAgvStatus(int id)
         agvStatusSubers.erase(itr);
     }
 }
-void MsgProcess::removeSubTask(int id)
+void MsgProcess::removeSubTask(ClientSessionPtr id)
 {
     UNIQUE_LCK(tsMtx);
     auto itr = std::find(taskSubers.begin(), taskSubers.end(), id);
@@ -187,7 +187,7 @@ void MsgProcess::removeSubTask(int id)
         taskSubers.erase(itr);
     }
 }
-void MsgProcess::removeSubLog(int id)
+void MsgProcess::removeSubLog(ClientSessionPtr id)
 {
     UNIQUE_LCK(lsMtx);
     auto itr = std::find(logSubers.begin(), logSubers.end(), id);
@@ -196,7 +196,7 @@ void MsgProcess::removeSubLog(int id)
     }
 }
 
-void MsgProcess::removeSubELE(int id)
+void MsgProcess::removeSubELE(ClientSessionPtr id)
 {
     UNIQUE_LCK(eleMtx);
     auto itr = std::find(eleSubers.begin(), eleSubers.end(), id);
@@ -230,7 +230,7 @@ void MsgProcess::publisher_agv_position()
             if (aps["agvs"].isNull())continue;
             //执行发送
             for (auto c : agvPositionSubers) {
-                SessionManager::getInstance()->sendSessionData(c, aps);
+                c->send(aps);
             }
         }
     }
@@ -261,7 +261,7 @@ void MsgProcess::publisher_agv_status()
             if (agvStatusSubers.empty())continue;
             //执行发送
             for (auto c : agvStatusSubers) {
-                SessionManager::getInstance()->sendSessionData(c, response);
+                c->send(response);
             }
         }
     }
@@ -350,8 +350,7 @@ void MsgProcess::publisher_task()
             UNIQUE_LCK(tsMtx);
             if (taskSubers.size() <= 0)continue;
             for (auto c : taskSubers) {
-                SessionManager::getInstance()->sendSessionData(c, response);
-
+                c->send(response);
             }
         }
     }
@@ -392,7 +391,7 @@ void MsgProcess::publisher_ELE()
             UNIQUE_LCK(eleMtx);
             if (eleSubers.size() <= 0)continue;
             for (auto c : eleSubers) {
-                SessionManager::getInstance()->sendSessionData(c, response);
+                c->send(response);
             }
         }
     }
@@ -417,24 +416,8 @@ void MsgProcess::sessionLogout(int user_id)
     g_db.execDML(ss.str().c_str());
 }
 
-void MsgProcess::removeSubSession(int session)
-{
-    psMtx.lock();
-    agvPositionSubers.remove(session);
-    psMtx.unlock();
-    ssMtx.lock();
-    agvStatusSubers.remove(session);
-    ssMtx.unlock();
-    tsMtx.lock();
-    taskSubers.remove(session);
-    tsMtx.unlock();
-    lsMtx.lock();
-    logSubers.remove(session);
-    lsMtx.unlock();
-}
-
 //进来一个消息,分配给一个线程去处理它
-void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
+void MsgProcess::processOneMsg(const Json::Value &request, ClientSessionPtr session)
 {
     //request需要copy一个到线程中。
     g_threads.create_thread([&, request, session] {
@@ -457,7 +440,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, SessionPtr session)
             }
         }
 
-        typedef std::function<void(SessionPtr, const Json::Value &)> ProcessFunction;
+        typedef std::function<void(ClientSessionPtr, const Json::Value &)> ProcessFunction;
 
         //TODO:
         //combined_logger->debug("recv request:{0}", request.toStyledString());
@@ -542,7 +525,7 @@ void MsgProcess::publishOneLog(USER_LOG log)
         response["log"] = vlog;
         UNIQUE_LCK(lsMtx);
         for (auto c : logSubers) {
-            SessionManager::getInstance()->sendSessionData(c, response);
+            c->send(response);
         }
     });
 }
@@ -566,7 +549,7 @@ void MsgProcess::notifyAll(ENUM_NOTIFY_ALL_TYPE type)
         response["todo"] = MSG_TODO_NOTIFY_ALL_MAP_UPDATE;
         response["queuenumber"] = 0;
 
-        SessionManager::getInstance()->sendData(response);
+        SessionManager::getInstance()->sendToAllClient(response);
     }
     else if (type == ENUM_NOTIFY_ALL_TYPE_ERROR) {
 
@@ -578,7 +561,7 @@ void MsgProcess::notifyAll(ENUM_NOTIFY_ALL_TYPE type)
         response["error_code"] = error_code;
         response["error_info"] = error_info;
 
-        SessionManager::getInstance()->sendData(response);
+        SessionManager::getInstance()->sendToAllClient(response);
     }
 }
 

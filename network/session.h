@@ -1,72 +1,59 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include <memory>
-#include <atomic>
-#ifdef WIN32
-#include <json/json.h>
-#else
-#include <jsoncpp/json/json.h>
-#endif
+#include <boost/noncopyable.hpp>
+#include <boost/asio.hpp>
+#include "../qyhbuffer.h"
+#include "../protocol.h"
 
-class TimeUsed;
+class SessionManager;
+using SessionManagerPtr = std::shared_ptr<SessionManager>;
 class Session;
 using SessionPtr = std::shared_ptr<Session>;
 
-class Session : public std::enable_shared_from_this<Session>
+class Session : public std::enable_shared_from_this<Session>,private boost::noncopyable
 {
 public:
-    Session(int sessionId,int acceptId);
+    explicit Session(boost::asio::io_context &_context);
 
-    virtual ~Session();
+    virtual void afterread() = 0;
+    virtual void onStart() = 0 ;//add session to session manager
+    virtual void onStop() = 0 ;//remove session from session manager
 
-    virtual void send(const Json::Value &json) = 0;
+    boost::asio::ip::tcp::socket& socket();
 
-    virtual bool doSend(const char *data,int len) = 0;
+    void start();
+    void stop();
+    void read();
+    void send(const Json::Value &json);
+    void write(const char *data,int len);
+    int getSessionId(){return sessionId;}
+    bool alive(){return socket_.is_open();}
 
-    virtual void close() = 0;
+    virtual void onread(const boost::system::error_code& ec,
+        std::size_t bytes_transferred);
+    virtual void onTimeOut(const boost::system::error_code &ec);
+    virtual void onWrite(boost::system::error_code ec);
+    int getTimeout(){return timeout;}
+    void setTimeout(int _timeout){
+        wait_request_timer_.cancel();
+        timeout = _timeout;
+        wait_request_timer_.expires_from_now(boost::posix_time::seconds(timeout));
+    }
 
-    virtual void start() = 0;
 
-    int getSessionID(){ return _sessionID; }
-
-    void setSessionID(int sID){ _sessionID = sID; }
-
-    int getAcceptID(){ return _acceptID; }
-
-    void setAcceptnID(int sID){ _acceptID = sID; }
-
-    void setUserId(int _user_id){user_id = _user_id;}
-
-    int getUserId(){return user_id;}
-
-    void setUserRole(int _user_role){user_role = _user_role;}
-
-    int getUserRole(){return user_role;}
-
-    void setUserName(std::string _user_name){username = _user_name;}
-
-    std::string getUserName(){return username;}
-
-    double getUsed();
-
-    int getTimeOut(){return timeout;}
-
-    bool isAlive(){return alive;}
 protected:
-    int _sessionID = -1;
-    int _acceptID = -1;
-
-    //连接保存一个用户的两个信息
-    int user_id = 0;
-    int user_role = 0;
-    std::string username;
-
-    int timeout;//recv time out,seconds
-
-    TimeUsed *t;//jishiqi
-
-    std::atomic_bool alive;
+    template <typename Derived>
+    std::shared_ptr<Derived> shared_from_base() {
+        return std::static_pointer_cast<Derived>(shared_from_this());
+    }
+    boost::asio::ip::tcp::socket socket_;
+    boost::asio::io_context::strand strand_;
+    boost::asio::deadline_timer wait_request_timer_;
+    int sessionId;
+    QyhBuffer buffer;
+    char read_buffer[MSG_READ_BUFFER_LENGTH];
+    int timeout;
 };
 
 #endif // SESSION_H

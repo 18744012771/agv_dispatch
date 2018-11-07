@@ -5,7 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include "common.h"
 #include "protocol.h"
-#include "network/session.h"
+#include "network/clientsession.h"
 
 class UserLogManager;
 using UserLogManagerPtr = std::shared_ptr<UserLogManager>;
@@ -27,7 +27,7 @@ public:
 
     void push(const std::string &s);
 
-    void interLogDuring(SessionPtr conn, const Json::Value &request);
+    void interLogDuring(ClientSessionPtr conn, const Json::Value &request);
 
 private:
     UserLogManager();

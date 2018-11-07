@@ -30,10 +30,10 @@ void AgvManager::checkTable()
     }
 }
 
-void AgvManager::setServerAccepterID(int serverID)
-{
-    _serverID = serverID;
-}
+//void AgvManager::setServerAccepterID(int serverID)
+//{
+//    _serverID = serverID;
+//}
 
 bool AgvManager::init()
 {
@@ -258,7 +258,7 @@ void AgvManager::getPositionJson(Json::Value &json)
         json["agvs"] = json_all_agv;
 }
 
-void AgvManager::interList(SessionPtr conn, const Json::Value &request)
+void AgvManager::interList(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -285,7 +285,7 @@ void AgvManager::interList(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void AgvManager::interAdd(SessionPtr conn, const Json::Value &request)
+void AgvManager::interAdd(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -349,7 +349,7 @@ void AgvManager::interAdd(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void AgvManager::interDelete(SessionPtr conn, const Json::Value &request)
+void AgvManager::interDelete(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -391,7 +391,7 @@ void AgvManager::interDelete(SessionPtr conn, const Json::Value &request)
     conn->send(response);
 }
 
-void AgvManager::interInitPosition(SessionPtr conn, const Json::Value &request)
+void AgvManager::interInitPosition(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -427,7 +427,7 @@ void AgvManager::interInitPosition(SessionPtr conn, const Json::Value &request)
 
 }
 
-void AgvManager::interStop(SessionPtr conn, const Json::Value &request)
+void AgvManager::interStop(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;
@@ -454,7 +454,7 @@ void AgvManager::interStop(SessionPtr conn, const Json::Value &request)
 }
 
 
-void AgvManager::interModify(SessionPtr conn, const Json::Value &request)
+void AgvManager::interModify(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;

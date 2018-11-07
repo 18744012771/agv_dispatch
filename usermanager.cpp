@@ -36,7 +36,7 @@ void UserManager::init()
 }
 
 
-void UserManager::interLogin(SessionPtr conn, const Json::Value &request)
+void UserManager::interLogin(ClientSessionPtr conn, const Json::Value &request)
 {
 	Json::Value response;
 	response["type"] = MSG_TYPE_RESPONSE;
@@ -112,7 +112,7 @@ void UserManager::interLogin(SessionPtr conn, const Json::Value &request)
 	conn->send(response);
 }
 
-void UserManager::interLogout(SessionPtr conn, const Json::Value &request)
+void UserManager::interLogout(ClientSessionPtr conn, const Json::Value &request)
 {
 	Json::Value response;
 	response["type"] = MSG_TYPE_RESPONSE;
@@ -150,10 +150,10 @@ void UserManager::interLogout(SessionPtr conn, const Json::Value &request)
 	conn->send(response);
 
 	//断开连接
-	SessionManager::getInstance()->kickSession(conn->getSessionID());
+    conn->stop();
 }
 
-void UserManager::interChangePassword(SessionPtr conn, const Json::Value &request)
+void UserManager::interChangePassword(ClientSessionPtr conn, const Json::Value &request)
 {
 	Json::Value response;
 	response["type"] = MSG_TYPE_RESPONSE;
@@ -195,10 +195,10 @@ void UserManager::interChangePassword(SessionPtr conn, const Json::Value &reques
 	conn->send(response);
 
 	//断开连接
-	SessionManager::getInstance()->kickSession(conn->getSessionID());
+    conn->stop();
 }
 
-void UserManager::interList(SessionPtr conn, const Json::Value &request)
+void UserManager::interList(ClientSessionPtr conn, const Json::Value &request)
 {
 	Json::Value response;
 	response["type"] = MSG_TYPE_RESPONSE;
@@ -253,7 +253,7 @@ void UserManager::interList(SessionPtr conn, const Json::Value &request)
 	conn->send(response);
 }
 
-void UserManager::interRemove(SessionPtr conn, const Json::Value &request)
+void UserManager::interRemove(ClientSessionPtr conn, const Json::Value &request)
 {
 	int deleteid = 0;
 
@@ -322,13 +322,13 @@ void UserManager::interRemove(SessionPtr conn, const Json::Value &request)
 	//发送返回值
 	conn->send(response);
 
-	//断开 被删除的用户的 连接
-	if (deleteid > 0) {
-		SessionManager::getInstance()->kickSessionByUserId(deleteid);
-	}
+//	//断开 被删除的用户的 连接
+//	if (deleteid > 0) {
+//		SessionManager::getInstance()->kickSessionByUserId(deleteid);
+//	}
 }
 
-void UserManager::interAdd(SessionPtr conn, const Json::Value &request)
+void UserManager::interAdd(ClientSessionPtr conn, const Json::Value &request)
 {
 	Json::Value response;
 	response["type"] = MSG_TYPE_RESPONSE;
@@ -391,7 +391,7 @@ void UserManager::interAdd(SessionPtr conn, const Json::Value &request)
 	conn->send(response);
 }
 
-void UserManager::interModify(SessionPtr conn, const Json::Value &request)
+void UserManager::interModify(ClientSessionPtr conn, const Json::Value &request)
 {
 	Json::Value response;
 	response["type"] = MSG_TYPE_RESPONSE;

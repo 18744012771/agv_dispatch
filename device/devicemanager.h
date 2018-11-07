@@ -7,7 +7,7 @@
 #include <functional>
 #include <boost/noncopyable.hpp>
 #include "../protocol.h"
-#include "../network/session.h"
+#include "../network/clientsession.h"
 
 enum DEVICE_TYPE
 {
@@ -39,8 +39,8 @@ public:
     void foreachDevice(DeviceEachCallback cb);
 
     //用户接口
-    void getDeviceLog(SessionPtr conn, const Json::Value &request);
-    void interElevatorControl(SessionPtr conn, const Json::Value &request);
+    void getDeviceLog(ClientSessionPtr conn, const Json::Value &request);
+    void interElevatorControl(ClientSessionPtr conn, const Json::Value &request);
 protected:
     DeviceManager();
 private:

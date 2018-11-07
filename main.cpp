@@ -254,22 +254,15 @@ int main(int argc, char *argv[])
     //    10.初始化tcp/ip 接口
     //tcpip服务
     combined_logger->debug("SessionManager init...");
-    auto aID = SessionManager::getInstance()->addTcpAccepter(9999);
-    SessionManager::getInstance()->openTcpAccepter(aID);
-
-    //websocket fuwu
-    aID = SessionManager::getInstance()->addWebSocketAccepter(9998);
-    SessionManager::getInstance()->openWebSocketAccepter(aID);
-#ifdef DY_TEST
-    //agv server
-    combined_logger->debug("agv server init...");
-    aID = SessionManager::getInstance()->addTcpAccepter(6789);
-    SessionManager::getInstance()->openTcpAccepter(aID);
-    AgvManager::getInstance()->setServerAccepterID(aID);
-#endif
+    auto sessionmanagerptr = SessionManager::getInstance();
+    sessionmanagerptr->startAgvServer(6789);
+    sessionmanagerptr->startClientServer(9999);
     combined_logger->info("server init OK!");
-    SessionManager::getInstance()->run();
-    while(!g_quit)sleep(1);
+    sessionmanagerptr->run();
+
+    while(!g_quit){
+        sleep(1);
+    }
 
     g_threads.join_all();
 

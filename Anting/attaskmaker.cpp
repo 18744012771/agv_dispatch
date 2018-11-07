@@ -83,7 +83,7 @@ void AtTaskMaker::onDisconnect()
 }
 
 #ifndef USETABLE
-void AtTaskMaker::makeTask(SessionPtr conn, const Json::Value &request)
+void AtTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 {
     AgvTaskPtr task(new AgvTask());
 
@@ -220,7 +220,7 @@ void AtTaskMaker::makeTask(SessionPtr conn, const Json::Value &request)
     response["result"] = RETURN_MSG_RESULT_SUCCESS;
 }
 #else
-void AtTaskMaker::makeTask(SessionPtr conn, const Json::Value &request)
+void AtTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 {
     AgvTaskPtr task(new AgvTask());
 

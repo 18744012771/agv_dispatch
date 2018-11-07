@@ -96,7 +96,7 @@ void DyTaskMaker::onDisconnect()
 }
 
 
-void DyTaskMaker::makeTask(SessionPtr conn, const Json::Value &request)
+void DyTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 {
     AgvTaskPtr task(new AgvTask());
 

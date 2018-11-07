@@ -6,7 +6,7 @@
 #include <mutex>
 #include <boost/noncopyable.hpp>
 #include "protocol.h"
-#include "network/session.h"
+#include "network/clientsession.h"
 
 class MsgProcess;
 
@@ -28,13 +28,11 @@ public:
 
     bool init();
 
-    void removeSubSession(int session);
-
 	//用户断开连接导致 用户退出登录
 	void sessionLogout(int user_id);
 
     //进来一个消息,分配给一个线程去处理它
-    void processOneMsg(const Json::Value &request,SessionPtr session);
+    void processOneMsg(const Json::Value &request,ClientSessionPtr session);
 
     //发布一个日志消息
     void publishOneLog(USER_LOG log);
@@ -46,31 +44,31 @@ public:
     void errorOccur(int code,std::string msg,bool needConfirm);
 
     //用户接口
-    void interAddSubAgvPosition(SessionPtr conn, const Json::Value &request);
-    void interAddSubAgvStatus(SessionPtr conn, const Json::Value &request);
-    void interAddSubTask(SessionPtr conn, const Json::Value &request);
-    void interAddSubLog(SessionPtr conn, const Json::Value &request);
-	void interAddSubELE(SessionPtr conn, const Json::Value &request);
-    void interRemoveSubAgvPosition(SessionPtr conn, const Json::Value &request);
-    void interRemoveSubAgvStatus(SessionPtr conn,const Json::Value &request);
-    void interRemoveSubTask(SessionPtr conn, const Json::Value &request);
-    void interRemoveSubLog(SessionPtr conn, const Json::Value &request);
-	void interRemoveSubELE(SessionPtr conn, const Json::Value &request);
+    void interAddSubAgvPosition(ClientSessionPtr conn, const Json::Value &request);
+    void interAddSubAgvStatus(ClientSessionPtr conn, const Json::Value &request);
+    void interAddSubTask(ClientSessionPtr conn, const Json::Value &request);
+    void interAddSubLog(ClientSessionPtr conn, const Json::Value &request);
+	void interAddSubELE(ClientSessionPtr conn, const Json::Value &request);
+    void interRemoveSubAgvPosition(ClientSessionPtr conn, const Json::Value &request);
+    void interRemoveSubAgvStatus(ClientSessionPtr conn,const Json::Value &request);
+    void interRemoveSubTask(ClientSessionPtr conn, const Json::Value &request);
+    void interRemoveSubLog(ClientSessionPtr conn, const Json::Value &request);
+	void interRemoveSubELE(ClientSessionPtr conn, const Json::Value &request);
 
 
-    void onSessionClosed(int id);
+    void onSessionClosed(ClientSessionPtr id);
 
-    void addSubAgvPosition(int id);
-    void addSubAgvStatus(int id);
-    void addSubTask(int id);
-    void addSubLog(int id);
-	void addSubELE(int id);
+    void addSubAgvPosition(ClientSessionPtr id);
+    void addSubAgvStatus(ClientSessionPtr id);
+    void addSubTask(ClientSessionPtr id);
+    void addSubLog(ClientSessionPtr id);
+    void addSubELE(ClientSessionPtr id);
 
-    void removeSubAgvPosition(int id);
-    void removeSubAgvStatus(int id);
-    void removeSubTask(int id);
-    void removeSubLog(int id);
-	void removeSubELE(int id);
+    void removeSubAgvPosition(ClientSessionPtr id);
+    void removeSubAgvStatus(ClientSessionPtr id);
+    void removeSubTask(ClientSessionPtr id);
+    void removeSubLog(ClientSessionPtr id);
+    void removeSubELE(ClientSessionPtr id);
 private:
 
     void publisher_agv_position();
@@ -84,19 +82,19 @@ private:
     MsgProcess();
 
     std::mutex psMtx;
-    std::list<int> agvPositionSubers;
+    std::list<ClientSessionPtr> agvPositionSubers;
 
     std::mutex ssMtx;
-    std::list<int> agvStatusSubers;
+    std::list<ClientSessionPtr> agvStatusSubers;
 
     std::mutex tsMtx;
-    std::list<int> taskSubers;
+    std::list<ClientSessionPtr> taskSubers;
 
     std::mutex lsMtx;
-    std::list<int> logSubers;
+    std::list<ClientSessionPtr> logSubers;
 
 	std::mutex eleMtx;
-	std::list<int> eleSubers;
+    std::list<ClientSessionPtr> eleSubers;
 
     std::mutex errorMtx;
     int error_code;

@@ -1,62 +1,68 @@
 #ifndef SESSIONMANAGER_H
 #define SESSIONMANAGER_H
 
-#include <deque>
-#include <iostream>
-#include <list>
-#include <unordered_map>
-#include <memory>
-#include <set>
-#include <utility>
-#include <atomic>
 #include <boost/asio.hpp>
-#include <boost/noncopyable.hpp>
-#include "session.h"
-#include "acceptor.h"
+#include <boost/atomic.hpp>
+#include <set>
+#include "clientsession.h"
+#include "agvsession.h"
 
-
-using boost::asio::ip::tcp;
+class ClientServer;
+class AgvServer;
 
 class SessionManager;
 using SessionManagerPtr = std::shared_ptr<SessionManager>;
 
-class SessionManager: public boost::noncopyable,public std::enable_shared_from_this<SessionManager>
+class SessionManager : public boost::noncopyable,public std::enable_shared_from_this<SessionManager>
 {
 public:
+
     static SessionManagerPtr getInstance(){
         static SessionManagerPtr m_inst = SessionManagerPtr(new SessionManager());
         return m_inst;
     }
 
-    int addTcpAccepter(int port);
-    void openTcpAccepter(int aID);
+    void startAgvServer(int port);
 
-    int addWebSocketAccepter(int port);
-    void openWebSocketAccepter(int aID);
+    void startClientServer(int port);
+
+    void addAgvSession(AgvSessionPtr c);
+
+    void removeAgvSession(AgvSessionPtr c);
+
+    void addClientSession(ClientSessionPtr c);
+
+    void removeClientSession(ClientSessionPtr c);
 
     void run();
-    void kickSession(int sID);
-    void kickSessionByUserId(int userId);
 
-    void sendSessionData(int sID, const Json::Value &response);
-    void sendData(const Json::Value &response);
-    int getNextSessionId(){return ++nextSessionId;}
+    void stop();
 
-    void addSession(int id,SessionPtr session);
-    void removeSession(SessionPtr session);
+    int getNextSessionId(){return sessionId++;}
+
+    void sendToAllClient(Json::Value &v);
+
 private:
-    std::atomic_int nextAcceptId;
-    std::atomic_int nextSessionId;
-
-    boost::asio::io_context io_context;
 
     SessionManager();
 
-    std::mutex mapSessionMtx;
-    std::unordered_map<int, SessionPtr> _mapSessionPtr;
+    ClientServer *client;
+    AgvServer *agv;
 
-    std::mutex mapAcceptorMtx;
-    std::unordered_map<int, AcceptorPtr > _mapAcceptorPtr;
+    boost::asio::io_context io_context_;
+
+    boost::asio::signal_set signals_;
+
+    int thread_number;
+
+    boost::atomic_int   sessionId;
+
+    std::mutex agvsessoinmtx;
+    std::set<AgvSessionPtr> agvsessions;
+
+
+    std::mutex clientsessoinmtx;
+    std::set<ClientSessionPtr> clientsessions;
 };
 
 #endif // SESSIONMANAGER_H

@@ -1,143 +1,92 @@
+#include "boost/thread.hpp"
 #include "sessionmanager.h"
-#include "../common.h"
-#include "tcpsession.h"
-#include "tcpacceptor.h"
-#include "websocketsession.h"
-#include "websocketacceptor.h"
-
+#include "./agvserver.h"
+#include "./clientserver.h"
 #include "../msgprocess.h"
+#include "../common.h"
+
+#define  THREAD_NUMBER  20
 
 SessionManager::SessionManager():
-    nextAcceptId(0),
-    nextSessionId(0)
+    thread_number(THREAD_NUMBER),
+    sessionId(0),
+    signals_(io_context_),
+    client(nullptr),
+    agv(nullptr)
 {
+    signals_.add(SIGINT);
+    signals_.add(SIGTERM);
+#if defined(SIGQUIT)
+    signals_.add(SIGQUIT);
+#endif // defined(SIGQUIT)
+    signals_.async_wait(boost::bind(&SessionManager::stop, this));
 }
 
-int SessionManager::addTcpAccepter(int port)
+void SessionManager::startAgvServer(int port)
 {
-    TcpAcceptorPtr acceptor = std::make_shared<TcpAcceptor>(io_context,port,++nextAcceptId);
-    mapAcceptorMtx.lock();
-    _mapAcceptorPtr[acceptor->getId()] = acceptor;
-    mapAcceptorMtx.unlock();
-    return acceptor->getId();
-}
-
-void SessionManager::openTcpAccepter(int aID)
-{
-    mapAcceptorMtx.lock();
-    for(auto a = _mapAcceptorPtr.begin();a!=_mapAcceptorPtr.end();++a){
-        if(a->first == aID ){
-            a->second->start();
-            break;
-        }
+    if(agv == nullptr){
+        agv = new AgvServer(port,io_context_);
+        agv->start();
     }
-    mapAcceptorMtx.unlock();
 }
 
-int SessionManager::addWebSocketAccepter(int port)
+void SessionManager::startClientServer(int port)
 {
-    WebsocketAcceptorPtr acceptor = std::make_shared<WebsocketAcceptor>(io_context, port, ++nextAcceptId);
-    mapAcceptorMtx.lock();
-    _mapAcceptorPtr[acceptor->getId()] = acceptor;
-    mapAcceptorMtx.unlock();
-    return acceptor->getId();
-}
-void SessionManager::openWebSocketAccepter(int aID)
-{
-    mapAcceptorMtx.lock();
-    for (auto a = _mapAcceptorPtr.begin(); a != _mapAcceptorPtr.end(); ++a) {
-        if (a->first == aID) {
-            a->second->start();
-            break;
-        }
+    if(client == nullptr){
+        client = new ClientServer(port,io_context_);
+        client->start();
     }
-    mapAcceptorMtx.unlock();
 }
 
 void SessionManager::run()
 {
-    g_threads.create_thread([&]
+    std::vector<boost::shared_ptr<boost::thread> > threads;
+    for (std::size_t i = 0; i < thread_number; ++i)
     {
-        std::vector<int> toKickSessions;
-
-        while(!g_quit){
-            toKickSessions.clear();
-            mapSessionMtx.lock();
-            for (auto &ms : _mapSessionPtr)
-            {
-                if(!ms.second->isAlive())continue;
-                //combined_logger->debug("session{0} time used={1}",ms.first,ms.second->getUsed());
-                if(ms.second->getUsed() > 1.0*ms.second->getTimeOut())
-                {
-                    toKickSessions.push_back(ms.first);
-                }
-            }
-            mapSessionMtx.unlock();
-
-            for(auto itr = toKickSessions.begin();itr!=toKickSessions.end();++itr){
-                kickSession(*itr);
-            }
-            usleep(100000);
-        }
-    })->detach();
-}
-
-void SessionManager::kickSession(int sID)
-{
-    UNIQUE_LCK(mapSessionMtx);
-    auto iter = _mapSessionPtr.find(sID);
-    if (iter == _mapSessionPtr.end())
-    {
-        combined_logger->info("kickSession NOT FOUND SessionID. SessionID={0}", sID);
-        return;
+        boost::shared_ptr<boost::thread> thread(new boost::thread(
+                                                    boost::bind(&boost::asio::io_context::run, &io_context_)));
+        threads.push_back(thread);
     }
-    combined_logger->info("kickSession SessionID. SessionID={0}",sID);
-    iter->second->close();
+
+    for (std::size_t i = 0; i < threads.size(); ++i)
+        threads[i]->join();
 }
 
-void SessionManager::sendSessionData(int sID, const Json::Value &response)
+void SessionManager::stop()
 {
-    UNIQUE_LCK(mapSessionMtx);
-    auto iter = _mapSessionPtr.find(sID);
-    if (iter == _mapSessionPtr.end())
-    {
-        combined_logger->warn("sendSessionData NOT FOUND SessionID.  SessionID={0}",sID);
-        return;
-    }
-    iter->second->send(response);
+    io_context_.stop();
 }
 
-void SessionManager::sendData(const Json::Value &response)
+void SessionManager::addAgvSession(AgvSessionPtr c)
 {
-    UNIQUE_LCK(mapSessionMtx);
-    for (auto &ms : _mapSessionPtr)
-    {
-        ms.second->send(response);
+    UNIQUE_LCK(agvsessoinmtx);
+    agvsessions.insert(c);
+}
+
+void SessionManager::removeAgvSession(AgvSessionPtr c)
+{
+    UNIQUE_LCK(agvsessoinmtx);
+    agvsessions.erase(c);
+}
+
+void SessionManager::addClientSession(ClientSessionPtr c)
+{
+    UNIQUE_LCK(clientsessoinmtx);
+    clientsessions.insert(c);
+}
+
+void SessionManager::removeClientSession(ClientSessionPtr c)
+{
+    MsgProcess::getInstance()->onSessionClosed(c);
+    UNIQUE_LCK(clientsessoinmtx);
+    clientsessions.erase(c);
+}
+
+void SessionManager::sendToAllClient(Json::Value &v)
+{
+    UNIQUE_LCK(clientsessoinmtx);
+    for(auto itr = clientsessions.begin();itr!=clientsessions.end();){
+        (*itr)->send(v);
     }
 }
 
-void SessionManager::kickSessionByUserId(int userId)
-{
-    UNIQUE_LCK(mapSessionMtx);
-    for (auto &ms : _mapSessionPtr)
-    {
-        if (ms.second->getUserId() == userId)
-        {
-            ms.second->close();
-        }
-    }
-}
-
-void SessionManager::addSession(int id,SessionPtr session)
-{
-    UNIQUE_LCK(mapSessionMtx);
-    _mapSessionPtr[id] = session;
-}
-void SessionManager::removeSession(SessionPtr session)
-{
-    if(session==nullptr)return ;
-    UNIQUE_LCK(mapSessionMtx);
-    _mapSessionPtr.erase(session->getSessionID());
-    //取消该session的所有订阅
-    MsgProcess::getInstance()->onSessionClosed(session->getSessionID());
-}

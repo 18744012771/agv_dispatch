@@ -142,6 +142,13 @@ void NewElevatorManager::send(const char *data, int len)
     }
 }
 
+void NewElevatorManager::queryElevatorState(int elevator_id)
+{
+    unsigned char data[8];
+    getCmdData(0, elevator_id, StaEleENQ, data);
+    send((char *)data, 8);
+}
+
 void NewElevatorManager::resetElevatorState(int elevator_id)
 {
     unsigned char data[8];
@@ -305,7 +312,7 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     combined_logger->info("excute path finish");
 }
 
-void NewElevatorManager::interSetEnableELE(SessionPtr conn, const Json::Value &request)
+void NewElevatorManager::interSetEnableELE(ClientSessionPtr conn, const Json::Value &request)
 {
     Json::Value response;
     response["type"] = MSG_TYPE_RESPONSE;

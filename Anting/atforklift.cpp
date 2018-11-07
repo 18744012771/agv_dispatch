@@ -632,7 +632,7 @@ void AtForklift::goStation(std::vector<int> lines, bool stop)
         }
     }
 }
-void AtForklift::setQyhTcp(SessionPtr _qyhTcp)
+void AtForklift::setQyhTcp(AgvSessionPtr _qyhTcp)
 {
     m_qTcp = _qyhTcp;
 }
@@ -640,16 +640,14 @@ void AtForklift::setQyhTcp(SessionPtr _qyhTcp)
 bool AtForklift::send(const std::string &data)
 {
     std::string sendContent = transToFullMsg(data);
-
+        if(sendContent.length()<13)return false;
     if (ATFORKLIFT_HEART != stringToInt(sendContent.substr(11, 2)))
     {
         combined_logger->info("send to agv{0}:{1}", id, sendContent);
     }
-    bool res = m_qTcp->doSend(sendContent.c_str(), sendContent.length());
-    if(!res){
-        combined_logger->info("send to agv msg fail!");
-    }
-    if(sendContent.length()<13)return res;
+
+    m_qTcp->write(sendContent.c_str(), sendContent.length());
+
     DyMsg msg;
     msg.msg = sendContent;
     msg.waitTime = 0;
@@ -662,7 +660,7 @@ bool AtForklift::send(const std::string &data)
     {
         m_unFinishCmd[msgType] = msg;
     }
-    return res;
+    return true;
 }
 
 //开始上报

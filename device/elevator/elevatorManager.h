@@ -6,7 +6,7 @@
 #include <mutex>
 #include <boost/noncopyable.hpp>
 #include "../../protocol.h"
-#include "../../network/tcpsession.h"
+#include "../../network/clientsession.h"
 #include "elevator.h"
 
 class Elevator;

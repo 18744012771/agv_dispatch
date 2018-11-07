@@ -122,7 +122,7 @@ void QingdaoTaskMaker::init()
     })->detach();
 }
 
-void QingdaoTaskMaker::makeTask(SessionPtr conn, const Json::Value &request)
+void QingdaoTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 {
     AgvTaskPtr task(new AgvTask());
 
