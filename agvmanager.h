@@ -45,9 +45,6 @@ public:
 
     void getStatusJson(Json::Value &json);
 
-    //void setServerAccepterID(int serverID);
-
-    //int getServerAccepterID(){return _serverID;}
     //用户接口
     void interList(ClientSessionPtr conn, const Json::Value &request);
     void interAdd(ClientSessionPtr conn, const Json::Value &request);
@@ -62,7 +59,6 @@ private:
 
     std::mutex mtx;
     std::vector<AgvPtr> agvs;
-    //int _serverID;
 };
 
 #endif // AGVMANAGER_H

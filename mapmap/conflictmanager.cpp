@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "conflictmanager.h"
 #include "../common.h"
 #include "mapmanager.h"
@@ -88,10 +89,14 @@ void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId
                         calcc(agv1spirits,agv2spirits,ii,jj,ic,jc);
                         std::reverse(jc.begin(),jc.end());
                         Conflict c(agv1,ic,agv2,jc);
+                        conflictMtx.lock();
                         conflicts.push_back(c);
+                        conflictMtx.unlock();
                     }
                 }
             }
+            mergeConflict(agv1,agv2);
+            mergeReverseConflic(agv1,agv2);
         }
     }
     stationPathMtx.unlock();
@@ -122,7 +127,226 @@ void ConflictManager::addAgvExcuteStationPath(std::vector<int> spirits,int agvId
         tryAddConflictOccu(itr->second,itr->first);
     }
 
-    //printConflict();
+    printConflict();
+}
+
+bool ConflictManager::absoluteAContainB(std::vector<int> a,std::vector<int> b)
+{
+    if(a.size()<b.size())return false;
+    if(b.empty())return true;
+    if(a.empty())return false;
+    return std::find_end(a.begin(),a.end(),b.begin(),b.end())!=a.end();
+}
+
+void ConflictManager::mergeReverseConflic(int agv1,int agv2)
+{
+
+    std::vector<Conflict> tempconflics;
+    std::vector<Conflict> tempRconflics;
+    std::vector<Conflict> toDelete;
+    std::vector<Conflict> toAdd;
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();++itr)
+    {
+        if(itr->getAgvA() == agv1 && itr->getAgvB() == agv2)
+        {
+            tempconflics.push_back((*itr));
+        }else if(itr->getAgvA() == agv2 && itr->getAgvB() == agv1){
+            tempRconflics.push_back((*itr));
+        }
+    }
+    conflictMtx.unlock();
+
+    //1.
+    for(auto itr = tempconflics.begin();itr!=tempconflics.end();++itr){
+        for(auto pos = tempRconflics.begin();pos!=tempRconflics.end();++pos){
+            if(absoluteAContainB(itr->getAspirits(),pos->getBspirits())
+                    &&absoluteAContainB(itr->getBspirits(),pos->getAspirits())){
+                toDelete.push_back(*pos);
+            }else if(absoluteAContainB(pos->getBspirits(),itr->getAspirits())
+                     &&absoluteAContainB(pos->getAspirits(),itr->getBspirits())){
+                toDelete.push_back(*itr);
+            }
+        }
+    }
+
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();)
+    {
+        bool needDelete = false;
+        for(auto pos = toDelete.begin();pos!=toDelete.end();++pos){
+            if(*itr == *pos){
+                needDelete = true;
+                break;
+            }
+        }
+        if(needDelete){
+            itr = conflicts.erase(itr);
+        }else{
+            ++itr;
+        }
+    }
+    conflictMtx.unlock();
+
+    //2.
+    tempconflics.clear();
+    tempRconflics.clear();
+    toDelete.clear();
+    toAdd.clear();
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();++itr)
+    {
+        if(itr->getAgvA() == agv1 && itr->getAgvB() == agv2)
+        {
+            tempconflics.push_back((*itr));
+        }else if(itr->getAgvA() == agv2 && itr->getAgvB() == agv1){
+            tempRconflics.push_back((*itr));
+        }
+    }
+    conflictMtx.unlock();
+
+
+    for(auto itr = tempconflics.begin();itr!=tempconflics.end();++itr){
+        for(auto pos = tempRconflics.begin();pos!=tempRconflics.end();++pos){
+            if(absoluteAContainB(itr->getAspirits(),pos->getBspirits())
+                    &&absoluteAContainB(pos->getAspirits(),itr->getBspirits())){
+                Conflict addConfclit(agv1,itr->getAspirits(),agv2,pos->getAspirits());
+                toAdd.push_back(addConfclit);
+                toDelete.push_back(*itr);
+                toDelete.push_back(*pos);
+            }else if(absoluteAContainB(pos->getBspirits(),itr->getAspirits())
+                     &&absoluteAContainB(itr->getBspirits(),pos->getAspirits())){
+                Conflict addConfclit(agv1,pos->getBspirits(),agv2,itr->getBspirits());
+                toAdd.push_back(addConfclit);
+                toDelete.push_back(*itr);
+                toDelete.push_back(*pos);
+            }
+        }
+    }
+
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();)
+    {
+        bool needDelete = false;
+        for(auto pos = toDelete.begin();pos!=toDelete.end();++pos){
+            if(*itr == *pos){
+                needDelete = true;
+                break;
+            }
+        }
+        if(needDelete){
+            itr = conflicts.erase(itr);
+        }else{
+            ++itr;
+        }
+    }
+
+    for(auto itr = toAdd.begin();itr!=toAdd.end();++itr){
+        conflicts.push_back((*itr));
+    }
+    conflictMtx.unlock();
+
+}
+
+void ConflictManager::mergeConflict(int agv1,int agv2)
+{
+    std::vector<Conflict> tempconflics;
+    std::vector<Conflict> toDelete;
+    std::vector<Conflict> toAdd;
+
+    //1.
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();++itr)
+    {
+        if(itr->getAgvA() == agv1 && itr->getAgvB() == agv2)
+        {
+            tempconflics.push_back((*itr));
+        }
+    }
+    conflictMtx.unlock();
+
+    for(int i=0;i<tempconflics.size();++i){
+        for(int j=i+1;j<tempconflics.size();++j){
+            if(absoluteAContainB(tempconflics[i].getAspirits(),tempconflics[j].getAspirits())
+                    &&absoluteAContainB(tempconflics[i].getBspirits(),tempconflics[j].getBspirits())){
+                toDelete.push_back(tempconflics[j]);
+            }else if(absoluteAContainB(tempconflics[j].getAspirits(),tempconflics[i].getAspirits())
+                     &&absoluteAContainB(tempconflics[j].getBspirits(),tempconflics[i].getBspirits())){
+                toDelete.push_back(tempconflics[i]);
+            }
+        }
+    }
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();)
+    {
+        bool needDelete = false;
+        for(auto pos = toDelete.begin();pos!=toDelete.end();++pos){
+            if(*itr == *pos){
+                needDelete = true;
+                break;
+            }
+        }
+        if(needDelete){
+            itr = conflicts.erase(itr);
+        }else{
+            ++itr;
+        }
+    }
+    conflictMtx.unlock();
+
+    //2.
+    tempconflics.clear();
+    toDelete.clear();
+    toAdd.clear();
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();++itr)
+    {
+        if(itr->getAgvA() == agv1 && itr->getAgvB() == agv2)
+        {
+            tempconflics.push_back((*itr));
+        }
+    }
+    conflictMtx.unlock();
+
+    for(int i=0;i<tempconflics.size();++i){
+        for(int j=i+1;j<tempconflics.size();++j){
+            if(absoluteAContainB(tempconflics[i].getAspirits(),tempconflics[j].getAspirits())
+                    &&absoluteAContainB(tempconflics[j].getBspirits(),tempconflics[i].getBspirits())){
+                Conflict addConfclit(agv1,tempconflics[i].getAspirits(),agv2,tempconflics[j].getBspirits());
+                toAdd.push_back(addConfclit);
+                toDelete.push_back(tempconflics[i]);
+                toDelete.push_back(tempconflics[j]);
+            }else if(absoluteAContainB(tempconflics[j].getAspirits(),tempconflics[i].getAspirits())
+                     &&absoluteAContainB(tempconflics[i].getBspirits(),tempconflics[j].getBspirits())){
+                Conflict addConfclit(agv1,tempconflics[j].getAspirits(),agv2,tempconflics[i].getBspirits());
+                toAdd.push_back(addConfclit);
+                toDelete.push_back(tempconflics[i]);
+                toDelete.push_back(tempconflics[j]);
+            }
+        }
+    }
+
+    conflictMtx.lock();
+    for(auto itr = conflicts.begin();itr!=conflicts.end();)
+    {
+        bool needDelete = false;
+        for(auto pos = toDelete.begin();pos!=toDelete.end();++pos){
+            if(*itr == *pos){
+                needDelete = true;
+                break;
+            }
+        }
+        if(needDelete){
+            itr = conflicts.erase(itr);
+        }else{
+            ++itr;
+        }
+    }
+
+    for(auto itr = toAdd.begin();itr!=toAdd.end();++itr){
+        conflicts.push_back((*itr));
+    }
+    conflictMtx.unlock();
 }
 
 void ConflictManager::freeAgvOccu(int agvId,int lastStation,int nowStation,int nextStation)
@@ -209,33 +433,6 @@ bool ConflictManager::tryAddConflictOccu(int spirit,int agvId)
 
     return true;
 }
-//void ConflictManager::freeConflictOccu(std::vector<int> spirits,int agvId)
-//{
-//    UNIQUE_LCK(conflictMtx);
-//    for(auto block:blocks)
-//    {
-//        for(auto itr=bblocks.begin();itr!=bblocks.end();++itr)
-//        {
-//            if(itr->getBlockId() == block){
-//                itr->removeOccu(agvId,spiritId);
-//            }
-//        }
-//    }
-//}
-
-//bool ConflictManager::conflictPassable(std::vector<int> blocks, int agvId)
-//{
-//    UNIQUE_LCK(conflictMtx);
-//    for(auto block:blocks)
-//    {
-//        for(auto itr = bblocks.begin();itr!=bblocks.end();++itr){
-//            if(itr->getBlockId() == block){
-//                if(!itr->passable(agvId))return false;
-//            }
-//        }
-//    }
-//    return true;
-//}
 
 void ConflictManager::clear()
 {
@@ -263,5 +460,4 @@ void ConflictManager::printConflict()
 
 void ConflictManager::test()
 {
-
 }

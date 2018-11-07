@@ -18,6 +18,16 @@ public:
     bool passable(int agvId,int spirit);
     void print();
     Conflict &operator = (const Conflict&b);
+    int getAgvA(){return agvA;}
+    int getAgvB(){return agvB;}
+    std::vector<int> getAspirits(){return agvAspirits;}
+    std::vector<int> getBspirits(){return agvBspirits;}
+    bool operator ==(const Conflict &b){
+        return agvA == b.agvA
+                && agvB == b.agvB
+                && agvAspirits == b.agvAspirits
+                && agvBspirits == b.agvBspirits;
+    }
 private:
     int agvA;
     int agvB;

@@ -30,10 +30,6 @@ void AgvManager::checkTable()
     }
 }
 
-//void AgvManager::setServerAccepterID(int serverID)
-//{
-//    _serverID = serverID;
-//}
 
 bool AgvManager::init()
 {

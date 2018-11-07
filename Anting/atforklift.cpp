@@ -660,7 +660,7 @@ bool AtForklift::send(const std::string &data)
     {
         m_unFinishCmd[msgType] = msg;
     }
-    return true;
+    return false;
 }
 
 //开始上报

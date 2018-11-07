@@ -37,8 +37,6 @@ public:
 
     bool getResetOk() { return resetOk; }
 
-    bool isCurrentOpenDoor(int floor);
-
 private:
     int id;
     std::string name;

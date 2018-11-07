@@ -35,7 +35,7 @@ enum CMD {
     InitEleENQ = 0x10,
     InitEleACK = 0x11,
     StaEleENQ = 0x12,
-    //StaEleACK = 0x13,
+    StaEleACK = 0x13,
     //EleLightON = 0x14,
     //EleLitOnSet = 0x15,
     //EleLightOFF = 0x16,
@@ -49,8 +49,6 @@ enum CMD {
     //AlignEleENQ = 0x24,
     //AlignEleACK = 0x25,
 };
-
-#define TAKE_ELE_TIME_OUT       60
 
 class NewElevatorManager : public boost::noncopyable,public std::enable_shared_from_this<NewElevatorManager>
 {

@@ -119,7 +119,7 @@ void QingdaoTaskMaker::init()
                 TaskManager::getInstance()->addTask(task);
             }
         }
-    })->detach();
+    });
 }
 
 void QingdaoTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
@@ -134,7 +134,14 @@ void QingdaoTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &reques
     int priority = request["priority"].asInt();
     task->setPriority(priority);
 
-    //3.额外的参数
+    //3.执行次数
+    if (!request["runTimes"].isNull())
+    {
+        int runTimes = request["runTimes"].asInt();
+        task->setRunTimes(runTimes);
+    }
+
+    //4.额外的参数
     if (!request["extra_params"].isNull()) {
         Json::Value extra_params = request["extra_params"];
         Json::Value::Members mem = extra_params.getMemberNames();

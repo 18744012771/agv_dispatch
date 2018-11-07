@@ -113,11 +113,11 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                         //combined_logger->error(" tempagv->status != Agv::AGV_STATUS_IDLE return... ");
                         return;
                     }
-//                    if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO){
-//                        DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
-//                        auto session = forklift->getQyhTcp();
-//                        if(session == nullptr||session->getUsed()>=2.0)return ;
-//                    }
+                    if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO && tempagv->getType() == DyForklift::Type){
+                        DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(tempagv);
+                        auto session = forklift->getQyhTcp();
+                        if(session ==nullptr || !session->alive())return ;
+                    }
                     if (tempagv->getNowStation() != 0)
                     {
                         int tempDis;
@@ -553,8 +553,8 @@ int TaskManager::cancelTask(int taskId)
             {
                 task = t;
                 //TODO 释放占有的路径等
-                doingTask.erase(std::find(doingTask.begin(), doingTask.end(), task));
-                alreadyCancel = true;
+                //doingTask.erase(std::find(doingTask.begin(), doingTask.end(), task));
+                //alreadyCancel = true;
                 break;
             }
         }

@@ -54,6 +54,13 @@ private:
     std::multimap<int,int> conflict_pairs;
 
     bool checkConflict(int a,int b);
+
+    void mergeConflict(int agv1, int agv2);
+
+    void mergeReverseConflic(int agv1,int agv2);
+
+    bool absoluteAContainB(std::vector<int> a,std::vector<int> b);
+
 };
 
 #endif // CONFLICTMANAGER_H

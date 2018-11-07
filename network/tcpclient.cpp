@@ -105,7 +105,7 @@ bool TcpClient::sendToServer(const char *data,int len)
 
 void TcpClient::disconnect()
 {
-    need_reconnect = true;
+    need_reconnect = false;
     s->shutdown(tcp::socket::shutdown_both);
     s->close();
 }

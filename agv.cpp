@@ -68,6 +68,8 @@ void Agv::setPosition(int _lastStation, int _nowStation, int _nextStation) {
     lastStation = _lastStation;
     nowStation = _nowStation;
     nextStation = _nextStation;
+
+    mapmanagerptr->printGroup();
 }
 
 //到达后是否停下，如果不停下，就是不减速。
@@ -96,12 +98,12 @@ void Agv::onArriveStation(int station)
     bool addOccuResult = conflictmanagerptr->tryAddConflictOccu(station,getId());
 
     if(station>0){
-        if(nowStation>0){
+        if(nowStation!=nowStation){
             lastStation = (int)nowStation;
-            //free last station occu
-            mapmanagerptr->freeStation(lastStation,shared_from_this());
-            conflictmanagerptr->freeConflictOccu(lastStation,getId());
         }
+        //free last station occu
+        mapmanagerptr->freeStation(lastStation,shared_from_this());
+        conflictmanagerptr->freeConflictOccu(lastStation,getId());
         nowStation = station;
         stationMtx.lock();
         for (int i = 0; i < excutestations.size(); ++i) {
@@ -199,8 +201,8 @@ void Agv::onArriveStation(int station)
     }else{
         pause();
     }
-    //conflictmanagerptr->printConflict();
-    //mapmanagerptr->printGroup();
+    conflictmanagerptr->printConflict();
+    mapmanagerptr->printGroup();
 }
 
 void Agv::onLeaveStation(int stationid)
@@ -280,8 +282,8 @@ void Agv::onLeaveStation(int stationid)
         pause();
     }
 
-    //conflictmanagerptr->printConflict();
-    //mapmanagerptr->printGroup();
+    conflictmanagerptr->printConflict();
+    mapmanagerptr->printGroup();
 }
 
 void Agv::onError(int code, std::string msg)
@@ -337,6 +339,8 @@ void Agv::cancelTask()
         //释放其他所有占用
         MapManager::getInstance()->freeAllStationLines(shared_from_this(),nowOccu);
     }
+
+    mapmanagerptr->printGroup();
 
     onTaskCanceled(currentTask);
 }

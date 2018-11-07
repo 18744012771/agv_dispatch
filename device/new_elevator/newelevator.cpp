@@ -43,7 +43,7 @@ void NewElevator::KeepOpen(int floor)
             elemanagerptr->send((char *)data,8);
             sleep(2);
         } while (send_cmd);
-    })->detach();
+    });
 }
 
 void NewElevator::DropOpen()
@@ -76,11 +76,4 @@ void NewElevator::onConnect()
 void NewElevator::onDisconnect()
 {
     isConnected = false;
-}
-
-bool NewElevator::isCurrentOpenDoor(int floor)
-{
-    //查询电梯
-
-
 }

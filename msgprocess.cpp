@@ -500,7 +500,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, ClientSessionPtr sess
         { MSG_TODO_CANCEL_SUB_ELE_STATSU,std::bind(&MsgProcess::interRemoveSubELE,msgProcess,std::placeholders::_1,std::placeholders::_2) },
         { MSG_TODO_ELE_ENABLE,std::bind(&NewElevatorManager::interSetEnableELE,elemanagerptr,std::placeholders::_1,std::placeholders::_2) },
         { MSG_TODO_AGV_INIT_POSITION,std::bind(&AgvManager::interInitPosition,agvManager,std::placeholders::_1,std::placeholders::_2) }
-    };
+        };
         table[request["todo"].asInt()].f(session, request);
 
         //        t.end();

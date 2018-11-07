@@ -6,7 +6,8 @@
 #include "../network/sessionmanager.h"
 #include "../network/agvsession.h"
 
-#define PRECISION 30
+#define PRECISION   30
+#define ALLOWANVE   5
 #define ANGLE_PRECISION 30
 #define START_RANGE 300
 #define PRECMD_RANGE 500
@@ -118,6 +119,7 @@ public:
     bool startReport(int interval);
     bool endReport();
     bool fork(int params); //1-liftup 0-setdown
+    bool heart();
     //bool move(float speed, float distance);//进电梯时用
     bool charge(int params);  //1-充电 0-退出充电
     //bool heart();
@@ -171,8 +173,8 @@ private:
 
     std::atomic_int m_power;
     bool m_lift = false;
-    std::map<int,  DyMsg> m_unRecvSend;
-    std::map<int,  DyMsg> m_unFinishCmd;
+    std::map<int, std::string> m_unRecvSend;
+    std::map<int, std::string> m_unFinishCmd;
     std::mutex unRecvMsgMtx;
     std::mutex unFinishMsgMtx;
 

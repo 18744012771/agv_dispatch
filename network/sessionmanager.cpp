@@ -49,11 +49,14 @@ void SessionManager::run()
     }
 
     for (std::size_t i = 0; i < threads.size(); ++i)
+    {
         threads[i]->join();
+    }
 }
 
 void SessionManager::stop()
 {
+    g_quit = true;
     io_context_.stop();
 }
 

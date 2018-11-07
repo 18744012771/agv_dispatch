@@ -211,6 +211,8 @@ int main(int argc, char *argv[])
     combined_logger->debug("ConflictManager init...");
     ConflictManager::getInstance()->init();
 
+    //ConflictManager::getInstance()->test();
+
     //3.初始化车辆及其链接
     combined_logger->debug("AgvManager init...");
     if (!AgvManager::getInstance()->init()) {
@@ -259,10 +261,6 @@ int main(int argc, char *argv[])
     sessionmanagerptr->startClientServer(9999);
     combined_logger->info("server init OK!");
     sessionmanagerptr->run();
-
-    while(!g_quit){
-        sleep(1);
-    }
 
     g_threads.join_all();
 

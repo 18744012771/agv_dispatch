@@ -160,13 +160,13 @@ void DyTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 
 
                 //update wms
-                /*  std::vector<std::string> _paramswms;
-                _paramswms.push_back(all[i+2]);
-                _paramswms.push_back(all[i+3]);
-                _paramswms.push_back("0");
-                _paramswms.push_back(all[i+4]);
-                DyForkliftUpdWMS* test= new DyForkliftUpdWMS(_paramswms);
-                getGoodDoThings.push_back(AgvTaskNodeDoThingPtr(test));*/
+//                std::vector<std::string> _paramswms;
+//                _paramswms.push_back(all[i+2]);
+//                _paramswms.push_back(all[i+3]);
+//                _paramswms.push_back("0");
+//                _paramswms.push_back(all[i+4]);
+//                DyForkliftUpdWMS* test= new DyForkliftUpdWMS(_paramswms);
+//                getGoodDoThings.push_back(AgvTaskNodeDoThingPtr(test));
 
                 node_node->setTaskType(TASK_PICK);
                 node_node->setDoThings(doThings);

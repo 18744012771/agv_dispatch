@@ -167,9 +167,16 @@ void NewElevatorManager::processReadMsg(const char *data, int len)
     if (data[0] != (char)0xAA)return;
     if (data[1] != (char)0x55)return;
 
-    //combined_logger->debug("process read msg========{0}",toHexString(data,len));
+    combined_logger->debug("process read msg========{0}",toHexString(data,len));
 
     if (data[4] == (char)TakeEleENQ && data[3] == (char)0x01) {
+        int eleid = data[5];
+        int openfloor = data[2];
+        for (auto ele : eles) {
+            if (ele->getId() == eleid)ele->setCurrentOpenDoorFloor(openfloor);
+        }
+    }
+    else if (data[4] == (char)StaEleACK && data[3] == (char)0x01) {
         int eleid = data[5];
         int openfloor = data[2];
         for (auto ele : eles) {
@@ -265,8 +272,10 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     //呼梯
     elevator->setCurrentOpenDoorFloor(-1);
     while (!g_quit) {
+        sleep(1);
         elemanagerptr->call(elevator_id, from_floor);
-        sleep(2);
+        sleep(1);
+        elemanagerptr->queryElevatorState(elevator_id);
         if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
     }
 
@@ -280,19 +289,16 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     elemanagerptr->DropOpen(elevator_id);
     sleep(1);
     elemanagerptr->resetElevatorState(elevator_id);
-
+    sleep(5);
     //呼梯
     elemanagerptr->call(elevator_id, to_floor);
-    int timeout = 0;
+
     while (!g_quit) {
         sleep(1);
         if (elevator->getCurrentOpenDoorFloor() == to_floor)break;
-        ++timeout;
-        if(timeout>TAKE_ELE_TIME_OUT){
-            //重新呼叫
-            elemanagerptr->call(elevator_id, to_floor);
-            timeout = 0;
-        }
+        sleep(1);
+        //重新呼叫
+        elemanagerptr->call(elevator_id, to_floor);
     }
 
     //出电梯

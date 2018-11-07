@@ -36,43 +36,29 @@ void DyForklift::init() {
 #ifdef RESEND
     g_threads.create_thread([&] {
         while (!g_quit) {
-            if (m_qTcp == nullptr) {
+            if (m_qTcp == nullptr || !m_qTcp->alive()) {
                 //已经掉线了
                 sleep(1);
                 continue;
             }
-            std::map<int, DyMsg >::iterator iter;
-            if (unRecvMsgMtx.try_lock())
-            {
-                for (iter = this->m_unRecvSend.begin(); iter != this->m_unRecvSend.end(); iter++)
-                {
-                    iter->second.waitTime++;
-                    combined_logger->info("lastsend:{0}, waitTime:{1}", iter->first, iter->second.waitTime);
-                    if (iter->second.waitTime > MAX_WAITTIMES)
-                    {
-                        //TODO 判断连接是否有效
-                        if (m_qTcp && m_qTcp->alive())
-                        {
-                            m_qTcp->write(iter->second.msg.c_str(), iter->second.msg.length());
-                            iter->second.waitTime = 0;
-                        }
-                    }
-                }
-                unRecvMsgMtx.unlock();
-            }
-            sleep(1);
-        }
-    })->detach();
-#endif
-    //#ifdef HEART
-    //    g_threadPool.create_thread([&, this] {
-    //        while (true) {
-    //            heart();
-    //            usleep(500000);
+            unRecvMsgMtx.lock();
 
-    //        }
-    //    });
-    //#endif
+            for (auto iter = m_unRecvSend.begin(); iter != m_unRecvSend.end(); iter++)
+            {
+                //combined_logger->info("lastsend:{0}", iter->first, iter->second.waitTime);
+
+                //TODO 判断连接是否有效
+                if (m_qTcp!=nullptr && m_qTcp->alive())
+                {
+                    m_qTcp->write(iter->second.c_str(), iter->second.length());
+                }
+            }
+            unRecvMsgMtx.unlock();
+
+            usleep(1000000);
+        }
+    });
+#endif
 }
 
 void DyForklift::onTaskStart(AgvTaskPtr _task)
@@ -90,24 +76,7 @@ void DyForklift::onTaskFinished(AgvTaskPtr _task)
 
 bool DyForklift::resend(const std::string &msg) {
     if (msg.length() <= 0)return false;
-    bool sendResult = send(msg);
-    int resendTimes = 0;
-
-    if (currentTask == nullptr) {
-        while (!sendResult && ++resendTimes < maxResendTime) {
-            std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(500));
-            sendResult = send(msg);
-        }
-    }
-    else {
-        // doing task!!!!!!!!!!!
-        // no return until send ok except task is cancel or task is error
-        while (!sendResult && !currentTask->getIsCancel() && currentTask->getErrorCode() == 0) {
-            std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(500));
-            sendResult = send(msg);
-        }
-    }
-    return sendResult;
+    return send(msg);
 }
 
 bool DyForklift::fork(int params)
@@ -121,15 +90,14 @@ bool DyForklift::fork(int params)
     return resend(body.str());
 }
 
-//bool DyForklift::heart()
-//{
-//    std::stringstream body;
-//    body.fill('0');
-//    body.width(2);
-//    body<<FORKLIFT_HEART;
-//    body<<m_lift<<m_lift;
-//    return resend(body.str().c_str());
-//}
+bool DyForklift::heart()
+{
+    std::stringstream body;
+    body.fill('0');
+    body.width(2);
+    body<<FORKLIFT_HEART;
+    return send(body.str().c_str());
+}
 
 int DyForklift::nearestStation()
 {
@@ -147,6 +115,11 @@ int DyForklift::nearestStation()
             min_station = point->getId();
         }
     }
+
+    if(minDis > PRECISION - ALLOWANVE){
+        return -1;
+    }
+
     return min_station;
 }
 
@@ -169,6 +142,12 @@ void DyForklift::onRead(const char *data, int len)
     if (length != len && length < 12)
     {
         return;
+    }
+
+    int timestamp = stringToInt(msg.substr(0,6));
+
+    if(timestamp%5 == 0){
+        heart();
     }
 
     int mainMsg = stringToInt(msg.substr(10, 2));
@@ -196,16 +175,15 @@ void DyForklift::onRead(const char *data, int len)
                 double x_new = 100 * stringToDouble(temp[0]);
                 double y_new = -100 * stringToDouble(temp[1]);
                 double theta_new = -57.3 * stringToDouble(temp[2]);
-                static std::string lastRecvData = "";
-                if(abs(x_new - x)>=100 || abs(y_new-y)>100 || abs(theta_new-theta)>30){
-                    combined_logger->debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!tiaobian!!!!!!!!!!!!!!!!!!1");
+
+                if(func_dis(x_new,y_new,x,y)>=100|| func_angle(theta_new,theta)>30){
+                    combined_logger->debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!tiaobian agv{0}!!!!!!!!!!!!!!!!!!1",getId());
                     combined_logger->debug("oldX={0},oldy={1},old_theta={2}",x,y,theta);
                     combined_logger->debug("newX={0},newY={1},new_theta={2}",x_new,y_new,theta_new);
-                    combined_logger->debug("last time recv data={}",lastRecvData);
                     combined_logger->debug("recv data={}",std::string(data,len));
+                    combined_logger->debug("recv data={}",data,len);
                 }
 
-                lastRecvData = std::string(data,len);
 
                 x = x_new;
                 y = y_new;
@@ -308,7 +286,7 @@ void DyForklift::onRead(const char *data, int len)
         {
             //command finish
             UNIQUE_LCK lck(unFinishMsgMtx);
-            std::map<int, DyMsg>::iterator iter = m_unFinishCmd.find(stringToInt(body.substr(0, 2)));
+            auto iter = m_unFinishCmd.find(stringToInt(body.substr(0, 2)));
             if (iter != m_unFinishCmd.end())
             {
                 m_unFinishCmd.erase(iter);
@@ -325,7 +303,7 @@ void DyForklift::onRead(const char *data, int len)
     {
         unRecvMsgMtx.lock();
         //command response
-        std::map<int, DyMsg>::iterator iter = m_unRecvSend.find(stringToInt(msg.substr(0, 6)));
+        auto iter = m_unRecvSend.find(stringToInt(msg.substr(0, 6)));
         if (iter != m_unRecvSend.end())
         {
             m_unRecvSend.erase(iter);
@@ -337,7 +315,7 @@ void DyForklift::onRead(const char *data, int len)
     {
         unRecvMsgMtx.lock();
         //command response
-        std::map<int, DyMsg>::iterator iter = m_unRecvSend.find(stringToInt(msg.substr(0, 6)));
+        auto iter = m_unRecvSend.find(stringToInt(msg.substr(0, 6)));
         if (iter != m_unRecvSend.end())
         {
             m_unRecvSend.erase(iter);
@@ -363,7 +341,7 @@ void DyForklift::arrve() {
         auto point = mapmanagerptr->getPointById(nowStation);
         if (point != nullptr)
         {
-            if (func_dis(x, y, point->getRealX(), point->getRealY()) > PRECISION) {
+            if (func_dis(x, y, point->getRealX(), point->getRealY()) > PRECISION + ALLOWANVE) {
                 //too far leave station
                 onLeaveStation(nowStation);
             }
@@ -373,43 +351,65 @@ void DyForklift::arrve() {
     //2.did agv arrive a station
     int arriveId = -1;
     double minDis = DISTANCE_INFINITY_DOUBLE;
-    stationMtx.lock();
-    for (auto station : excutestations) {
-        MapPoint *point = mapmanagerptr->getPointById(station);
-        if (point == nullptr)continue;
 
-        if (mapmanagerptr->getFloor(station) != floor)continue;
+    if(currentTask != nullptr && !currentTask->getIsCancel())
+    {
+        stationMtx.lock();
+        for (auto station : excutestations) {
+            MapPoint *point = mapmanagerptr->getPointById(station);
+            if (point == nullptr)continue;
 
-        auto dis = func_dis(x, y, point->getRealX(), point->getRealY());
-        if (dis < minDis && dis < PRECISION && station != nowStation && func_angle(-point->getRealA() / 10, (int)theta) < ANGLE_PRECISION) {
-            minDis = dis;
-            arriveId = station;
+            if (mapmanagerptr->getFloor(station) != floor)continue;
+
+            auto dis = func_dis(x, y, point->getRealX(), point->getRealY());
+            if (dis < minDis && dis < PRECISION - ALLOWANVE && station != nowStation && func_angle(-point->getRealA() / 10, (int)theta) < ANGLE_PRECISION) {
+                minDis = dis;
+                arriveId = station;
+            }
+
+            if (station == currentEndStation)
+            {
+                //已抵达当前路径终点，退出判断
+                break;
+            }
         }
+        stationMtx.unlock();
+        if (arriveId != -1) {
+            onArriveStation(arriveId);
+        }
+    }else if(status != AGV_STATUS_TASKING){
+        int tempStation = nearestStation();
+        if(nowStation == tempStation){
 
-        if (station == currentEndStation)
-        {
-            //已抵达当前路径终点，退出判断
-            break;
+        }else{
+            nowStation = tempStation;
+            combined_logger->debug("========================agv{0} arrive station{1} without task!!!!!!!!!",getId(),nowStation);
+            //occu the station and release others!
+            if(nowStation>0){
+                mapmanagerptr->addOccuStation(nowStation,shared_from_this());
+            }
+            mapmanagerptr->freeAllStationLines(shared_from_this(),nowStation);
         }
     }
-    stationMtx.unlock();
-    if (arriveId != -1) {
-        onArriveStation(arriveId);
-    }
+
+
 
     //3.check conflict occu current station or path!
-    //per 100 ms
-    if(currentTask != nullptr && !currentTask->getIsCancel()){
-        //combined_logger->debug("agv {0} check conflick need paused! nowStation = {1},lastStation = {2},nextStation={3}",getId(),nowStation,lastStation,nextStation);
-        if(nowStation>0){
-            if(!ConflictManager::getInstance()->conflictPassable(nowStation,getId())){
-                pause();
-            }
-        }else{
-            auto nowPath = mapmanagerptr->getPathByStartEnd(lastStation,nextStation);
-            if(nowPath!=nullptr){
-                if(!ConflictManager::getInstance()->conflictPassable(nowPath->getId(),getId())){
+    if (!sendPause && !pauseFlag){
+        if(currentTask != nullptr && !currentTask->getIsCancel()){
+            if(nowStation>0){
+                if(!ConflictManager::getInstance()->conflictPassable(nowStation,getId())){
+                    combined_logger->debug("agv {0} check conflick now Station need paused! nowStation = {1},lastStation = {2},nextStation={3}",getId(),nowStation,lastStation,nextStation);
                     pause();
+                }
+
+            }else{
+                auto nowPath = mapmanagerptr->getPathByStartEnd(lastStation,nextStation);
+                if(nowPath!=nullptr){
+                    if(!ConflictManager::getInstance()->conflictPassable(nowPath->getId(),getId())){
+                        combined_logger->debug("agv {0} check conflick now Path need paused! nowStation = {1},lastStation = {2},nextStation={3}",getId(),nowStation,lastStation,nextStation);
+                        pause();
+                    }
                 }
             }
         }
@@ -628,19 +628,16 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         combined_logger->info("DyForklift,  excutePath, from_floor: {0}, to_floor: {1}", from_floor, to_floor);
 
+        //呼梯
         elevator->setCurrentOpenDoorFloor(-1);
-        elemanagerptr->queryElevatorState(elevator_id);
-        sleep(1);
-        if (elevator->getCurrentOpenDoorFloor() != from_floor){
-            //呼梯
-            elevator->setCurrentOpenDoorFloor(-1);
-            while (!g_quit && !currentTask->getIsCancel()) {
-                elemanagerptr->call(elevator_id, from_floor);
-                sleep(2);
-                if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
-            }
+        while (!g_quit &&currentTask!=nullptr && !currentTask->getIsCancel()) {
+            sleep(1);
+            elemanagerptr->call(elevator_id, from_floor);
+            sleep(1);
+            elemanagerptr->queryElevatorState(elevator_id);
+            if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
         }
-
+        
         if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
 
         //进电梯
@@ -659,6 +656,8 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         //关门
         elemanagerptr->DropOpen(elevator_id);
+        Sleep(2);
+
         elemanagerptr->resetElevatorState(elevator_id);
         while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
             sleep(2);
@@ -667,19 +666,15 @@ void DyForklift::goElevator(const std::vector<int> lines)
         }
 
         if (g_quit || currentTask == nullptr|| currentTask->getIsCancel()) return;
-        Sleep(3);
+        Sleep(5);
         //呼梯
         elemanagerptr->call(elevator_id, to_floor);
-        int timeout = 0;
         while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
             sleep(1);
             if (elevator->getCurrentOpenDoorFloor() == to_floor)break;
-            ++timeout;
-            if(timeout>TAKE_ELE_TIME_OUT){
-                //重新呼叫
-                elemanagerptr->call(elevator_id, to_floor);
-                timeout = 0;
-            }
+            sleep(1);
+            //重新呼叫
+            elemanagerptr->call(elevator_id, to_floor);
         }
 
         if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
@@ -790,7 +785,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     body << "1";
 
     currentEndStation = endId;
-
+    combined_logger->debug(" agv {0} check can go before go!...");
     while (!g_quit && currentTask != nullptr && !currentTask->getIsCancel()) {
         usleep(500000);
         bool canGo = true;
@@ -846,7 +841,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     }
 
     if (g_quit || currentTask == nullptr || currentTask->getIsCancel())return;
-
+    combined_logger->debug(" agv {0} check can go finish,GO!...");
     resend(body.str());
 
     do
@@ -863,9 +858,9 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
             //could occu current station or path block?
             //combined_logger->debug("agv {0} check conflick can resume! nowStation = {1},lastStation = {2},nextStation={3}",getId(),nowStation,lastStation,nextStation);
             if (nowStation > 0) {
-                //auto nowStationPtr = mapmanagerptr->getPointById(nowStation);
+                auto nowStationPtr = mapmanagerptr->getPointById(nowStation);
                 if (!conflictmanagerptr->tryAddConflictOccu(nowStation, getId())) {
-                    //combined_logger->debug("agv {0} paused,check current station {1},result={2}!",id,nowStationPtr->getName(),false);
+                    combined_logger->debug("agv {0} paused,check current station {1},result={2}!",id,nowStationPtr->getName(),false);
                     canResume = false;
                 }else{
                     //combined_logger->debug("agv {0} paused,check current station {1},result={2}!",id,nowStationPtr->getName(),true);
@@ -876,15 +871,15 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
                     auto path = mapmanagerptr->getPathByStartEnd(lastStation, nextStation);
                     if (path != nullptr) {
                         if (!conflictmanagerptr->tryAddConflictOccu(path->getId(), getId())) {
-                            //combined_logger->debug("agv {0} paused,check current line {1},result={2}!",getId(),path->getName(),false);
+                            combined_logger->debug("agv {0} paused,check current line {1},result={2}!",getId(),path->getName(),false);
                             canResume = false;
                         }else{
                             //combined_logger->debug("agv {0} paused,check current line {1},result={2}!",getId(),path->getName(),true);
                         }
                     }else{
-                        //auto lastStationPtr = mapmanagerptr->getPointById(lastStation);
+                        auto lastStationPtr = mapmanagerptr->getPointById(lastStation);
                         if (!conflictmanagerptr->tryAddConflictOccu(lastStation, getId())) {
-                            //combined_logger->debug("agv {0} paused,check last station {1},result={2}!",id,lastStationPtr->getName(),false);
+                            combined_logger->debug("agv {0} paused,check last station {1},result={2}!",id,lastStationPtr->getName(),false);
                             canResume = false;
                         }else{
                             //combined_logger->debug("agv {0} paused,check last station {1},result={2}!",id,lastStationPtr->getName(),true);
@@ -915,7 +910,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
             }
 
             if (!conflictmanagerptr->conflictPassable(iip, getId())) {
-                //combined_logger->debug("agv {0} paused,check next station {1},result={2}!",id,iip,false);
+                combined_logger->debug("agv {0} paused,check next station or path {1},result={2}!",id,iip,false);
                 canResume = false;
             }
             else {
@@ -973,24 +968,22 @@ bool DyForklift::send(const std::string &data)
     {
         combined_logger->info("send to agv{0}:{1}", id, sendContent);
     }
-    if (nullptr == m_qTcp || !m_qTcp->alive())
+    if (nullptr != m_qTcp  && m_qTcp->alive())
     {
-        return false;
+        m_qTcp->write(sendContent.c_str(), sendContent.length());
+    }
+    int msgType = stringToInt(sendContent.substr(11, 2));
+
+    if(FORKLIFT_HEART != msgType){
+        unRecvMsgMtx.lock();
+        m_unRecvSend[stoi(sendContent.substr(1, 6))] = sendContent;
+        unRecvMsgMtx.unlock();
     }
 
-    m_qTcp->write(sendContent.c_str(), sendContent.length());
-
-    DyMsg msg;
-    msg.msg = sendContent;
-    msg.waitTime = 0;
-    unRecvMsgMtx.lock();
-    m_unRecvSend[stoi(msg.msg.substr(1, 6))] = msg;
-    unRecvMsgMtx.unlock();
-    int msgType = stringToInt(msg.msg.substr(11, 2));
-    if (FORKLIFT_HEART != msgType)
+    if (FORKLIFT_STARTREPORT != msgType && FORKLIFT_HEART != msgType)
     {
-        UNIQUE_LCK lck(unFinishMsgMtx);
-        m_unFinishCmd[msgType] = msg;
+        UNIQUE_LCK(unFinishMsgMtx);
+        m_unFinishCmd[msgType] = sendContent;
     }
     return false;
 }
@@ -1027,7 +1020,7 @@ bool DyForklift::isFinish()
 bool DyForklift::isFinish(int cmd_type)
 {
     UNIQUE_LCK lck(unFinishMsgMtx);
-    std::map<int, DyMsg>::iterator iter = m_unFinishCmd.find(cmd_type);
+    auto iter = m_unFinishCmd.find(cmd_type);
     if (iter != m_unFinishCmd.end())
     {
         return false;
