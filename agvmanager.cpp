@@ -496,7 +496,7 @@ void AgvManager::interModify(ClientSessionPtr conn, const Json::Value &request)
 
         UserLogManager::getInstance()->push(conn->getUserName() + " modify AGV.ID:" + intToString(id) + " newname:" + name + " newip:" + ip + " newport:" + intToString(port)+ " lastStation:" + intToString(lastStation)+ " nowStation:" + intToString(nowStation) + " nextStation:" + intToString(nextStation));
         char buf[SQL_MAX_LENGTH];
-        snprintf(buf, SQL_MAX_LENGTH, "update agv_agv set name='%s',ip='%s',port=%d,lastStation=%d,nowStation=%d,nextStation=%d,agvClass=%d,lineName='%s'  where id = %d;", name.c_str(), ip.c_str(), port, lastStation, nowStation, nextStation,agvClass,lineName,id);
+        snprintf(buf, SQL_MAX_LENGTH, "update agv_agv set name='%s',ip='%s',port=%d,lastStation=%d,nowStation=%d,nextStation=%d,agvClass=%d,lineName='%s'  where id = %d;", name.c_str(), ip.c_str(), port, lastStation, nowStation, nextStation,agvClass,lineName.c_str(),id);
 
         try{
             g_db.execDML(buf);

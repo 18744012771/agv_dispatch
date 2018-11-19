@@ -20,7 +20,7 @@ void OneMap::clear()
 
 void OneMap::sort()
 {
-    //std::sort(all_element.begin(),all_element.end(),MapSpiritPtrCompare());
+    all_element.sort(PtrComp<MapSpirit>);
 }
 
 void OneMap::addSpirit(MapSpirit *spirit)

@@ -705,10 +705,10 @@ bool MapManager::loadFromDb()
             if (p->getId() > max_id)max_id = p->getId();
         }
         g_onemap.setMaxId(max_id);
-        g_onemap.sort();
         getReverseLines();
         getAdj();
         check();
+        g_onemap.sort();
     }
     catch (CppSQLite3Exception &e) {
         combined_logger->error("sqlerr code:{0} msg:{1}", e.errorCode(), e.errorMessage());
@@ -1290,6 +1290,7 @@ std::vector<int> MapManager::getPath(int agv, int lastStation, int startStation,
 
 void MapManager::getReverseLines()
 {
+    combined_logger->debug("get reverse lines...");
     std::list<MapPath *> paths = g_onemap.getPaths();
 
     //TODO:对于临近的 a ->  b 和  b' -> a'进行反向判断
@@ -1310,13 +1311,11 @@ void MapManager::getReverseLines()
             MapPoint *pAStart = getPointById(aStartId);
 
             if(pAEnd == nullptr||pBStart == nullptr||pBEnd == nullptr||pAStart == nullptr)continue;
-
-
             auto lists = m_reverseLines[a->getId()];
-
             if (a->getEnd() == b->getStart() && a->getStart() == b->getEnd()) {
                 lists.push_back(b->getId());
                 m_reverseLines[a->getId()] = lists;
+
             }else if(pAEnd->getRealX() == pBStart->getRealX() && pAEnd->getRealY() == pBStart->getRealY()
                      && pBEnd->getRealX() == pAStart->getRealX() && pBEnd->getRealY() == pAStart->getRealY()){
                 lists.push_back(b->getId());
@@ -1603,6 +1602,7 @@ void MapManager::check()
 
 void MapManager::getAdj()
 {
+    combined_logger->debug("get adjs ...");
     std::list<MapPath *> paths = g_onemap.getPaths();
 
     for (auto a : paths) {

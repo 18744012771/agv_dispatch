@@ -982,11 +982,20 @@ void DyForklift::checkCanResume()
 void DyForklift::setQyhTcp(AgvSessionPtr _qyhTcp)
 {
     if (_qyhTcp == nullptr) {
-        status = Agv::AGV_STATUS_UNCONNECT;
+        if(status == AGV_STATUS_NOTREADY|| status == Agv::AGV_STATUS_IDLE || status == Agv::AGV_STATUS_TASKING )
+            status = Agv::AGV_STATUS_UNCONNECT;
         m_qTcp = nullptr;
     }else{
         m_qTcp = _qyhTcp;
-	//TODO:status recover
+        if(status == Agv::AGV_STATUS_UNCONNECT){
+            if(firstConnect){
+                status = Agv::AGV_STATUS_NOTREADY;
+            }else if(currentTask == nullptr || currentTask->getIsCancel()){
+                status = Agv::AGV_STATUS_IDLE;
+            }else{
+                status = Agv::AGV_STATUS_TASKING;
+            }
+        }
     }
 }
 //发送消息给小车

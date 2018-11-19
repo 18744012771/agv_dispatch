@@ -1,4 +1,4 @@
-#include "session.h"
+﻿#include "session.h"
 #include "./sessionmanager.h"
 #include "../common.h"
 
@@ -97,12 +97,22 @@ void Session::stop()
 
 void Session::write(const char *data,int len)
 {
-    //TODO:fenbao?
+    if(data==nullptr || len<=0)return ;
 
-    boost::asio::async_write(socket_, boost::asio::buffer(data, len),
+    bool f = len%SESSION_MSG_MEMORY_LENGTH == 0;
+    int pack_nums = len/SESSION_MSG_MEMORY_LENGTH;
+    if(!f)pack_nums++;
+    mtx.lock();
+    for(int ii=0;ii<pack_nums-1;++ii){
+        sendmsgs.push_back(SessionMsg(data+ii*SESSION_MSG_MEMORY_LENGTH,SESSION_MSG_MEMORY_LENGTH));
+    }
+    sendmsgs.push_back(SessionMsg(data+(pack_nums-1)*SESSION_MSG_MEMORY_LENGTH,len - (pack_nums-1)*SESSION_MSG_MEMORY_LENGTH));
+
+    boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
                              boost::asio::bind_executor(strand_,
                                                         boost::bind(&Session::onWrite, shared_from_this(),
                                                                     boost::asio::placeholders::error)));
+    mtx.unlock();
 }
 
 void Session::onWrite(boost::system::error_code ec)
@@ -110,5 +120,18 @@ void Session::onWrite(boost::system::error_code ec)
     if (ec && ec !=  boost::asio::error::operation_aborted){
         combined_logger->debug("session id {0} write fail,error:{1}",sessionId,ec.message());
         stop();
+    }
+
+    if (!ec)
+    {
+        sendmsgs.pop_front();
+        if (!sendmsgs.empty())
+        {
+            UNIQUE_LCK(mtx);
+            boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
+                                     boost::asio::bind_executor(strand_,
+                                                                boost::bind(&Session::onWrite, shared_from_this(),
+                                                                            boost::asio::placeholders::error)));
+        }
     }
 }

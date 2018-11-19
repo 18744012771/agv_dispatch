@@ -3,6 +3,12 @@
 
 #include <string>
 
+
+template <typename T> bool PtrComp(const T * const & a, const T * const & b)
+{
+   return *a < *b;
+}
+
 class MapSpirit
 {
 public:
@@ -40,6 +46,12 @@ public:
 
     std::string getName() const {return name;}
     void setName(std::string _name){name=_name;}
+
+    bool operator<(const MapSpirit& b) const
+    {
+        return (this->name<b.name);
+    }
+
 private:
     int id;
     std::string name;

@@ -1,4 +1,4 @@
-#include "rosAgv.h"
+﻿#include "rosAgv.h"
 
 void rosAgv::navCtrlStatusNotify(string waypoint_name, int nav_ctrl_status)
 {
@@ -501,7 +501,7 @@ bool rosAgv::sendJsonToAGV(Json::Value json)
                 combined_logger->error("rosAgv, sendJsonToAGV failed, send data error, retry_conut: {0}", retry_count);
                 result=false;
                 retry_count--;
-                sleep(2);
+                sleep_for_s(2);
             }
             else
             {

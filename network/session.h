@@ -1,4 +1,4 @@
-#ifndef SESSION_H
+﻿#ifndef SESSION_H
 #define SESSION_H
 
 #include <boost/noncopyable.hpp>
@@ -11,9 +11,47 @@ using SessionManagerPtr = std::shared_ptr<SessionManager>;
 class Session;
 using SessionPtr = std::shared_ptr<Session>;
 
+#define SESSION_MSG_MEMORY_LENGTH   1024
+
+class SessionMsg{
+public:
+    SessionMsg(const char *_data,int _length){
+        m_length = _length;
+        if(m_length > SESSION_MSG_MEMORY_LENGTH)m_length = SESSION_MSG_MEMORY_LENGTH;
+        memcpy(m_data,_data,m_length);
+    }
+    const char* data() const
+    {
+        return m_data;
+    }
+
+    char* data()
+    {
+        return m_data;
+    }
+
+    size_t length() const
+    {
+        return m_length;
+    }
+
+    void setLength(size_t new_length)
+    {
+        m_length = new_length;
+        if (m_length > SESSION_MSG_MEMORY_LENGTH)
+            m_length = SESSION_MSG_MEMORY_LENGTH;
+    }
+private:
+    char m_data[SESSION_MSG_MEMORY_LENGTH];
+    size_t m_length;
+};
+
+
 class Session : public std::enable_shared_from_this<Session>,private boost::noncopyable
 {
 public:
+    typedef std::deque<SessionMsg> SendMessageQueue;
+
     explicit Session(boost::asio::io_context &_context);
 
     virtual void afterread() = 0;
@@ -31,7 +69,7 @@ public:
     bool alive(){return socket_.is_open();}
 
     virtual void onread(const boost::system::error_code& ec,
-        std::size_t bytes_transferred);
+                        std::size_t bytes_transferred);
     virtual void onTimeOut(const boost::system::error_code &ec);
     virtual void onWrite(boost::system::error_code ec);
     int getTimeout(){return timeout;}
@@ -50,10 +88,14 @@ protected:
     boost::asio::ip::tcp::socket socket_;
     boost::asio::io_context::strand strand_;
     boost::asio::deadline_timer wait_request_timer_;
+
     int sessionId;
     QyhBuffer buffer;
     char read_buffer[MSG_READ_BUFFER_LENGTH];
     int timeout;
+
+    std::mutex mtx;
+    SendMessageQueue sendmsgs;
 };
 
 #endif // SESSION_H

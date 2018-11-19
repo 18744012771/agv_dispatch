@@ -1,6 +1,6 @@
 #include "tcpclient.h"
 #include <iostream>
-#include "common.h"
+#include "../common.h"
 
 TcpClient::TcpClient(std::string _ip, int _port, ClientReadCallback _readcallback, ClientConnectCallback _connectcallback, ClientDisconnectCallback _disconnectcallback):
     ip(_ip),
