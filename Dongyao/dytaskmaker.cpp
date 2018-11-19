@@ -96,6 +96,57 @@ void DyTaskMaker::onDisconnect()
 }
 
 
+bool DyTaskMaker::makeChargeTask(int agv)
+{
+    AgvTaskPtr task(new AgvTask());
+
+    //1.指定车辆
+    task->setAgv(agv);
+
+    //2.优先级
+    task->setPriority(AgvTask::PRIORITY_VERY_HIGH);
+
+    //3.执行次数
+    task->setRunTimes(1);
+
+    //4.节点
+    std::string task_describe;
+    MapPoint *point = MapManager::getInstance()->getIdleChargeStation();
+
+    if(point == nullptr || point->getPointType()!=MapPoint::Map_Point_Type_CHARGE){
+        combined_logger->debug("no idle charge station!");
+        return false;
+    }
+    task_describe.append(point->getName());
+
+    AgvTaskNodePtr node_node(new AgvTaskNode());
+    node_node->setStation(point->getId());
+    std::vector<AgvTaskNodeDoThingPtr> doThings;
+
+    task_describe.append("[+] ");
+
+    std::vector<std::string> _paramscharge;
+    _paramscharge.push_back(point->getLineId());  //充电桩id
+    _paramscharge.push_back(point->getIp());
+    _paramscharge.push_back(intToString(point->getPort()));
+
+    doThings.push_back(AgvTaskNodeDoThingPtr(new DyForkliftThingCharge(_paramscharge)));
+    node_node->setTaskType(TASK_CHARGE);
+    node_node->setDoThings(doThings);
+
+    task->push_backNode(node_node);
+
+    //5.产生时间
+    task->setProduceTime(getTimeStrNow());
+    task->setDescribe(task_describe);
+    TaskManager::getInstance()->addTask(task);
+
+    combined_logger->info("makeTask : agv{} charge",agv);
+
+    return true;
+}
+
+
 void DyTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 {
     AgvTaskPtr task(new AgvTask());
@@ -160,13 +211,13 @@ void DyTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 
 
                 //update wms
-//                std::vector<std::string> _paramswms;
-//                _paramswms.push_back(all[i+2]);
-//                _paramswms.push_back(all[i+3]);
-//                _paramswms.push_back("0");
-//                _paramswms.push_back(all[i+4]);
-//                DyForkliftUpdWMS* test= new DyForkliftUpdWMS(_paramswms);
-//                getGoodDoThings.push_back(AgvTaskNodeDoThingPtr(test));
+                //                std::vector<std::string> _paramswms;
+                //                _paramswms.push_back(all[i+2]);
+                //                _paramswms.push_back(all[i+3]);
+                //                _paramswms.push_back("0");
+                //                _paramswms.push_back(all[i+4]);
+                //                DyForkliftUpdWMS* test= new DyForkliftUpdWMS(_paramswms);
+                //                getGoodDoThings.push_back(AgvTaskNodeDoThingPtr(test));
 
                 node_node->setTaskType(TASK_PICK);
                 node_node->setDoThings(doThings);

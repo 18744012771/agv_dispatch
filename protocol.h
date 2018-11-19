@@ -43,6 +43,14 @@
 #define LOG_TIME_LENGTH          (32)
 #define LOG_MSG_LENGTH          (1024)
 
+//notifys
+typedef enum{
+    ENUM_NOTIFY_ALL_TYPE_MAP_UPDATE = 0,
+    ENUM_NOTIFY_ALL_TYPE_ERROR,
+    ENUM_NOTIFY_INIT_POSITION_OK,
+    ENUM_NOTIFY_INIT_POSITION_FAIL,
+}ENUM_NOTIFY_ALL_TYPE;
+
 //result位的定义
 enum
 {

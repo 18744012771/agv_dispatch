@@ -19,9 +19,9 @@ void QingdaoNodeTingPut::beforeDoing(AgvPtr agv)
 
 void QingdaoNodeTingPut::doing(AgvPtr agv)
 {
-	//²âÊÔ 
+	//ï¿½ï¿½ï¿½ï¿½ 
 
-	Sleep(15000);
+    sleep_for_ms(15000);
 	bresult = true;
 }
 

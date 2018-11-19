@@ -282,8 +282,8 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     agv->setTask(task);
                     agv->onTaskStart(task);
                     task->setPath(result);
-                    combined_logger->info("path={0}", task->getPath().at(0));
-                    combined_logger->info("3.excuteTask={0}", task->getId());
+                    //combined_logger->info("path={0}", task->getPath().at(0));
+                    //combined_logger->info("3.excuteTask={0}", task->getId());
                     //占用线路和站点
                     mapmanagerptr->addOccuStation(aimStation, agv);
                     for (auto tline : result)
@@ -390,8 +390,8 @@ bool TaskManager::init()
                     }
                 }
             }
-            toDisMtx.unlock();
-            usleep(20000);
+            toDisMtx.unlock();            
+            sleep_for_us(20000);
         }
     });
 

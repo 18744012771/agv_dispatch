@@ -9,12 +9,14 @@ AgvSession::AgvSession(boost::asio::io_context &service):
     Session(service),
     _agvPtr(nullptr)
 {
-    timeout = 10;
+    timeout = 5*60;
 }
 
 void AgvSession::afterread()
 {
-    if(_agvPtr == nullptr)return ;
+    if(_agvPtr == nullptr){
+        return ;
+    }
     int returnValue;
     do
     {
@@ -103,6 +105,7 @@ void AgvSession::onStart()
             //start report
             agv->startReport(100);
             SessionManager::getInstance()->addAgvSession(shared_from_base<AgvSession>());
+            _agvPtr = agv;
             return ;
         }
         else
@@ -121,6 +124,7 @@ void AgvSession::onStart()
             //start report
             agv->startReport(100);
             SessionManager::getInstance()->addAgvSession(shared_from_base<AgvSession>());
+            _agvPtr = agv;
             return ;
         }else{
             combined_logger->info("there is no agv with this ip:{}",socket_.remote_endpoint().address().to_string());

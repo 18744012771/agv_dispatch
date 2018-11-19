@@ -33,7 +33,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
     do
     {
-        sleep(1);
+        sleep_for_s(1);
     }while(!forklift->isFinish());
     //TEST END
     */
@@ -46,7 +46,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(2);
+            sleep_for_s(2);
         }while(!forklift->isFinish(ATFORKLIFT_FORK_ADJUSTALL));
 
         /*
@@ -57,7 +57,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(1);
+            sleep_for_s(1);
         }while(!forklift->isFinish(<<ATFORKLIFT_FORK_LIFT));
 
         //伸出
@@ -66,7 +66,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(2);
+            sleep_for_s(2);
         }while(!forklift->isFinish(<<ATFORKLIFT_FORK_ADJUST));
 
         //抬升10cm
@@ -76,7 +76,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(1);
+            sleep_for_s(1);
         }while(!forklift->isFinish(<<ATFORKLIFT_FORK_LIFT));
 
         //上扬
@@ -85,7 +85,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(2);
+            sleep_for_s(2);
         }while(!forklift->isFinish(<<ATFORKLIFT_FORK_ADJUST));
         */
     }
@@ -97,7 +97,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(2);
+            sleep_for_s(2);
         }while(!forklift->isFinish(ATFORKLIFT_FORK_ADJUSTALL));
 
         /*
@@ -107,7 +107,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(2);
+            sleep_for_s(2);
         }while(!forklift->isFinish(<<ATFORKLIFT_FORK_ADJUST));
 
         //下降至指定高度
@@ -117,7 +117,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(1);
+            sleep_for_s(1);
         }while(!forklift->isFinish(<<ATFORKLIFT_FORK_LIFT));
 
         //叉尺缩回
@@ -126,7 +126,7 @@ void AtForkliftThingFork::doing(AgvPtr agv)
 
         do
         {
-            sleep(2);
+            sleep_for_s(2);
         }while(!forklift->isFinish(<<ATFORKLIFT_FORK_ADJUST));
 
 */

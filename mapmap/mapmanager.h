@@ -33,6 +33,8 @@ public:
     //保存地图
     bool save();
 
+    MapPoint *getIdleChargeStation();
+
     MapSpirit *getMapSpiritById(int id);
 
     MapSpirit *getMapSpiritByName(std::string name);

@@ -443,7 +443,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, ClientSessionPtr sess
         typedef std::function<void(ClientSessionPtr, const Json::Value &)> ProcessFunction;
 
         //TODO:
-        //combined_logger->debug("recv request:{0}", request.toStyledString());
+        combined_logger->debug("recv request:{0}", request.toStyledString());
 
         UserManagerPtr userManager = UserManager::getInstance();
         MapManagerPtr mapManager = MapManager::getInstance();
@@ -560,6 +560,32 @@ void MsgProcess::notifyAll(ENUM_NOTIFY_ALL_TYPE type)
         response["needConfirm"] = needConfirm;
         response["error_code"] = error_code;
         response["error_info"] = error_info;
+
+        SessionManager::getInstance()->sendToAllClient(response);
+    }
+
+    else if (type == ENUM_NOTIFY_INIT_POSITION_OK) {
+        needConfirm = true;
+        Json::Value response;
+        response["type"] = MSG_TYPE_NOTIFY;
+        response["todo"] = ENUM_NOTIFY_INIT_POSITION_OK;
+        response["queuenumber"] = 0;
+        response["needConfirm"] = needConfirm;
+        response["error_code"] = "";
+        response["error_info"] = "";
+
+        SessionManager::getInstance()->sendToAllClient(response);
+    }
+
+    else if (type == ENUM_NOTIFY_INIT_POSITION_FAIL) {
+
+        Json::Value response;
+        response["type"] = MSG_TYPE_NOTIFY;
+        response["todo"] = ENUM_NOTIFY_INIT_POSITION_FAIL;
+        response["queuenumber"] = 0;
+        response["needConfirm"] = needConfirm;
+        response["error_code"] = "";
+        response["error_info"] = "";
 
         SessionManager::getInstance()->sendToAllClient(response);
     }

@@ -185,7 +185,7 @@ void rosAgv::onTaskFinished(AgvTaskPtr _task)
         }
         else
         {
-            sleep(10);
+            sleep_for_s(10);
             combined_logger->info("rosAgv,  onTaskFinished, 不需要返回待命点");
         }
     }
@@ -478,20 +478,20 @@ void rosAgv::startShelftUp(string action)//3层升降货架AGV
     if(action == AGV_ACTION_PUT)
     {
         ControlShelfUpDown(3, "87500");
-        sleep(1);
+        sleep_for_s(1);
         ControlShelfUpDown(2, "63000");
-        sleep(1);
+        sleep_for_s(1);
         ControlShelfUpDown(1, "39000");
-        sleep(10);
+        sleep_for_s(10);
     }
     else if(action == AGV_ACTION_GET)
     {
         ControlShelfUpDown(3, "85500");
-        sleep(1);
+        sleep_for_s(1);
         ControlShelfUpDown(2, "61000");
-        sleep(1);
+        sleep_for_s(1);
         ControlShelfUpDown(1, "37000");
-        sleep(10);
+        sleep_for_s(10);
     }
 
 }
@@ -499,11 +499,11 @@ void rosAgv::startShelftUp(string action)//3层升降货架AGV
 void rosAgv::startShelftDown(string action)//3层升降货架AGV
 {
     ControlShelfUpDown(1, "0");
-    sleep(1);
+    sleep_for_s(1);
     ControlShelfUpDown(2, "20000");
-    sleep(1);
+    sleep_for_s(1);
     ControlShelfUpDown(3, "40000");
-    sleep(1);
+    sleep_for_s(1);
 }
 
 

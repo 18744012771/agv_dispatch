@@ -64,10 +64,10 @@ typedef struct WarnStatus
     int iScramSt;          //紧急停止状态 0:非 1：紧急停止
     int iTouchEdgeSt;      //触边状态    0：正常 1：触边
     int iTentacleSt;       //触须状态    0：正常  1：触须
-    int iTemperatureSt;    //温度保护状态 0：正常  1：温度保护
-    int iDriveSt;          //驱动状态    0：正常  1：异常
+    int iTemperatureSt;    //温度
     int iBaffleSt;         //挡板状态    0：正常  1：异常
-    int iBatterySt;        //电池状态    0：正常  1：过低
+    int iBatteryA;        //dianliu
+    int iBatteryV;        //dianya
     //int Equipmment_Err_Status;          //设备故障告警
     int iLocationLaserConnectSt;        //定位激光连接状态    0： 正常 1:异常
     int iObstacleLaserConnectSt;        //避障激光连接状态    0： 正常 1：异常
@@ -79,8 +79,8 @@ typedef struct WarnStatus
     bool operator ==(WarnStatus & t){
         if(iLocateSt == t.iLocateSt && iSchedualPlanSt == t.iSchedualPlanSt && iHandCtrSt == t.iHandCtrSt &&
                 iObstacleLaserSt == t.iObstacleLaserSt && iScramSt == t.iScramSt && iTouchEdgeSt == t.iTouchEdgeSt &&
-                iTentacleSt == t.iTentacleSt && iTemperatureSt == t.iTemperatureSt && iDriveSt == t.iDriveSt &&
-                iBaffleSt == t.iBaffleSt && iBatterySt == t.iBatterySt && iLocationLaserConnectSt == t.iLocationLaserConnectSt &&
+                iTentacleSt == t.iTentacleSt && iTemperatureSt == t.iTemperatureSt && iBatteryV == t.iBatteryV &&
+                iBaffleSt == t.iBaffleSt && iBatteryA == t.iBatteryA && iLocationLaserConnectSt == t.iLocationLaserConnectSt &&
                 iObstacleLaserConnectSt == t.iObstacleLaserConnectSt && iSerialPortConnectSt == t.iSerialPortConnectSt)
         {
             return true;
@@ -92,8 +92,8 @@ typedef struct WarnStatus
     std::string toString()
     {
         char buf[LOG_MSG_LENGTH];
-        snprintf(buf, LOG_MSG_LENGTH, "定位丢失=%d 调度系统规划错误=%d 模式=%d 激光避障状态=%d 紧急停止状态=%d 触边状态=%d 触须状态=%d 温度保护状态=%d 驱动状态=%d 挡板状态=%d 电池状态=%d 定位激光连接状态=%d 避障激光连接状态=%d 串口连接状态=%d",
-                 iLocateSt, iSchedualPlanSt, iHandCtrSt,iObstacleLaserSt,iScramSt, iTouchEdgeSt, iTentacleSt, iTemperatureSt, iDriveSt, iBaffleSt, iBatterySt, iLocationLaserConnectSt,iObstacleLaserConnectSt,iSerialPortConnectSt
+        snprintf(buf, LOG_MSG_LENGTH, "定位丢失=%d 调度系统规划错误=%d 模式=%d 激光避障状态=%d 紧急停止状态=%d 触边状态=%d 触须状态=%d 温度保护状态=%d dianya=%d 挡板状态=%d dianliu=%d 定位激光连接状态=%d 避障激光连接状态=%d 串口连接状态=%d",
+                 iLocateSt, iSchedualPlanSt, iHandCtrSt,iObstacleLaserSt,iScramSt, iTouchEdgeSt, iTentacleSt, iTemperatureSt, iBatteryV, iBaffleSt, iBatteryA, iLocationLaserConnectSt,iObstacleLaserConnectSt,iSerialPortConnectSt
                  );
         return std::string(buf);
     }
@@ -113,13 +113,12 @@ public:
     void goStation(std::vector<int> lines,  bool stop, FORKLIFT_COMM cmd);
     void goElevator(const std::vector<int> lines);
     void setQyhTcp(AgvSessionPtr _qyhTcp);
-
     AgvSessionPtr getQyhTcp(){return m_qTcp;}
 
     bool startReport(int interval);
     bool endReport();
     bool fork(int params); //1-liftup 0-setdown
-    bool heart();
+    void heart();
     //bool move(float speed, float distance);//进电梯时用
     bool charge(int params);  //1-充电 0-退出充电
     //bool heart();
@@ -159,6 +158,8 @@ public:
     virtual bool resume();
 
     virtual void onTaskCanceled(AgvTaskPtr _task);
+
+    int getBatteryTemprature(){return batteryTemprature;}
 private:
     void checkCanGo();
     void checkNeedPause();
@@ -181,10 +182,12 @@ private:
     int task_type;
 
     AgvSessionPtr m_qTcp;
-    WarnSt m_warn;
+//    WarnSt m_warn;
     std::atomic_bool pauseFlag;
     std::atomic_bool sendPause;//发送的是暂停的指令，还是继续的指令.true:send pause  false:send resume
     bool firstConnect;
+
+    int batteryTemprature;
 };
 
 #endif // DYFORKLIFT_H

@@ -60,7 +60,7 @@ void testAGV()
         chip->init();
         agv->setChipMounter(chip);
 
-        sleep(20);
+        sleep_for_s(20);
 
         chipinfo info;
         while (chip != nullptr)
@@ -91,7 +91,7 @@ void testAGV()
             break;
         }*/
 
-            sleep(1);
+            sleep_for_s(1);
         }
     });
 
@@ -262,7 +262,8 @@ int main(int argc, char *argv[])
     combined_logger->info("server init OK!");
     sessionmanagerptr->run();
 
-    g_threads.join_all();
+    g_threads.interrupt_all();
+    //g_threads.join_all();
 
     spdlog::drop_all();
 

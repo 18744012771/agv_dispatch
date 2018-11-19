@@ -12,11 +12,6 @@ class MsgProcess;
 
 using MsgProcessPtr = std::shared_ptr<MsgProcess>;
 
-typedef enum{
-    ENUM_NOTIFY_ALL_TYPE_MAP_UPDATE = 0,
-    ENUM_NOTIFY_ALL_TYPE_ERROR,
-}ENUM_NOTIFY_ALL_TYPE;
-
 class MsgProcess : public boost::noncopyable,public std::enable_shared_from_this<MsgProcess>
 {
 public:

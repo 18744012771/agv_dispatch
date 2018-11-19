@@ -5,8 +5,8 @@ boost::thread_group  g_threads;
 CppSQLite3DB g_db;
 
 //const int GLOBAL_AGV_PROJECT = AGV_PROJECT_ANTING;
-//const int GLOBAL_AGV_PROJECT = AGV_PROJECT_QINGDAO;
-const int GLOBAL_AGV_PROJECT = AGV_PROJECT_DONGYAO;
+const int GLOBAL_AGV_PROJECT = AGV_PROJECT_QINGDAO;
+//const int GLOBAL_AGV_PROJECT = AGV_PROJECT_DONGYAO;
 //const int GLOBAL_AGV_PROJECT = AGV_PROJECT_QUNCHUANG;
 
 std::shared_ptr<spdlog::logger> combined_logger;
@@ -127,7 +127,7 @@ bool stringToBool(std::string str)
 std::vector<std::string> split(std::string src,std::string sp)
 {
     std::vector<std::string> result;
-	if (src.length() == 0)return result;
+    if (src.length() == 0)return result;
     if(sp.length()==0){
         result.push_back(src);
         return result;
@@ -139,12 +139,12 @@ std::vector<std::string> split(std::string src,std::string sp)
         if(pos == std::string::npos){
             break;
         }
-		if(pos!=0)
-			result.push_back(src.substr(0,pos));
+        if(pos!=0)
+            result.push_back(src.substr(0,pos));
         src = src.substr(pos+sp.length());
     }
-	if(src.length()>0)
-		result.push_back(src);
+    if(src.length()>0)
+        result.push_back(src);
     return result;
 }
 
@@ -280,9 +280,9 @@ std::string transToFullMsg(const std::string &data)
     std::string lenstr = "0000"+intToString(data.length()+10);
     ss <<"*"
       <<timeStampStr.substr(timeStampStr.length()-6)
-      <<lenstr.substr(lenstr.length()-4)
-      <<data
-     <<"#";
+     <<lenstr.substr(lenstr.length()-4)
+    <<data
+    <<"#";
     return ss.str();
 }
 
@@ -294,4 +294,31 @@ int getRandom(int maxRandom)
     if(maxRandom>0)
         return rand()%maxRandom;
     return rand();
+}
+
+void sleep_for_s(int s)
+{
+    try{
+        boost::this_thread::sleep(boost::posix_time::seconds(s));
+    }catch(...){
+
+    }
+}
+
+void sleep_for_ms(int ms)
+{
+    try{
+        boost::this_thread::sleep(boost::posix_time::milliseconds(ms));
+    }catch(...){
+
+    }
+}
+
+void sleep_for_us(int us)
+{
+    try{
+        boost::this_thread::sleep(boost::posix_time::microseconds(us));
+    }catch(...){
+
+    }
 }

@@ -387,7 +387,7 @@ void Elevator::StartSendThread(int cmd, int from_floor, int to_floor, int elevat
             }
 
             notify(p);
-            sleep(5);
+            sleep_for_s(5);
             combined_logger->info("AGV发送CMD end", cmd);
         }
         while(send_cmd);

@@ -8,6 +8,8 @@
 #include "../mapmap/conflictmanager.h"
 #include "../device/new_elevator/newelevator.h"
 #include "../device/new_elevator/newelevatormanager.h"
+#include "../msgprocess.h"
+#include "../taskmaker.h"
 #define RESEND
 //#define HEART
 
@@ -15,7 +17,8 @@
 DyForklift::DyForklift(int id, std::string name, std::string ip, int port) :
     Agv(id, name, ip, port),
     m_qTcp(nullptr),
-    firstConnect(true)
+    firstConnect(true),
+    batteryTemprature(0)
 {
     //    startpoint = -1;
     //    actionpoint = -1;
@@ -38,7 +41,7 @@ void DyForklift::init() {
         while (!g_quit) {
             if (m_qTcp == nullptr || !m_qTcp->alive()) {
                 //已经掉线了
-                sleep(1);
+                sleep_for_s(1);
                 continue;
             }
             unRecvMsgMtx.lock();
@@ -55,7 +58,7 @@ void DyForklift::init() {
             }
             unRecvMsgMtx.unlock();
 
-            usleep(1000000);
+            sleep_for_us(1000000);
         }
     });
 #endif
@@ -90,13 +93,13 @@ bool DyForklift::fork(int params)
     return resend(body.str());
 }
 
-bool DyForklift::heart()
+void DyForklift::heart()
 {
     std::stringstream body;
     body.fill('0');
     body.width(2);
     body<<FORKLIFT_HEART;
-    return send(body.str().c_str());
+    send(body.str());
 }
 
 int DyForklift::nearestStation()
@@ -108,8 +111,8 @@ int DyForklift::nearestStation()
     for (auto station : stations) {
         MapPoint *point = mapmanager->getPointById(station);
         if (point == nullptr)continue;
-        long dis = pow(x - point->getRealX(), 2) + pow(y - point->getRealY(), 2);
-        if ((min_station == -1 || minDis > dis) && abs(-point->getRealA()/10 - theta) < 40)
+        long dis = func_dis(x,y,point->getRealX(),point->getRealY());
+        if ((min_station == -1 || minDis > dis) && func_angle(-point->getRealA() / 10, (int)theta) < 20)
         {
             minDis = dis;
             min_station = point->getId();
@@ -144,16 +147,13 @@ void DyForklift::onRead(const char *data, int len)
         return;
     }
 
-    int timestamp = stringToInt(msg.substr(0,6));
-
-    if(timestamp%5 == 0){
-        heart();
-    }
-
     int mainMsg = stringToInt(msg.substr(10, 2));
     std::string body = msg.substr(12);
 
-    if (FORKLIFT_POS != mainMsg)
+    int timestamp = stringToInt(msg.substr(0,6));
+    if(timestamp%5==0)heart();
+
+    if (FORKLIFT_POS != mainMsg && FORKLIFT_WARN != mainMsg)
     {
         combined_logger->info("agv{0} recv data:{1}", id, data);
     }
@@ -223,51 +223,44 @@ void DyForklift::onRead(const char *data, int len)
         tempWarn.iScramSt = stringToInt(warn.at(4));           //紧急停止状态 0:非 1：紧急停止
         tempWarn.iTouchEdgeSt = stringToInt(warn.at(5));       //触边状态    0：正常 1：触边
         tempWarn.iTentacleSt = stringToInt(warn.at(6));        //触须状态    0：正常  1：触须
-        tempWarn.iTemperatureSt = stringToInt(warn.at(7));     //温度保护状态 0：正常  1：温度保护
-        tempWarn.iDriveSt = stringToInt(warn.at(8));           //驱动状态    0：正常  1：异常
-        tempWarn.iBaffleSt = stringToInt(warn.at(9));          //挡板状态    0：正常  1：异常
-        tempWarn.iBatterySt = stringToInt(warn.at(10));         //电池状态    0：正常  1：过低
-        tempWarn.iLocationLaserConnectSt = stringToInt(warn.at(11));         //定位激光连接状态    0： 正常 1:异常
-        tempWarn.iObstacleLaserConnectSt = stringToInt(warn.at(12));         //避障激光连接状态    0： 正常 1：异常
-        tempWarn.iSerialPortConnectSt = stringToInt(warn.at(13));            //串口连接状态       0： 正常 1：异常
+        tempWarn.iTemperatureSt = stringToInt(warn.at(7));     //温度
+        tempWarn.iBaffleSt = stringToInt(warn.at(8));          //挡板状态    0：正常  1：异常
+        tempWarn.iLocationLaserConnectSt = stringToInt(warn.at(9));         //定位激光连接状态    0： 正常 1:异常
+        tempWarn.iObstacleLaserConnectSt = stringToInt(warn.at(10));         //避障激光连接状态    0： 正常 1：异常
+        tempWarn.iSerialPortConnectSt = stringToInt(warn.at(11));            //串口连接状态       0： 正常 1：异常
+        tempWarn.iBatteryA = stringToInt(warn.at(12));
+        tempWarn.iBatteryV = stringToInt(warn.at(13));
 
-        isManualControl = (tempWarn.iHandCtrSt == 1);
+        //combined_logger->info("agv{1} warn changed:{0}", tempWarn.toString(), id);
+        batteryTemprature = tempWarn.iTemperatureSt;
+        isChanging = (tempWarn.iBatteryA > 0);
+        isManualControl = (tempWarn.iHandCtrSt ==1);
         isEmergencyStop = (tempWarn.iScramSt == 1);
+        isPowerLow = (tempWarn.iBatteryV < 25*(1000));
 
         //set status
-        if(isManualControl && !isEmergencyStop){
-            status = AGV_STATUS_HANDING;
+        if(isChanging){
+            status = AGV_STATUS_CHARGING;
         }else if(isEmergencyStop){
             status = AGV_STATUS_ESTOP;
-        }
-
-
-        //recover status
-        if(status == AGV_STATUS_ESTOP && !isEmergencyStop){
-            if(currentTask!=nullptr && !currentTask->getIsCancel())
-            {
-                status = AGV_STATUS_TASKING;
-            }else{
-                status = AGV_STATUS_IDLE;
+        }else if(isManualControl){
+            status = AGV_STATUS_HANDING;
+        }else if(isPowerLow && status != AGV_STATUS_TASKING && status != AGV_STATUS_GO_CHARGING){
+            status = AGV_STATUS_POWER_LOW;
+            //TODO: zidong chongdian
+            bool ret = TaskMaker::getInstance()->makeChargeTask(getId());
+            if(ret){
+                status = AGV_STATUS_GO_CHARGING;
             }
-        }
-
-        if(status == AGV_STATUS_HANDING && !isManualControl){
-            if(currentTask!=nullptr && !currentTask->getIsCancel())
-            {
-                status = AGV_STATUS_TASKING;
-            }else{
-                status = AGV_STATUS_IDLE;
+        }else{
+            if(status == AGV_STATUS_CHARGING || status == AGV_STATUS_ESTOP || status == AGV_STATUS_HANDING ||status == AGV_STATUS_POWER_LOW){
+                //recover status!!!
+                if(currentTask!=nullptr && !currentTask->getIsCancel()){
+                    status = AGV_STATUS_TASKING;
+                }else{
+                    status = AGV_STATUS_IDLE;
+                }
             }
-        }
-
-        if (tempWarn == m_warn)
-        {
-        }
-        else
-        {
-            m_warn = tempWarn;
-            combined_logger->info("agv{1} warn changed:{0}", m_warn.toString(), id);
         }
         break;
     }
@@ -299,6 +292,17 @@ void DyForklift::onRead(const char *data, int len)
     case FORKLIFT_STARTREPORT:
     case FORKLIFT_MOVEELE:
     case FORKLIFT_CHARGE:
+    {
+        unRecvMsgMtx.lock();
+        //command response
+        auto iter = m_unRecvSend.find(stringToInt(msg.substr(0, 6)));
+        if (iter != m_unRecvSend.end())
+        {
+            m_unRecvSend.erase(iter);
+        }
+        unRecvMsgMtx.unlock();
+        break;
+    }
     case FORKLIFT_INITPOS:
     {
         unRecvMsgMtx.lock();
@@ -309,6 +313,14 @@ void DyForklift::onRead(const char *data, int len)
             m_unRecvSend.erase(iter);
         }
         unRecvMsgMtx.unlock();
+        if (body.length() <= 0)return;
+        if (1 == stringToInt(body))
+        {
+            MsgProcess::getInstance()->notifyAll(ENUM_NOTIFY_INIT_POSITION_OK);
+        }else{
+            MsgProcess::getInstance()->notifyAll(ENUM_NOTIFY_INIT_POSITION_FAIL);
+        }
+
         break;
     }
     case FORKLIFT_MOVE_NOLASER:
@@ -420,6 +432,7 @@ void DyForklift::arrve() {
 void DyForklift::excutePath(std::vector<int> lines)
 {
     auto conflictmanagerptr = ConflictManager::getInstance();
+    auto mapmanagerptr = MapManager::getInstance();
     combined_logger->info("dyForklift{0} excutePath", id);
 
     std::vector<int> spirits;
@@ -430,10 +443,8 @@ void DyForklift::excutePath(std::vector<int> lines)
     excutestations.push_back(nowStation);
     for (auto line : lines) {
         spirits.push_back(line);
-        MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(line);
-        if (spirit == nullptr || spirit->getSpiritType() != MapSpirit::Map_Sprite_Type_Path)continue;
-
-        MapPath *path = static_cast<MapPath *>(spirit);
+        MapPath *path =  mapmanagerptr->getPathById(line);
+        if(path == nullptr)continue;
         int endId = path->getEnd();
         spirits.push_back(endId);
         excutestations.push_back(endId);
@@ -549,6 +560,7 @@ void DyForklift::goSameFloorPath(const std::vector<int> lines)
 //上电梯
 void DyForklift::goElevator(const std::vector<int> lines)
 {
+    auto mapmanagerptr = MapManager::getInstance();
     //duoci chengzuo dianti de wenti s
     int agv_id = getId();
     int index = 0;
@@ -570,20 +582,37 @@ void DyForklift::goElevator(const std::vector<int> lines)
             return ;
         }
 
-        int from_floor = MapManager::getInstance()->getFloor(nowStation);
+        int from_floor = floor;
+        if(from_floor <=0 )
+        {
+            combined_logger->error("current floor {}<=0, can not take elevator!",from_floor);
+            return ;
+        }
 
         int elevator_line = lines_take_elevator.at(0);
+        MapPath *elevator_path =  mapmanagerptr->getPathById(elevator_line);
+        if(elevator_path == nullptr){
+            combined_logger->error("elevator path {} == nullptr, can not take elevator!",elevator_line);
+            return ;
+        }
 
-        MapSpirit *spirit = MapManager::getInstance()->getMapSpiritById(elevator_line);
-        MapPath *elevator_path = static_cast<MapPath *>(spirit);
-        MapSpirit *elevator_spirit = MapManager::getInstance()->getMapSpiritById(elevator_path->getStart());
-        MapPoint * elevator_point = static_cast<MapPoint*>(elevator_spirit);
+        MapPoint * elevator_point = mapmanagerptr->getPointById(elevator_path->getStart());
+        if(elevator_point == nullptr){
+            combined_logger->error("elevator_point {} == nullptr, can not take elevator!",elevator_path->getStart());
+            return ;
+        }
+
         combined_logger->info("DyForklift,  excutePath, elevatorID: {0}", elevator_point->getLineId());
 
 
         int elevator_back = lines_take_elevator.back();
-        MapSpirit *spirit_back = MapManager::getInstance()->getMapSpiritById(elevator_back);
-        MapPath *elevator_path_back = static_cast<MapPath *>(spirit_back);
+
+        MapPath *elevator_path_back = mapmanagerptr->getPathById(elevator_back);
+        if(elevator_path_back == nullptr){
+            combined_logger->error("elevator_path_back {} == nullptr, can not take elevator!",elevator_back);
+            return ;
+        }
+
         int endId = elevator_path_back->getEnd();
 
         //根据电梯等待区设置呼叫某个ID电梯
@@ -621,7 +650,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         while(!g_quit && currentTask != nullptr && !currentTask->getIsCancel()){
             elemanagerptr->resetElevatorState(elevator_id);
-            sleep(3);
+            sleep_for_s(3);
             if (elevator->getResetOk())
                 break;
         }
@@ -631,9 +660,9 @@ void DyForklift::goElevator(const std::vector<int> lines)
         //呼梯
         elevator->setCurrentOpenDoorFloor(-1);
         while (!g_quit &&currentTask!=nullptr && !currentTask->getIsCancel()) {
-            sleep(1);
+            sleep_for_s(1);
             elemanagerptr->call(elevator_id, from_floor);
-            sleep(1);
+            sleep_for_s(1);
             elemanagerptr->queryElevatorState(elevator_id);
             if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
         }
@@ -645,7 +674,7 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         elemanagerptr->KeepOpen(from_floor, elevator_id);
 
-        Sleep(5); //等待电梯门完全打开
+        sleep_for_s(5); //等待电梯门完全打开
 
         if (lines_enter_elevator.size() > 0)
         {
@@ -656,23 +685,23 @@ void DyForklift::goElevator(const std::vector<int> lines)
 
         //关门
         elemanagerptr->DropOpen(elevator_id);
-        Sleep(2);
+        sleep_for_s(2);
 
         elemanagerptr->resetElevatorState(elevator_id);
         while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
-            sleep(2);
+            sleep_for_s(2);
             if(elevator->getResetOk())break;
             elemanagerptr->resetElevatorState(elevator_id);
         }
 
         if (g_quit || currentTask == nullptr|| currentTask->getIsCancel()) return;
-        Sleep(5);
+        sleep_for_s(5);
         //呼梯
         elemanagerptr->call(elevator_id, to_floor);
         while (!g_quit && currentTask!=nullptr &&   !currentTask->getIsCancel()) {
-            sleep(1);
+            sleep_for_s(1);
             if (elevator->getCurrentOpenDoorFloor() == to_floor)break;
-            sleep(1);
+            sleep_for_s(1);
             //重新呼叫
             elemanagerptr->call(elevator_id, to_floor);
         }
@@ -684,19 +713,19 @@ void DyForklift::goElevator(const std::vector<int> lines)
         //出电梯
         combined_logger->debug("==============START go out elevator");
         elemanagerptr->KeepOpen(to_floor, elevator_id);
-        sleep(5);//等待电梯门完全打开
+        sleep_for_s(5);//等待电梯门完全打开
         goStation(lines_out_elevator, true, FORKLIFT_MOVEELE);
 
         combined_logger->debug("==============FINISH go out elevator");
 
         //关门
         elemanagerptr->DropOpen(elevator_id);
-        Sleep(2);
+        sleep_for_s(2);
         elemanagerptr->resetElevatorState(elevator_id);
 
         if (g_quit || currentTask == nullptr ||  currentTask->getIsCancel()) return;
 
-        sleep(2);
+        sleep_for_s(2);
 
         if (lines_out_elevator.size() > 0)
         {
@@ -787,7 +816,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     currentEndStation = endId;
     combined_logger->debug(" agv {0} check can go before go!...");
     while (!g_quit && currentTask != nullptr && !currentTask->getIsCancel()) {
-        usleep(500000);
+        sleep_for_us(500000);
         bool canGo = true;
         if (nowStation > 0) {
             if (!conflictmanagerptr->tryAddConflictOccu(nowStation, getId())) {
@@ -847,12 +876,12 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     do
     {
         //wait for move finish
-        usleep(50000);
+        sleep_for_us(50000);
 
         //如果中途因为block被暂停了，那么就判断block是否可以进入了，如果可以进入，那么久要发送resume
         if (sendPause || pauseFlag)
         {
-            sleep(1);
+            sleep_for_s(1);
 
             bool canResume = true;
             //could occu current station or path block?
@@ -955,8 +984,10 @@ void DyForklift::setQyhTcp(AgvSessionPtr _qyhTcp)
     if (_qyhTcp == nullptr) {
         status = Agv::AGV_STATUS_UNCONNECT;
         m_qTcp = nullptr;
-    }else
+    }else{
         m_qTcp = _qyhTcp;
+	//TODO:status recover
+    }
 }
 //发送消息给小车
 bool DyForklift::send(const std::string &data)
@@ -974,7 +1005,7 @@ bool DyForklift::send(const std::string &data)
     }
     int msgType = stringToInt(sendContent.substr(11, 2));
 
-    if(FORKLIFT_HEART != msgType){
+    if(FORKLIFT_STARTREPORT != msgType && FORKLIFT_HEART != msgType){
         unRecvMsgMtx.lock();
         m_unRecvSend[stoi(sendContent.substr(1, 6))] = sendContent;
         unRecvMsgMtx.unlock();

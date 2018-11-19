@@ -35,7 +35,7 @@ void DyForkliftThingFork::doing(AgvPtr agv)
 
     do
     {
-        sleep(1);
+        sleep_for_s(1);
     }while(!forklift->isFinish(FORKLIFT_FORK));
 
     combined_logger->info("dothings-fork={0} end",forkParams);

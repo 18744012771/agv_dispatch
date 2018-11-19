@@ -50,7 +50,7 @@ void Session::onread(const boost::system::error_code& ec,
                      std::size_t bytes_transferred)
 {
     if (!ec) {
-        combined_logger->debug("session id {1} read length:{0} ",bytes_transferred,sessionId);
+        combined_logger->debug("session id {1} read length:{0} :{2} ",bytes_transferred,sessionId,std::string(read_buffer,bytes_transferred));
         wait_request_timer_.cancel();
         buffer.append(read_buffer,bytes_transferred);
         afterread();
@@ -75,7 +75,7 @@ void Session::send(const Json::Value &json)
     int length = msg.length();
     if(length<=0)return;
 
-    //combined_logger->info("SEND! session id {0}  len= {1} json={2}" ,sessionId,length,msg);
+    combined_logger->info("SEND! session id {0}  len= {1} " ,sessionId,length);
 
     char *send_buffer = new char[length + 6];
     memset(send_buffer, 0, length + 6);
@@ -97,6 +97,8 @@ void Session::stop()
 
 void Session::write(const char *data,int len)
 {
+    //TODO:fenbao?
+
     boost::asio::async_write(socket_, boost::asio::buffer(data, len),
                              boost::asio::bind_executor(strand_,
                                                         boost::bind(&Session::onWrite, shared_from_this(),

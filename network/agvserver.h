@@ -9,6 +9,7 @@ public:
     AgvServer(int _port, boost::asio::io_context &_context);
     virtual void doAccept();
     virtual void onAccept(const boost::system::error_code& e);
+private:
     AgvSessionPtr c;
 };
 

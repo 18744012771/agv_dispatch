@@ -135,6 +135,7 @@ protected:
 
     std::map<std::string,std::string> extra_params;
 
+    std::atomic_bool isPowerLow;
     std::atomic_bool isChanging;            //
     std::atomic_bool isManualControl;       //
     std::atomic_bool isEmergencyStop;       //

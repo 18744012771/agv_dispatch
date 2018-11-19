@@ -1,6 +1,5 @@
 ﻿#include "chargemachine.h"
 #include <limits>
-#include <iostream>
 chargemachine::chargemachine()
 {
 
@@ -115,7 +114,7 @@ bool chargemachine::checkConnection()
 //            reconnect();
             reconnectTimes++;
         }
-        sleep(3);
+        sleep_for_s(3);
     }
     if(!connected)
         combined_logger->info("chargemachine, check connection error...");
@@ -248,6 +247,14 @@ void chargemachine::parse_real_data(const char *data,int len)
     combined_logger->info("充电机, 设定电流: {0}"  , setting_current*10);
     //故障编号
     realData.faultcode.Data = data[14];
+    charge_backing = (data[14]&0x80)>>7;
+    charge_ok = (data[14]&0x40)>>6;
+    charge_forwarding = (data[14]&0x20)>>5;
+    charge_unconnect = (data[14]&0x10)>>4;
+    charge_error = (data[14]&0x08)>>3;
+    charge_overV = (data[14]&0x04)>>2;;
+    charge_overA = (data[14]&0x02)>>1;;
+    charge_e = (data[14]&0x01);;
     combined_logger->info("充电机, 故障编号: {0}{1}{2}{3}{4}{5}{6}{7}"  , (data[14]&0x80)>>7,(data[14]&0x40)>>6,(data[14]&0x20)>>5,(data[14]&0x10)>>4,(data[14]&0x08)>>3, (data[14]&0x04)>>2, (data[14]&0x02)>>1, data[14]&0x0001 );
     //充电时间
     u_short  charge_time  = (u_short)((data[15]<<8)&0xFF00)+(u_short)(data[16]&0x00FF);
@@ -312,7 +319,7 @@ void chargemachine::onRead(const char *data,int len)
         //crc_check
         if(!check_crc((unsigned char*)buffer.buf.data(), msg_len))
         {
-            std::cout<<"CRC校验未通过"<<std::endl;
+            //std::cout<<"CRC校验未通过"<<std::endl;
             buffer.removeFront(msg_len);
 
             if(buffer.size() > MSG_HEAD_LEN)

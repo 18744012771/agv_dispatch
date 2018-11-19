@@ -22,7 +22,7 @@ void QingdaoNodeTingGet::doing(AgvPtr agv)
 {
 	//≤‚ ‘ 
 
-	Sleep(15000);
+    sleep_for_ms(15000);
 	bresult = true;
 }
 

@@ -41,7 +41,7 @@ void AtForklift::init() {
                 }
                 msgMtx.unlock();
             }
-            usleep(500000);
+            qyh_sleep_for_us(500000);
 
         }
     });
@@ -50,7 +50,7 @@ void AtForklift::init() {
     g_threadPool.create_thread([&, this] {
         while (true) {
             heart();
-            usleep(500000);
+            qyh_sleep_for_us(500000);
 
         }
     });
@@ -587,12 +587,12 @@ void AtForklift::goStation(std::vector<int> lines, bool stop)
     do
     {
         //wait for move finish
-        usleep(50000);
+        sleep_for_us(50000);
 
         //如果中途因为block被暂停了，那么就判断block是否可以进入了，如果可以进入，那么久要发送resume
         if (pausedFlag && sendPause)
         {
-            usleep(500000);
+            sleep_for_us(500000);
             //判断block是否可以进入
             std::vector<int> bs;
             if(nowStation!=0){
@@ -628,7 +628,7 @@ void AtForklift::goStation(std::vector<int> lines, bool stop)
         while (!isFinish())
         {
             //wait for all finish
-            usleep(50000);
+            sleep_for_us(50000);
         }
     }
 }

@@ -57,7 +57,7 @@ void QingdaoTaskMaker::init()
 
         while(!g_quit)
         {
-            sleep(10);
+            sleep_for_s(10);
             if(taskmanagerptr->getCurrentTasks().size()<5){
 
                 AgvTaskPtr task(new AgvTask());

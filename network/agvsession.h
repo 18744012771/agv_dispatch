@@ -17,7 +17,6 @@ public:
     virtual void onStop();
 private:
     int ProtocolProcess();
-    char read_buffer[MSG_READ_BUFFER_LENGTH];
     inline void setAGVPtr(AgvPtr agv){_agvPtr = agv;}
     AgvPtr _agvPtr;
 };

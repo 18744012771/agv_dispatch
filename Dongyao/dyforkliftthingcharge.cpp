@@ -33,11 +33,26 @@ void DyForkliftThingCharge::doing(AgvPtr agv)
     if(!cm.checkConnection())
         return;
 
+    //auto task  = agv->getTask();
+    if(agv->getTask() == nullptr){
+        combined_logger->debug("no charge task found!");
+        return;
+    }
+
     if(agv->type() != DyForklift::Type){
         bresult = true;
         return;
     }
     DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
+
+
+    //panduan wendu
+    while(forklift->getTask()!=nullptr && !forklift->getTask()->getIsCancel()){
+        if(forklift->getBatteryTemprature()>0){
+            break;
+        }
+    }
+
     //叉尺抬升
     combined_logger->info("charge fork up start");
     bool sendResult = forklift->fork(FORKLIFT_UP);
@@ -49,28 +64,43 @@ void DyForkliftThingCharge::doing(AgvPtr agv)
     }
     do
     {
-        sleep(1);
-    }while(!forklift->isFinish(FORKLIFT_FORK));
+        sleep_for_s(1);
+    }while(!forklift->isFinish(FORKLIFT_FORK)&&agv->getTask()!=nullptr && !agv->getTask()->getIsCancel());
+
+    if(agv->getTask()==nullptr || agv->getTask()->getIsCancel()){
+        combined_logger->debug("charge task is cancel!");
+        return ;
+    }
 
     combined_logger->info("charge fork up end");
     //发送给小车充电
     sendResult = forklift->charge(FORKLIFT_START_CHARGE);
     do
     {
-        sleep(1);
-    }while(!forklift->isFinish(FORKLIFT_CHARGE));
+        sleep_for_s(1);
+    }while(!forklift->isFinish(FORKLIFT_CHARGE)&&agv->getTask()!=nullptr && !agv->getTask()->getIsCancel());
 
+    if(agv->getTask()==nullptr || agv->getTask()->getIsCancel()){
+        combined_logger->debug("charge task is cancel!");
+        return ;
+    }
 
     combined_logger->info("dothings-charge start");
 
     //开始充电
-	int retry = 3;
-	do
+    int retry = 20;
+    do
     {
         cm.chargeControl(charge_id, CHARGE_START);
-        //等待充电完成
-		sleep(60);
-    }while(CHARGE_FULL != cm.getStatus() && retry-->0);
+        retry--;
+        sleep_for_s(2);
+    }while(CHARGE_ING != cm.getStatus()&& retry>0&&agv->getTask()!=nullptr && !agv->getTask()->getIsCancel());
+
+    while(CHARGE_ING == cm.getStatus()&&agv->getTask()!=nullptr && !agv->getTask()->getIsCancel())
+    {
+        sleep_for_s(2);
+        cm.chargeControl(charge_id, CHARGE_START);
+    }
 
 }
 
@@ -82,23 +112,26 @@ void DyForkliftThingCharge::afterDoing(AgvPtr agv)
         bresult = true;
         return ;
     }
-    //通知小车退出充电
-    DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
-
-    bool sendResult = forklift->charge(FORKLIFT_END_CHARGE);
-    do
-    {
-        sleep(1);
-    }while(!forklift->isFinish(FORKLIFT_CHARGE));
 
     //通知充电桩停止充电
     //TODO 低温保护需退出
     cm.chargeControl(charge_id, CHARGE_STOP);
     do
     {
-        sleep(1);
+        sleep_for_s(1);
         cm.chargeControl(charge_id, CHARGE_STOP);
     }while(CHARGE_IDLE != cm.getStatus());
+
+
+    //通知小车退出充电
+    DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
+
+    bool sendResult = forklift->charge(FORKLIFT_END_CHARGE);
+    do
+    {
+        sleep_for_s(1);
+    }while(!forklift->isFinish(FORKLIFT_CHARGE));
+
 
     //叉尺下降
     combined_logger->info("charge fork down start");
@@ -111,7 +144,7 @@ void DyForkliftThingCharge::afterDoing(AgvPtr agv)
     }
     do
     {
-        sleep(1);
+        sleep_for_s(1);
     }while(!forklift->isFinish(FORKLIFT_FORK));
 
     combined_logger->info("charge fork down end");

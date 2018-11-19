@@ -233,7 +233,7 @@ void VirtualRosAgv::goStation(int station, bool stop)
     }
 
     while (!g_quit && currentTask != nullptr && !currentTask->getIsCancel()) {
-        usleep(500000);
+        sleep_for_us(500000);
         bool canGo = true;
         if (nowStation > 0) {
             if (!conflictmanagerptr->tryAddConflictOccu(nowStation, getId())) {
@@ -360,7 +360,7 @@ void VirtualRosAgv::goStation(int station, bool stop)
             if (canResume)
                 resume();
 
-            Sleep(500);
+            sleep_for_ms(500);
             continue;
         }
         //1.向目标前进100ms的距离 假设每次前进10 //3.重新计算当前位置
@@ -420,7 +420,7 @@ void VirtualRosAgv::goStation(int station, bool stop)
             floor = mapmanagerptr->getFloor(station);
             break;
         }
-        Sleep(500);
+        sleep_for_ms(500);
     }
 
 
@@ -434,7 +434,7 @@ void VirtualRosAgv::stop()
 void VirtualRosAgv::callMapChange(int station)
 {
     //模拟电梯运行，这里只做等待即可
-    Sleep(5000);
+    sleep_for_ms(5000);
     lastStation = (int)nowStation;
     nowStation = station;
     floor = MapManager::getInstance()->getFloor(station);

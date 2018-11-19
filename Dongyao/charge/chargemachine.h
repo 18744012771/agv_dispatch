@@ -102,6 +102,14 @@ public:
         return realData.faultcode.Bit.ready;
     }
 
+    bool getStatusOk(){
+        return charge_ok || charge_forwarding;
+    }
+
+    bool getStatusFail(){
+        return charge_backing || charge_unconnect ||charge_error ||charge_overV||charge_overA||charge_e;
+    }
+
 private:
 
     void onRead(const char *data,int len);
@@ -119,6 +127,15 @@ private:
     QyhBuffer buffer;
     int stationID;
     int currentRecordID;
+
+    std::atomic_bool charge_backing;
+    std::atomic_bool charge_ok;
+    std::atomic_bool charge_forwarding;
+    std::atomic_bool charge_unconnect;
+    std::atomic_bool charge_error;
+    std::atomic_bool charge_overV;
+    std::atomic_bool charge_overA;
+    std::atomic_bool charge_e;
 };
 
 

@@ -66,6 +66,27 @@ bool MapManager::load()
     return true;
 }
 
+MapPoint *MapManager::getIdleChargeStation()
+{
+    auto ae = g_onemap.getAllElement();
+    for (auto e : ae) {
+        if (e->getSpiritType() == MapSpirit::Map_Sprite_Type_Point)
+        {
+            auto p = static_cast<MapPoint *>(e);
+            if(p->getPointType() == MapPoint::Map_Point_Type_CHARGE){
+                //check occu
+                stationOccuMtx.lock();
+                if(station_occuagv[p->getId()] <= 0){
+                    stationOccuMtx.unlock();
+                    return p;
+                }
+                stationOccuMtx.unlock();
+            }
+        }
+    }
+    return nullptr;
+}
+
 MapSpirit *MapManager::getMapSpiritById(int id)
 {
     return g_onemap.getSpiritById(id);

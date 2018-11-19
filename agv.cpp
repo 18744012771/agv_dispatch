@@ -24,7 +24,11 @@ Agv::Agv(int _id, std::string _name, std::string _ip, int _port) :
     y(0),
     theta(0),
     floor(-1),
-    agvType(-1)
+    agvType(-1),
+    isPowerLow(false),
+    isChanging(false),
+    isManualControl(false),
+    isEmergencyStop(false)
 {
 }
 

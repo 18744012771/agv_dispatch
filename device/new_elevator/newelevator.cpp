@@ -41,7 +41,7 @@ void NewElevator::KeepOpen(int floor)
         do
         {
             elemanagerptr->send((char *)data,8);
-            sleep(2);
+            sleep_for_s(2);
         } while (send_cmd);
     });
 }

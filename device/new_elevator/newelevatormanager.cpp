@@ -261,7 +261,7 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     while(!g_quit){
         elemanagerptr->resetElevatorState(elevator_id);
 
-        sleep(3);
+        sleep_for_s(3);
 
         if (elevator->getResetOk())
             break;
@@ -272,9 +272,9 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     //呼梯
     elevator->setCurrentOpenDoorFloor(-1);
     while (!g_quit) {
-        sleep(1);
+        sleep_for_s(1);
         elemanagerptr->call(elevator_id, from_floor);
-        sleep(1);
+        sleep_for_s(1);
         elemanagerptr->queryElevatorState(elevator_id);
         if (elevator->getCurrentOpenDoorFloor() == from_floor)break;
     }
@@ -282,21 +282,21 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     //进电梯
     combined_logger->debug("==============START go into elevator");
     elemanagerptr->KeepOpen(from_floor,elevator_id);
-    sleep(5);
-    sleep(10);
+    sleep_for_s(5);
+    sleep_for_s(10);
     combined_logger->debug("==============FINISH go into elevator");
     //关门
     elemanagerptr->DropOpen(elevator_id);
-    sleep(1);
+    sleep_for_s(1);
     elemanagerptr->resetElevatorState(elevator_id);
-    sleep(5);
+    sleep_for_s(5);
     //呼梯
     elemanagerptr->call(elevator_id, to_floor);
 
     while (!g_quit) {
-        sleep(1);
+        sleep_for_s(1);
         if (elevator->getCurrentOpenDoorFloor() == to_floor)break;
-        sleep(1);
+        sleep_for_s(1);
         //重新呼叫
         elemanagerptr->call(elevator_id, to_floor);
     }
@@ -304,12 +304,12 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     //出电梯
     combined_logger->debug("==============START go out elevator");
     elemanagerptr->KeepOpen(to_floor, elevator_id);
-    sleep(5);
-    sleep(10);
+    sleep_for_s(5);
+    sleep_for_s(10);
     combined_logger->debug("==============FINISH go out elevator");
     //关门
     elemanagerptr->DropOpen(elevator_id);
-    sleep(1);
+    sleep_for_s(1);
     elemanagerptr->resetElevatorState(elevator_id);
 
     
