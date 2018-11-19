@@ -48,16 +48,7 @@
     <ClInclude Include="..\..\network\sessionmanager.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\network\tcpsession.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\sqlite3\CppSQLite3.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\utils\noncopyable.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\utils\threadpool.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\..\mapmap\mapbackground.h">
@@ -165,22 +156,10 @@
     <ClInclude Include="..\..\qyhbuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\network\acceptor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\network\session.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\network\tcpacceptor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\network\tcpclient.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\network\websocketacceptor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\network\websocketsession.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Anting\atforklift.h">
@@ -222,6 +201,21 @@
     <ClInclude Include="..\..\device\new_elevator\newelevatormanager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\network\agvserver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\network\agvsession.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\network\clientserver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\network\clientsession.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\network\server.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\agv.cpp">
@@ -249,9 +243,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\network\sessionmanager.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\network\tcpsession.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\sqlite3\CppSQLite3.cpp">
@@ -362,18 +353,6 @@
     <ClCompile Include="..\..\qyhbuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\network\websocketacceptor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\network\websocketsession.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\network\tcpacceptor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\network\acceptor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\network\session.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -414,6 +393,21 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\device\new_elevator\newelevatormanager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\network\agvserver.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\network\agvsession.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\network\clientserver.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\network\clientsession.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\network\server.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

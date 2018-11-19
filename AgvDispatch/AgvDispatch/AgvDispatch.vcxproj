@@ -58,14 +58,14 @@
     <ClInclude Include="..\..\mapmap\mapspirit.h" />
     <ClInclude Include="..\..\mapmap\onemap.h" />
     <ClInclude Include="..\..\msgprocess.h" />
-    <ClInclude Include="..\..\network\acceptor.h" />
+    <ClInclude Include="..\..\network\agvserver.h" />
+    <ClInclude Include="..\..\network\agvsession.h" />
+    <ClInclude Include="..\..\network\clientserver.h" />
+    <ClInclude Include="..\..\network\clientsession.h" />
+    <ClInclude Include="..\..\network\server.h" />
     <ClInclude Include="..\..\network\session.h" />
     <ClInclude Include="..\..\network\sessionmanager.h" />
-    <ClInclude Include="..\..\network\tcpacceptor.h" />
     <ClInclude Include="..\..\network\tcpclient.h" />
-    <ClInclude Include="..\..\network\tcpsession.h" />
-    <ClInclude Include="..\..\network\websocketacceptor.h" />
-    <ClInclude Include="..\..\network\websocketsession.h" />
     <ClInclude Include="..\..\protocol.h" />
     <ClInclude Include="..\..\qingdao\qingdaonodetingcharge.h" />
     <ClInclude Include="..\..\qingdao\qingdaonodetingget.h" />
@@ -84,8 +84,6 @@
     <ClInclude Include="..\..\taskmanager.h" />
     <ClInclude Include="..\..\userlogmanager.h" />
     <ClInclude Include="..\..\usermanager.h" />
-    <ClInclude Include="..\..\utils\noncopyable.h" />
-    <ClInclude Include="..\..\utils\threadpool.h" />
     <ClInclude Include="..\..\virtualagv.h" />
     <ClInclude Include="..\..\virtualrosagv.h" />
   </ItemGroup>
@@ -126,14 +124,14 @@
     <ClCompile Include="..\..\mapmap\mapspirit.cpp" />
     <ClCompile Include="..\..\mapmap\onemap.cpp" />
     <ClCompile Include="..\..\msgprocess.cpp" />
-    <ClCompile Include="..\..\network\acceptor.cpp" />
+    <ClCompile Include="..\..\network\agvserver.cpp" />
+    <ClCompile Include="..\..\network\agvsession.cpp" />
+    <ClCompile Include="..\..\network\clientserver.cpp" />
+    <ClCompile Include="..\..\network\clientsession.cpp" />
+    <ClCompile Include="..\..\network\server.cpp" />
     <ClCompile Include="..\..\network\session.cpp" />
     <ClCompile Include="..\..\network\sessionmanager.cpp" />
-    <ClCompile Include="..\..\network\tcpacceptor.cpp" />
     <ClCompile Include="..\..\network\tcpclient.cpp" />
-    <ClCompile Include="..\..\network\tcpsession.cpp" />
-    <ClCompile Include="..\..\network\websocketacceptor.cpp" />
-    <ClCompile Include="..\..\network\websocketsession.cpp" />
     <ClCompile Include="..\..\qingdao\qingdaonodetingcharge.cpp" />
     <ClCompile Include="..\..\qingdao\qingdaonodetingget.cpp" />
     <ClCompile Include="..\..\qingdao\qingdaonodetingmove.cpp" />
@@ -213,7 +211,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\thirdparty\sqlite\include;D:\thirdparty\jsoncpp\include;D:\thirdparty\boost\src\boost_1_67_0;$(IncludePath)</IncludePath>
+    <IncludePath>D:\thirdparty\sqlite\include;D:\thirdparty\jsoncpp\include;D:\thirdparty\boost\src\boost_1_67_0;D:\thirdparty\spdlog\include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\thirdparty\sqlite\lib\Debug;D:\thirdparty\jsoncpp\lib\x64\Debug;D:\thirdparty\boost\install\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -7,7 +7,7 @@
 #include <sstream>
 
 
-namespace lynx {
+namespace lynx{
 
 class MsgValue;
 
