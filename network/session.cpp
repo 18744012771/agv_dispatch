@@ -6,7 +6,8 @@ Session::Session(boost::asio::io_context &_context):
     strand_(_context),
     socket_(_context),
     timeout(90),
-    wait_request_timer_(_context)
+    wait_request_timer_(_context),
+    sending(false)
 {
     sessionId = SessionManager::getInstance()->getNextSessionId();
 }
@@ -75,7 +76,7 @@ void Session::send(const Json::Value &json)
     int length = msg.length();
     if(length<=0)return;
 
-    combined_logger->info("SEND! session id {0}  len= {1} " ,sessionId,length);
+    //combined_logger->info("SEND! session id {0}  len= {1} " ,sessionId,length);
 
     char *send_buffer = new char[length + 6];
     memset(send_buffer, 0, length + 6);
@@ -93,6 +94,7 @@ void Session::stop()
     onStop();
     wait_request_timer_.cancel();
     socket_.close();
+    sending = false;
 }
 
 void Session::write(const char *data,int len)
@@ -107,12 +109,19 @@ void Session::write(const char *data,int len)
         sendmsgs.push_back(SessionMsg(data+ii*SESSION_MSG_MEMORY_LENGTH,SESSION_MSG_MEMORY_LENGTH));
     }
     sendmsgs.push_back(SessionMsg(data+(pack_nums-1)*SESSION_MSG_MEMORY_LENGTH,len - (pack_nums-1)*SESSION_MSG_MEMORY_LENGTH));
-
-    boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
-                             boost::asio::bind_executor(strand_,
-                                                        boost::bind(&Session::onWrite, shared_from_this(),
-                                                                    boost::asio::placeholders::error)));
     mtx.unlock();
+
+
+    if(!sending){
+        mtx.lock();
+        sending = true;
+        boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
+                                 boost::asio::bind_executor(strand_,
+                                                            boost::bind(&Session::onWrite, shared_from_this(),
+                                                                        boost::asio::placeholders::error)));
+        mtx.unlock();
+    }
+
 }
 
 void Session::onWrite(boost::system::error_code ec)
@@ -124,14 +133,16 @@ void Session::onWrite(boost::system::error_code ec)
 
     if (!ec)
     {
+        UNIQUE_LCK(mtx);
         sendmsgs.pop_front();
-        if (!sendmsgs.empty())
+        if (sendmsgs.size()>0)
         {
-            UNIQUE_LCK(mtx);
             boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
                                      boost::asio::bind_executor(strand_,
                                                                 boost::bind(&Session::onWrite, shared_from_this(),
                                                                             boost::asio::placeholders::error)));
+        }else{
+            sending = false;
         }
     }
 }

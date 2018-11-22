@@ -48,8 +48,6 @@ void DyForklift::init() {
 
             for (auto iter = m_unRecvSend.begin(); iter != m_unRecvSend.end(); iter++)
             {
-                //combined_logger->info("lastsend:{0}", iter->first, iter->second.waitTime);
-
                 //TODO 判断连接是否有效
                 if (m_qTcp!=nullptr && m_qTcp->alive())
                 {

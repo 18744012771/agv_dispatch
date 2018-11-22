@@ -3,6 +3,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
+#include <boost/atomic/atomic.hpp>
 #include "../qyhbuffer.h"
 #include "../protocol.h"
 
@@ -96,6 +97,8 @@ protected:
 
     std::mutex mtx;
     SendMessageQueue sendmsgs;
+
+    boost::atomics::atomic_bool sending;
 };
 
 #endif // SESSION_H

@@ -53,7 +53,7 @@ bool TaskManager::hasTaskDoing()
 bool TaskManager::distributeTask(AgvTaskPtr task)
 {
     auto mapmanagerptr = MapManager::getInstance();
-
+    int originAimStation;
     std::vector<AgvTaskNodePtr> nodes = task->getTaskNodes();
     int index = task->getDoingIndex();
     if (index >= nodes.size())
@@ -80,7 +80,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
     {
         AgvTaskNodePtr node = nodes[index];
         int aimStation = node->getStation();
-
+        originAimStation = aimStation;
         AgvPtr agv = AgvManager::getInstance()->getAgvById(task->getAgv());
         if (agv != nullptr && aimStation == 0 && agv->getTask() == task)
         {
@@ -91,11 +91,14 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
         }
         else
         {
-            //dongtai guihua qu zuijin de feizhanyong de tingliudan
+            //动态规划去最近的非占用的停留点
             if(agv != nullptr && GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO &&  aimStation == DONGYAO_TASK_GO_HALT_STATION){
                 aimStation = MapManager::getInstance()->getWaitPoint(agv->getId());
-                if(aimStation <=0)aimStation = 258;
-                //update node aim station
+                //没有空闲可用的等待点
+                if(aimStation<0)
+                    return false;
+                //更新要去的目的地为该空闲等待点
+                //如果分配失败，回滚该操作
                 node->setStation(aimStation);
             }
 
@@ -107,7 +110,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                 std::vector<int> result;
                 //遍历所有的agv
                 AgvManager::getInstance()->foreachAgv(
-                            [&](AgvPtr tempagv) {
+                            [&,aimStation](AgvPtr tempagv) {
                     if (tempagv->status != Agv::AGV_STATUS_IDLE)
                     {
                         //combined_logger->error(" tempagv->status != Agv::AGV_STATUS_IDLE return... ");
@@ -116,8 +119,22 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO && tempagv->getType() == DyForklift::Type){
                         DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(tempagv);
                         auto session = forklift->getQyhTcp();
-                        if(session ==nullptr || !session->alive())return ;
+                        if(session == nullptr || !session->alive())return ;
+
+                        //以下几个点，不能一号车去
+                        if(forklift->getId() == 1
+                                && (aimStation == 68
+                                    ||aimStation == 69
+                                    ||aimStation == 70
+                                    ||aimStation == 71
+                                    ||aimStation == 99
+                                    ||aimStation == 100
+                                    ||aimStation == 101
+                                    ||aimStation == 102)){
+                            return ;
+                        }
                     }
+
                     if (tempagv->getNowStation() != 0)
                     {
                         int tempDis;
@@ -169,13 +186,21 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                 else
                 {
                     //未能找到车辆和线路
+                    //如果目的地就是等待点
+                    auto des = mapmanagerptr->getPointById(aimStation);
+                    if (des != nullptr && des->getPointType() == MapPoint::Map_Point_Type_HALT) {
+                        if(originAimStation!=aimStation){
+                            node->setStation(originAimStation);
+                        }
+                        return false;
+                    }
+
+                    //寻找空闲车辆到该避让点等待
                     bestAgv = nullptr;
                     minDis = DISTANCE_INFINITY;
                     result.clear();
                     int haltStation = -1;
 
-
-                    //寻找空闲车辆到该避让点等待
                     AgvManager::getInstance()->foreachAgv(
                                 [&](AgvPtr tempagv) {
                         if (tempagv->status != Agv::AGV_STATUS_IDLE)
@@ -255,6 +280,9 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                         }
                     }
                 }
+                if(originAimStation!=aimStation){
+                    node->setStation(originAimStation);
+                }
             }
             else
             {
@@ -265,9 +293,39 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     if (agv->status != Agv::AGV_STATUS_IDLE)
                     {
                         //combined_logger->info(" 指定车辆不空闲 ");
+                        if(originAimStation!=aimStation){
+                            node->setStation(originAimStation);
+                        }
                         return false;
                     }
                 }
+
+                if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO && agv->getType() == DyForklift::Type){
+                    DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
+                    auto session = forklift->getQyhTcp();
+                    if(session == nullptr || !session->alive()){
+                        if(originAimStation!=aimStation){
+                            node->setStation(originAimStation);
+                        }
+                        return false;
+                    }
+                    //以下几个点，不能一号车去
+                    if(forklift->getId() == 1
+                            && (aimStation == 68
+                                ||aimStation == 69
+                                ||aimStation == 70
+                                ||aimStation == 71
+                                ||aimStation == 99
+                                ||aimStation == 100
+                                ||aimStation == 101
+                                ||aimStation == 102)){
+                        if(originAimStation!=aimStation){
+                            node->setStation(originAimStation);
+                        }
+                        return false;
+                    }
+                }
+
                 int distance = DISTANCE_INFINITY;
                 //combined_logger->info("before best path {0} {1} {2}", agv->getLastStation(), agv->getNowStation(), aimStation);
 
@@ -298,6 +356,9 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     //如果agv已经在躲避点了
                     auto nowSstaion = static_cast<MapPoint *>(mapmanagerptr->getMapSpiritById(agv->getNowStation()));
                     if (nowSstaion != nullptr && nowSstaion->getPointType() == MapPoint::Map_Point_Type_HALT) {
+                        if(originAimStation!=aimStation){
+                            node->setStation(originAimStation);
+                        }
                         return false;
                     }
 
@@ -339,10 +400,12 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                         }
                     }
                 }
+                if(originAimStation!=aimStation){
+                    node->setStation(originAimStation);
+                }
             }
         }
     }
-
     return false;
 }
 
@@ -390,7 +453,7 @@ bool TaskManager::init()
                     }
                 }
             }
-            toDisMtx.unlock();            
+            toDisMtx.unlock();
             sleep_for_us(20000);
         }
     });
