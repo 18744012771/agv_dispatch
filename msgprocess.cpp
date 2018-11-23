@@ -443,7 +443,7 @@ void MsgProcess::processOneMsg(const Json::Value &request, ClientSessionPtr sess
         typedef std::function<void(ClientSessionPtr, const Json::Value &)> ProcessFunction;
 
         //TODO:
-        combined_logger->debug("recv request:{0}", request.toStyledString());
+        //combined_logger->debug("recv request:{0}", request.toStyledString());
 
         UserManagerPtr userManager = UserManager::getInstance();
         MapManagerPtr mapManager = MapManager::getInstance();

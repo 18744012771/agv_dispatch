@@ -51,7 +51,7 @@ void Session::onread(const boost::system::error_code& ec,
                      std::size_t bytes_transferred)
 {
     if (!ec) {
-        combined_logger->debug("session id {1} read length:{0} :{2} ",bytes_transferred,sessionId,std::string(read_buffer,bytes_transferred));
+        //combined_logger->debug("session id {1} read length:{0} :{2} ",bytes_transferred,sessionId,std::string(read_buffer,bytes_transferred));
         wait_request_timer_.cancel();
         buffer.append(read_buffer,bytes_transferred);
         afterread();
@@ -114,11 +114,13 @@ void Session::write(const char *data,int len)
 
     if(!sending){
         mtx.lock();
-        sending = true;
-        boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
-                                 boost::asio::bind_executor(strand_,
-                                                            boost::bind(&Session::onWrite, shared_from_this(),
-                                                                        boost::asio::placeholders::error)));
+        if (!sendmsgs.empty()){
+            sending = true;
+            boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
+                                     boost::asio::bind_executor(strand_,
+                                                                boost::bind(&Session::onWrite, shared_from_this(),
+                                                                            boost::asio::placeholders::error)));
+        }
         mtx.unlock();
     }
 
