@@ -64,11 +64,11 @@ int AgvSession::ProtocolProcess()
     unsigned int FrameLength = stringToInt(FrameData.substr(6,4));
     if(FrameLength == FrameData.length())
     {
-        if(GLOBAL_AGV_PROJECT == AGV_PROJECT_ANTING && _agvPtr!=nullptr && _agvPtr->getType() == AtForklift::Type)
+        if(GLOBAL_AGV_PROJECT == AGV_PROJECT_ANTING && _agvPtr!=nullptr && _agvPtr->type() == AtForklift::Type)
         {
             std::static_pointer_cast<AtForklift>(_agvPtr)->onRead(FrameData.c_str(), FrameLength);
         }
-        else if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO  && _agvPtr!=nullptr && _agvPtr->getType() == DyForklift::Type)
+        else if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO  && _agvPtr!=nullptr && _agvPtr->type() == DyForklift::Type)
         {
             std::static_pointer_cast<DyForklift>(_agvPtr)->onRead(FrameData.c_str(), FrameLength);
         }

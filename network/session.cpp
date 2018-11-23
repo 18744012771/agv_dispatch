@@ -133,10 +133,12 @@ void Session::onWrite(boost::system::error_code ec)
 
     if (!ec)
     {
-        UNIQUE_LCK(mtx);
-        sendmsgs.pop_front();
-        if (sendmsgs.size()>0)
+        mtx.lock();
+        if (!sendmsgs.empty())
+            sendmsgs.pop_front();
+        if (!sendmsgs.empty())
         {
+            sending = true;
             boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
                                      boost::asio::bind_executor(strand_,
                                                                 boost::bind(&Session::onWrite, shared_from_this(),
@@ -144,5 +146,6 @@ void Session::onWrite(boost::system::error_code ec)
         }else{
             sending = false;
         }
+        mtx.unlock();
     }
 }
