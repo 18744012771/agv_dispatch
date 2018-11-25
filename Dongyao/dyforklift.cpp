@@ -265,7 +265,7 @@ void DyForklift::onRead(const char *data, int len)
             status = AGV_STATUS_ESTOP;
         }else if(isManualControl){
             status = AGV_STATUS_HANDING;
-        }else if(isPowerLow && status != AGV_STATUS_TASKING && status != AGV_STATUS_GO_CHARGING){
+        }else if(isPowerLow && status != AGV_STATUS_TASKING && status != AGV_STATUS_GO_CHARGING&&status!=AGV_STATUS_CHARGING){
             status = AGV_STATUS_POWER_LOW;
             //TODO: zidong chongdian
             bool ret = TaskMaker::getInstance()->makeChargeTask(getId());

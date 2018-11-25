@@ -116,7 +116,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                         //combined_logger->error(" tempagv->status != Agv::AGV_STATUS_IDLE return... ");
                         return;
                     }
-                    if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO && tempagv->getType() == DyForklift::Type){
+                    if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO && tempagv->type() == DyForklift::Type){
                         DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(tempagv);
                         auto session = forklift->getQyhTcp();
                         if(session == nullptr || !session->alive())return ;
@@ -300,7 +300,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     }
                 }
 
-                if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO && agv->getType() == DyForklift::Type){
+                if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO && agv->type() == DyForklift::Type){
                     DyForkliftPtr forklift = std::static_pointer_cast<DyForklift>(agv);
                     auto session = forklift->getQyhTcp();
                     if(session == nullptr || !session->alive()){
