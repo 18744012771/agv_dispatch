@@ -182,7 +182,6 @@ void DyForklift::onRead(const char *data, int len)
                     combined_logger->debug("recv data={}",data,len);
                 }
 
-
                 x = x_new;
                 y = y_new;
                 theta = theta_new;
@@ -234,7 +233,30 @@ void DyForklift::onRead(const char *data, int len)
         isChanging = (tempWarn.iBatteryA > 0);
         isManualControl = (tempWarn.iHandCtrSt ==1);
         isEmergencyStop = (tempWarn.iScramSt == 1);
-        isPowerLow = (tempWarn.iBatteryV < 25*(1000));
+
+        static int powerLowTimes = 0;
+        static int powerHighTimes = 0;
+
+        if((tempWarn.iBatteryV < 25*(1000))){
+            powerLowTimes++;
+            powerHighTimes = 0;
+        }else{
+            powerHighTimes++;
+            powerLowTimes = 0;
+        }
+
+        if(powerLowTimes>1000){
+            powerLowTimes = 50;
+        }
+        if(powerHighTimes>1000){
+            powerHighTimes = 50;
+        }
+
+        if(!isPowerLow &&powerLowTimes>=20){
+            isPowerLow = true;
+        }else if(isPowerLow && powerHighTimes>=20){
+            isPowerLow = false;
+        }
 
         //set status
         if(isChanging){

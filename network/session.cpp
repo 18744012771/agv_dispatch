@@ -133,8 +133,9 @@ void Session::onWrite(boost::system::error_code ec)
 
     if (!ec)
     {
-        UNIQUE_LCK(mtx);
-        sendmsgs.pop_front();
+        mtx.lock();
+        if (sendmsgs.size()>0)
+            sendmsgs.pop_front();
         if (sendmsgs.size()>0)
         {
             boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
@@ -144,5 +145,6 @@ void Session::onWrite(boost::system::error_code ec)
         }else{
             sending = false;
         }
+        mtx.unlock();
     }
 }
