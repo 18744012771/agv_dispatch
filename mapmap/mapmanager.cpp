@@ -261,17 +261,20 @@ void MapManager::freeStation(int station, AgvPtr occuAgv)
         UNIQUE_LCK(groupMtx);
         auto iter = group_occuagv.find(groupId);
         std::vector<int> occuSpirits;
+
         if(iter != group_occuagv.end())
         {
-            occuSpirits = iter->second.second;
-            auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),station);
-            occuSpirits.erase(ii,occuSpirits.end());
-            if(!occuSpirits.size())
-            {
-                group_occuagv.erase(iter);
-                combined_logger->info("free station and free whole group:{0} agv:{1}", groupId, occuAgv->getId());
-            }else{
-                group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
+            if(iter->first == occuAgv->getId()){
+                occuSpirits = iter->second.second;
+                auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),station);
+                occuSpirits.erase(ii,occuSpirits.end());
+                if(!occuSpirits.size())
+                {
+                    group_occuagv.erase(iter);
+                    combined_logger->info("free station and free whole group:{0} agv:{1}", groupId, occuAgv->getId());
+                }else{
+                    group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
+                }
             }
         }
     }
@@ -302,16 +305,18 @@ void MapManager::freeLine(int line, AgvPtr occuAgv)
         std::vector<int> occuSpirits;
         if(iter != group_occuagv.end())
         {
-            combined_logger->info("free one line:{0} in group:{1} agv:{2}", line,groupId, occuAgv->getId());
-            occuSpirits = iter->second.second;
-            auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),line);
-            occuSpirits.erase(ii,occuSpirits.end());
-            if(!occuSpirits.size())
-            {
-                group_occuagv.erase(iter);
-                combined_logger->info("free line and free whole:{0} agv:{1}", groupId, occuAgv->getId());
-            }else{
-                group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
+            if(iter->first == occuAgv->getId()){
+                combined_logger->info("free one line:{0} in group:{1} agv:{2}", line,groupId, occuAgv->getId());
+                occuSpirits = iter->second.second;
+                auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),line);
+                occuSpirits.erase(ii,occuSpirits.end());
+                if(!occuSpirits.size())
+                {
+                    group_occuagv.erase(iter);
+                    combined_logger->info("free line and free whole:{0} agv:{1}", groupId, occuAgv->getId());
+                }else{
+                    group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
+                }
             }
         }
     }

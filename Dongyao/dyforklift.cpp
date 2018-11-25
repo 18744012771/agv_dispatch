@@ -834,7 +834,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     body << "1";
 
     currentEndStation = endId;
-    combined_logger->debug(" agv {0} check can go before go!...");
+    combined_logger->debug(" agv {0} check can go before go!...",id);
     while (!g_quit && currentTask != nullptr && !currentTask->getIsCancel()) {
         sleep_for_us(500000);
         bool canGo = true;
