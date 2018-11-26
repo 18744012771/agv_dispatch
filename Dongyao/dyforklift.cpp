@@ -1,4 +1,4 @@
-﻿#include "dyforklift.h"
+#include "dyforklift.h"
 #include "../common.h"
 #include "../mapmap/mappoint.h"
 #include "../device/elevator/elevator.h"
@@ -151,10 +151,24 @@ void DyForklift::onRead(const char *data, int len)
     int timestamp = stringToInt(msg.substr(0,6));
     if(timestamp%5==0)heart();
 
+    //check received already
+    for(auto itr = receivedMsgs.begin();itr!=receivedMsgs.end();++itr){
+        if(*itr == timestamp){
+            //received already
+            return ;
+        }
+    }
+
     if (FORKLIFT_POS != mainMsg && FORKLIFT_WARN != mainMsg)
     {
         combined_logger->info("agv{0} recv data:{1}", id, data);
+
+        receivedMsgs.push_back(timestamp);
+        while(receivedMsgs.size()>30){
+            receivedMsgs.pop_front();
+        }
     }
+
     //解析小车发送的消息
     switch (mainMsg) {
     case FORKLIFT_POS:
