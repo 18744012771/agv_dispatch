@@ -698,7 +698,7 @@ bool MapManager::loadFromDb()
         getReverseLines();
         getAdj();
         check();
-        g_onemap.sort();
+        //g_onemap.sort();
     }
     catch (CppSQLite3Exception &e) {
         combined_logger->error("sqlerr code:{0} msg:{1}", e.errorCode(), e.errorMessage());

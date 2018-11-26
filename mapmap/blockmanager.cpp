@@ -49,7 +49,7 @@ std::string AgvOccuSpirits::getSpiritsStr()
 {
     std::stringstream ss;
     for(auto itr = spirits.begin();itr!=spirits.end();++itr){
-        ss<<*itr;
+        ss<<*itr<<";";
     }
     return ss.str();
 }
