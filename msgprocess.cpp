@@ -229,8 +229,8 @@ void MsgProcess::publisher_agv_position()
             AgvManager::getInstance()->getPositionJson(aps);
             if (aps["agvs"].isNull())continue;
             //执行发送
-            for (auto c : agvPositionSubers) {
-                c->send(aps);
+            for(auto itr = agvPositionSubers.begin();itr!=agvPositionSubers.end();++itr){
+                (*itr)->send(aps);
             }
         }
     }
@@ -260,8 +260,8 @@ void MsgProcess::publisher_agv_status()
             UNIQUE_LCK(ssMtx);
             if (agvStatusSubers.empty())continue;
             //执行发送
-            for (auto c : agvStatusSubers) {
-                c->send(response);
+            for(auto itr = agvStatusSubers.begin();itr!=agvStatusSubers.end();++itr){
+                (*itr)->send(response);
             }
         }
     }
@@ -349,8 +349,8 @@ void MsgProcess::publisher_task()
             //执行发送
             UNIQUE_LCK(tsMtx);
             if (taskSubers.size() <= 0)continue;
-            for (auto c : taskSubers) {
-                c->send(response);
+            for(auto itr = taskSubers.begin();itr!=taskSubers.end();++itr){
+                (*itr)->send(response);
             }
         }
     }
@@ -390,8 +390,8 @@ void MsgProcess::publisher_ELE()
 
             UNIQUE_LCK(eleMtx);
             if (eleSubers.size() <= 0)continue;
-            for (auto c : eleSubers) {
-                c->send(response);
+            for(auto itr = eleSubers.begin();itr!=eleSubers.end();++itr){
+                (*itr)->send(response);
             }
         }
     }
@@ -524,8 +524,8 @@ void MsgProcess::publishOneLog(USER_LOG log)
         vlog["msg"] = log.msg;
         response["log"] = vlog;
         UNIQUE_LCK(lsMtx);
-        for (auto c : logSubers) {
-            c->send(response);
+        for(auto itr = logSubers.begin();itr!=logSubers.end();++itr){
+            (*itr)->send(response);
         }
     });
 }

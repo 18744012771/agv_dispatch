@@ -904,7 +904,7 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
     }
 
     if (g_quit || currentTask == nullptr || currentTask->getIsCancel())return;
-    combined_logger->debug(" agv {0} check can go finish,GO!...");
+    combined_logger->debug(" agv {0} check can go finish,GO!...",getId());
     resend(body.str());
 
     do
@@ -990,27 +990,6 @@ void DyForklift::goStation(std::vector<int> lines, bool stop, FORKLIFT_COMM cmd)
 
     } while (this->nowStation != endId || !isFinish());
     combined_logger->info("nowStation = {0}, endId = {1}", this->nowStation, endId);
-}
-
-void DyForklift::checkCanGo()
-{
-    //
-
-
-}
-
-
-void DyForklift::checkNeedPause()
-{
-    //
-
-
-}
-
-
-void DyForklift::checkCanResume()
-{
-    //
 }
 
 void DyForklift::setQyhTcp(AgvSessionPtr _qyhTcp)

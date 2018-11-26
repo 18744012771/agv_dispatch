@@ -161,10 +161,6 @@ public:
 
     int getBatteryTemprature(){return batteryTemprature;}
 private:
-    void checkCanGo();
-    void checkNeedPause();
-    void checkCanResume();
-
     static const int maxResendTime = 10;
 
     bool resend(const std::string &msg);

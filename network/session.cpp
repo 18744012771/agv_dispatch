@@ -103,7 +103,7 @@ void Session::stop()
 void Session::write(const char *data,int len)
 {
     if(data==nullptr || len<=0)return ;
-    if(!socket_.is_open())return ;
+    //if(!socket_.is_open())return ;
     bool f = len%SESSION_MSG_MEMORY_LENGTH == 0;
     int pack_nums = len/SESSION_MSG_MEMORY_LENGTH;
     if(!f)pack_nums++;
