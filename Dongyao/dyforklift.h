@@ -188,6 +188,9 @@ private:
     bool firstConnect;
 
     int batteryTemprature;
+
+    //30个
+    std::list<int> receivedMsgs;
 };
 
 #endif // DYFORKLIFT_H
