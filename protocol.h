@@ -72,7 +72,7 @@ enum {
     RETURN_MSG_ERROR_CODE_TASKING,//有任务正在执行
     RETURN_MSG_ERROR_CODE_NOT_CTREATING,//不是正在创建地图的时候添加 站点啊、直线、曲线
     RETURN_MSG_ERROR_CODE_CTREATING,//正在创建地图的时候获取地图
-	RETURN_MSG_ERROR_CODE_UNFINDED,//未找到
+    RETURN_MSG_ERROR_CODE_UNFINDED,//未找到
 };
 
 ////返回消息的结构的额外头
@@ -84,10 +84,10 @@ enum {
 //}MSG_RESPONSE_HEAD;
 
 typedef enum Msg_Type {
-	MSG_TYPE_REQUEST = 0,
-	MSG_TYPE_RESPONSE,
-	MSG_TYPE_PUBLISH,
-	MSG_TYPE_NOTIFY
+    MSG_TYPE_REQUEST = 0,
+    MSG_TYPE_RESPONSE,
+    MSG_TYPE_PUBLISH,
+    MSG_TYPE_NOTIFY
 }MSG_TYPE;
 
 //定义消息头的 todo
@@ -123,21 +123,21 @@ typedef enum Msg_Todo
     MSG_TODO_CANCEL_SUB_LOG,//取消日志订阅
     MSG_TODO_SUB_TASK,//任务订阅
     MSG_TODO_CANCEL_SUB_TASK,//取消任务订阅
-	MSG_TODO_TRAFFIC_CONTROL_STATION,//交通管制,一个站点//stationId[int32]
-	MSG_TODO_TRAFFIC_CONTROL_LINE,//交通管制，一条线路//lineId[int32]
-	MSG_TODO_TRAFFIC_RELEASE_STATION,//交通管制 释放,一个站点//stationId[int32]
-	MSG_TODO_TRAFFIC_RELEASE_LINE,//交通管制 释放，一条线路//lineId[int32]
+    MSG_TODO_TRAFFIC_CONTROL_STATION,//交通管制,一个站点//stationId[int32]
+    MSG_TODO_TRAFFIC_CONTROL_LINE,//交通管制，一条线路//lineId[int32]
+    MSG_TODO_TRAFFIC_RELEASE_STATION,//交通管制 释放,一个站点//stationId[int32]
+    MSG_TODO_TRAFFIC_RELEASE_LINE,//交通管制 释放，一条线路//lineId[int32]
 
     MSG_TODO_AGV_MANAGE_STOP,//停止//id[4]
     MSG_TODO_QUERY_DEVICE_LOG, //查询设备日志 deviceid
     MSG_TODO_ELEVATOR_CONTROL, //控制电梯
-	
-	//new add: ele query
-	MSG_TODO_SUB_ELE_STATSU,//订阅电梯状态信息[将发送电梯连接状态、使能状态]
-	MSG_TODO_CANCEL_SUB_ELE_STATSU,//取消电梯状态信息订阅
-	
-	////new add: ele enable
-	MSG_TODO_ELE_ENABLE,//设置电梯使能
+
+    //new add: ele query
+    MSG_TODO_SUB_ELE_STATSU,//订阅电梯状态信息[将发送电梯连接状态、使能状态]
+    MSG_TODO_CANCEL_SUB_ELE_STATSU,//取消电梯状态信息订阅
+
+    ////new add: ele enable
+    MSG_TODO_ELE_ENABLE,//设置电梯使能
 
     ////new add: init agv position
     MSG_TODO_AGV_INIT_POSITION,//agvId  and stationId
@@ -147,7 +147,7 @@ typedef enum Msg_Todo
     MSG_TODO_PUB_AGV_STATUS,//发布的agv状态信息，该信息的queuebumber = 0
     MSG_TODO_PUB_LOG,//发布的日志信息，该信息的queuebumber = 0
     MSG_TODO_PUB_TASK,//发布的任务信息，该信息的queuebumber = 0
-	MSG_TODO_PUB_ELE,//发布电梯状态信息，该信息queuenumber = 0
+    MSG_TODO_PUB_ELE,//发布电梯状态信息，该信息queuenumber = 0
 
     //notify
     MSG_TODO_NOTIFY_ALL_MAP_UPDATE,//通知消息 -- 地图更新

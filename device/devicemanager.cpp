@@ -122,34 +122,34 @@ DevicePtr DeviceManager::getDeviceByIP(std::string ip)
 
 void DeviceManager::interElevatorControl(ClientSessionPtr conn, const Json::Value &request)
 {
-    Json::Value response;
-    response["type"] = MSG_TYPE_RESPONSE;
-    response["todo"] = request["todo"];
-    response["queuenumber"] = request["queuenumber"];
-    response["result"] = RETURN_MSG_RESULT_SUCCESS;
+//    Json::Value response;
+//    response["type"] = MSG_TYPE_RESPONSE;
+//    response["todo"] = request["todo"];
+//    response["queuenumber"] = request["queuenumber"];
+//    response["result"] = RETURN_MSG_RESULT_SUCCESS;
 
-    int groupid = request["groupid"].asInt();
-    int status = request["status"].asInt();
+//    int groupid = request["groupid"].asInt();
+//    int status = request["status"].asInt();
 
-    auto group = MapManager::getInstance()->getGroupById(groupid);
-    if(group != nullptr){
-        combined_logger->info("group id:{0} change status to {1}", groupid, status);
+//    auto group = MapManager::getInstance()->getGroupById(groupid);
+//    if(group != nullptr){
+//        combined_logger->info("group id:{0} change status to {1}", groupid, status);
 
-        if(status == 0)
-        {
-            //停用电梯
-           bool ret = MapManager::getInstance()->addOccuGroup(groupid, INT_MAX);
-           if(!ret)
-           {
-               response["result"] = RETURN_MSG_RESULT_FAIL;
-           }
-        }
-        else
-        {
-            //启用电梯 恢复锁定
-            MapManager::getInstance()->freeGroup(groupid, INT_MAX);
+//        if(status == 0)
+//        {
+//            //停用电梯
+//           bool ret = MapManager::getInstance()->addOccuGroup(groupid, INT_MAX);
+//           if(!ret)
+//           {
+//               response["result"] = RETURN_MSG_RESULT_FAIL;
+//           }
+//        }
+//        else
+//        {
+//            //启用电梯 恢复锁定
+//            MapManager::getInstance()->freeGroup(groupid, INT_MAX);
 
-        }
-    }
-    conn->send(response);
+//        }
+//    }
+//    conn->send(response);
 }

@@ -129,32 +129,33 @@ int MapManager::getWaitPoint(int agvId)
 
 void MapManager::printGroup()
 {
-    UNIQUE_LCK(groupMtx);
-    combined_logger->debug("GROUP==========================================");
-    for(auto p=group_occuagv.begin();p!=group_occuagv.end();++p){
+    GroupManager::getInstance()->print();
+//    UNIQUE_LCK(groupMtx);
+//    combined_logger->debug("GROUP==========================================");
+//    for(auto p=group_occuagv.begin();p!=group_occuagv.end();++p){
 
-        auto pp = p->second;
-        combined_logger->debug("groupId:{0} agv:{1}",p->first,pp.first);
-        std::stringstream ss1;
-        ss1<<"stations: ";
-        for(auto ppp:pp.second){
-            auto ptr = getPointById(ppp);
-            if(ptr!=nullptr){
-                ss1<<ptr->getName()<<" ";
-            }
-        }
-        std::stringstream ss2;
-        ss2<<"paths: ";
-        for(auto ppp:pp.second){
-            auto ptr = getPathById(ppp);
-            if(ptr!=nullptr){
-                ss2<<ptr->getName()<<" ";
-            }
-        }
-        combined_logger->debug("{0}",ss1.str());
-        combined_logger->debug("{0}",ss2.str());
-    }
-    combined_logger->debug("GROUP==========================================");
+//        auto pp = p->second;
+//        combined_logger->debug("groupId:{0} agv:{1}",p->first,pp.first);
+//        std::stringstream ss1;
+//        ss1<<"stations: ";
+//        for(auto ppp:pp.second){
+//            auto ptr = getPointById(ppp);
+//            if(ptr!=nullptr){
+//                ss1<<ptr->getName()<<" ";
+//            }
+//        }
+//        std::stringstream ss2;
+//        ss2<<"paths: ";
+//        for(auto ppp:pp.second){
+//            auto ptr = getPathById(ppp);
+//            if(ptr!=nullptr){
+//                ss2<<ptr->getName()<<" ";
+//            }
+//        }
+//        combined_logger->debug("{0}",ss1.str());
+//        combined_logger->debug("{0}",ss2.str());
+//    }
+//    combined_logger->debug("GROUP==========================================");
 }
 
 void MapManager::freeAllStationLines(AgvPtr occuAgv, int except)
@@ -200,19 +201,8 @@ void MapManager::addOccuStation(int station, AgvPtr occuAgv)
 
     std::vector<int> groupIds = getGroup(station);
 
-    for(auto groupId:groupIds)
-    {
-        combined_logger->info("occupy group:{0} agv:{1}", groupId, occuAgv->getId());
-        UNIQUE_LCK(groupMtx);
-        auto iter = group_occuagv.find(groupId);
-        std::vector<int> occuSpirits;
-        if(iter != group_occuagv.end())
-        {
-            occuSpirits = iter->second.second;
-        }
-        occuSpirits.push_back(station);
-        group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
-    }
+    auto groupmanagerptr = GroupManager::getInstance();
+    groupmanagerptr->tryAddGroupOccu(groupIds,occuAgv->getId(),station);
 }
 
 //线路的反向占用//这辆车行驶方向和线路方向相反
@@ -228,19 +218,8 @@ void MapManager::addOccuLine(int line, AgvPtr occuAgv)
 
     //同一条line可能属于多个Group
     std::vector<int> groupIds = getGroup(line);
-    for(auto groupId:groupIds)
-    {
-        combined_logger->info("occupy group:{0} agv:{1}", groupId, occuAgv->getId());
-        UNIQUE_LCK(groupMtx);
-        auto iter = group_occuagv.find(groupId);
-        std::vector<int> occuSpirits;
-        if(iter != group_occuagv.end())
-        {
-            occuSpirits = iter->second.second;
-        }
-        occuSpirits.push_back(line);
-        group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
-    }
+    auto groupmanagerptr = GroupManager::getInstance();
+    groupmanagerptr->tryAddGroupOccu(groupIds,occuAgv->getId(),line);
 }
 
 //如果车辆占领该站点，释放
@@ -255,29 +234,32 @@ void MapManager::freeStation(int station, AgvPtr occuAgv)
     combined_logger->info("free station:{0} agv:{1}", station, occuAgv->getId());
 
     std::vector<int> groupIds = getGroup(station);
-    for(auto groupId:groupIds)
-    {
-        combined_logger->info("free one station:{0} in group:{1} agv:{2}", station,groupId, occuAgv->getId());
-        UNIQUE_LCK(groupMtx);
-        auto iter = group_occuagv.find(groupId);
-        std::vector<int> occuSpirits;
+    auto groupmanagerptr = GroupManager::getInstance();
+    groupmanagerptr->freeGroupOccu(groupIds,occuAgv->getId(),station);
 
-        if(iter != group_occuagv.end())
-        {
-            if(iter->first == occuAgv->getId()){
-                occuSpirits = iter->second.second;
-                auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),station);
-                occuSpirits.erase(ii,occuSpirits.end());
-                if(!occuSpirits.size())
-                {
-                    group_occuagv.erase(iter);
-                    combined_logger->info("free station and free whole group:{0} agv:{1}", groupId, occuAgv->getId());
-                }else{
-                    group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
-                }
-            }
-        }
-    }
+//    for(auto groupId:groupIds)
+//    {
+//        combined_logger->info("free one station:{0} in group:{1} agv:{2}", station,groupId, occuAgv->getId());
+//        UNIQUE_LCK(groupMtx);
+//        auto iter = group_occuagv.find(groupId);
+//        std::vector<int> occuSpirits;
+
+//        if(iter != group_occuagv.end())
+//        {
+//            if(iter->first == occuAgv->getId()){
+//                occuSpirits = iter->second.second;
+//                auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),station);
+//                occuSpirits.erase(ii,occuSpirits.end());
+//                if(!occuSpirits.size())
+//                {
+//                    group_occuagv.erase(iter);
+//                    combined_logger->info("free station and free whole group:{0} agv:{1}", groupId, occuAgv->getId());
+//                }else{
+//                    group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
+//                }
+//            }
+//        }
+//    }
 }
 
 //如果车辆在线路的占领表中，释放出去
@@ -298,28 +280,31 @@ void MapManager::freeLine(int line, AgvPtr occuAgv)
 
     //TODO 如果一段路径同属于多个block 此处需要验证
     std::vector<int> groupIds = getGroup(line);
-    for(auto groupId:groupIds)
-    {
-        UNIQUE_LCK(groupMtx);
-        auto iter = group_occuagv.find(groupId);
-        std::vector<int> occuSpirits;
-        if(iter != group_occuagv.end())
-        {
-            if(iter->first == occuAgv->getId()){
-                combined_logger->info("free one line:{0} in group:{1} agv:{2}", line,groupId, occuAgv->getId());
-                occuSpirits = iter->second.second;
-                auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),line);
-                occuSpirits.erase(ii,occuSpirits.end());
-                if(!occuSpirits.size())
-                {
-                    group_occuagv.erase(iter);
-                    combined_logger->info("free line and free whole:{0} agv:{1}", groupId, occuAgv->getId());
-                }else{
-                    group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
-                }
-            }
-        }
-    }
+    auto groupmanagerptr = GroupManager::getInstance();
+    groupmanagerptr->freeGroupOccu(groupIds,occuAgv->getId(),line);
+
+//    for(auto groupId:groupIds)
+//    {
+//        UNIQUE_LCK(groupMtx);
+//        auto iter = group_occuagv.find(groupId);
+//        std::vector<int> occuSpirits;
+//        if(iter != group_occuagv.end())
+//        {
+//            if(iter->first == occuAgv->getId()){
+//                combined_logger->info("free one line:{0} in group:{1} agv:{2}", line,groupId, occuAgv->getId());
+//                occuSpirits = iter->second.second;
+//                auto ii = std::remove(occuSpirits.begin(),occuSpirits.end(),line);
+//                occuSpirits.erase(ii,occuSpirits.end());
+//                if(!occuSpirits.size())
+//                {
+//                    group_occuagv.erase(iter);
+//                    combined_logger->info("free line and free whole:{0} agv:{1}", groupId, occuAgv->getId());
+//                }else{
+//                    group_occuagv[groupId] = std::make_pair(occuAgv->getId(), occuSpirits);
+//                }
+//            }
+//        }
+//    }
 }
 
 //获得站点楼层
@@ -789,19 +774,11 @@ bool MapManager::pathPassable(MapPath *line, int agvId, std::vector<int> passabl
 
 
     //判断group占用
-    auto groups = g_onemap.getGroups(COMMON_GROUP);
-    UNIQUE_LCK(groupMtx);
-    for (auto group : groups) {
-        auto sps = group->getSpirits();
-        if (std::find(sps.begin(), sps.end(), line->getId()) != sps.end() ||
-                std::find(sps.begin(), sps.end(), line->getEnd()) != sps.end())
-        {
-            //该线路/线路终点属于这个block
-            //判断该block是否有agv以外的其他agv
-            if (group_occuagv.find(group->getId()) != group_occuagv.end() && group_occuagv[group->getId()].first != agvId)
-                return false;
-        }
-    }
+    auto groupmanagerptr = GroupManager::getInstance();
+    auto groupsIds = getGroup(line->getId());
+    if(!groupmanagerptr->groupPassable(groupsIds,agvId))return false;
+    groupsIds = getGroup(line->getEnd());
+    if(!groupmanagerptr->groupPassable(groupsIds,agvId))return false;
 
     //增加电梯是否可用判断
     if (pend->getLineId().length() > 0) {
@@ -854,19 +831,26 @@ bool MapManager::pathPassable(MapPath *line, int agvId) {
     }
     stationOccuMtx.unlock();
     //判断group占用
-    auto groups = g_onemap.getGroups(COMMON_GROUP);
-    UNIQUE_LCK(groupMtx);
-    for (auto group : groups) {
-        auto sps = group->getSpirits();
-        if (std::find(sps.begin(), sps.end(), line->getId()) != sps.end() ||
-                std::find(sps.begin(), sps.end(), line->getEnd()) != sps.end())
-        {
-            //该线路/线路终点属于这个group
-            //判断该group是否有agv以外的其他agv
-            if (group_occuagv.find(group->getId()) != group_occuagv.end() && group_occuagv[group->getId()].first != agvId)
-                return false;
-        }
-    }
+
+    auto groupmanagerptr = GroupManager::getInstance();
+    auto groupsIds = getGroup(line->getId());
+    if(!groupmanagerptr->groupPassable(groupsIds,agvId))return false;
+    groupsIds = getGroup(line->getEnd());
+    if(!groupmanagerptr->groupPassable(groupsIds,agvId))return false;
+
+//    auto groups = g_onemap.getGroups(COMMON_GROUP);
+//    UNIQUE_LCK(groupMtx);
+//    for (auto group : groups) {
+//        auto sps = group->getSpirits();
+//        if (std::find(sps.begin(), sps.end(), line->getId()) != sps.end() ||
+//                std::find(sps.begin(), sps.end(), line->getEnd()) != sps.end())
+//        {
+//            //该线路/线路终点属于这个group
+//            //判断该group是否有agv以外的其他agv
+//            if (group_occuagv.find(group->getId()) != group_occuagv.end() && group_occuagv[group->getId()].first != agvId)
+//                return false;
+//        }
+//    }
 
     return true;
 }
@@ -877,6 +861,7 @@ int MapManager::getNearestHaltStation(int agvId, int aimStation)
     int halt = -1;
     int minDistance = DISTANCE_INFINITY;
     auto ae = g_onemap.getAllElement();
+    auto groupmanagerptr = GroupManager::getInstance();
     for(auto e:ae){
         if(e == nullptr)continue;
         //MapSpirit ee;
@@ -893,19 +878,8 @@ int MapManager::getNearestHaltStation(int agvId, int aimStation)
                 }
                 stationOccuMtx.unlock();
                 //判断group占用
-                auto groups = g_onemap.getGroups(HALT_GROUP);
-                for (auto group : groups)
-                {
-                    auto sps = group->getSpirits();
-                    if (std::find(sps.begin(), sps.end(), e->getId()) != sps.end())
-                    {
-                        //该线路/线路终点属于这个block
-                        //判断该block是否有agv以外的其他agv
-                        UNIQUE_LCK(groupMtx);
-                        if (group_occuagv.find(group->getId()) != group_occuagv.end() && group_occuagv[group->getId()].first != agvId)
-                            continue;
-                    }
-                }
+                auto groupsIds = getHaltGroup(e->getId());
+                if(!groupmanagerptr->groupPassable(groupsIds,agvId))continue;
 
                 //计算躲避点到目标点的最近距离
                 int distance = DISTANCE_INFINITY;
@@ -1674,6 +1648,22 @@ std::list<MapConflictPair *> MapManager::getConflictPairs()
     return g_onemap.getConflictPairs();
 }
 
+std::vector<int> MapManager::getHaltGroup(int spiritID)
+{
+    std::vector<int> group;
+    auto groups = g_onemap.getGroups(HALT_GROUP);
+    for (auto onegroup : groups)
+    {
+        std::list<int> spiritslist = onegroup->getSpirits();
+
+        if (std::find(spiritslist.begin(), spiritslist.end(), spiritID) != spiritslist.end())
+        {
+            group.push_back(onegroup->getId());
+        }
+    }
+    return group;
+}
+
 std::vector<int> MapManager::getGroup(int spiritID)
 {
     std::vector<int> group;
@@ -2385,70 +2375,70 @@ void MapManager::interTrafficControlLine(ClientSessionPtr conn, const Json::Valu
 }
 
 
-bool MapManager::addOccuGroup(int groupid, int agvId)
-{
-    auto group = getGroupById(groupid);
-    if(group != nullptr){
-        combined_logger->info("group id:{0} change status to lock", groupid);
-    }
-    else
-    {
-        combined_logger->info("group id:{0} error", groupid);
-    }
-    auto sps = group->getSpirits();
-    for(auto spirit:sps)
-    {
-        //TODO 检查当前电梯是否已经被AGV锁定如果已锁定返回错误
-        auto line = MapManager::getInstance()->getPathById(spirit);
-        if(line != nullptr)
-        {
-            UNIQUE_LCK lck(lineOccuMtx);
-            if(line_occuagvs[line->getId()].size())
-            {
-                return false;
-            }
-        }
-    }
-    for(auto spirit:sps)
-    {
-        auto line = MapManager::getInstance()->getPathById(spirit);
-        if(line != nullptr)
-        {
-            lineOccuMtx.lock();
-            line_occuagvs[line->getId()].push_back(agvId);
-            lineOccuMtx.unlock();
-        }
-    }
-    return true;
-}
+//bool MapManager::addOccuGroup(int groupid, int agvId)
+//{
+//    auto group = getGroupById(groupid);
+//    if(group != nullptr){
+//        combined_logger->info("group id:{0} change status to lock", groupid);
+//    }
+//    else
+//    {
+//        combined_logger->info("group id:{0} error", groupid);
+//    }
+//    auto sps = group->getSpirits();
+//    for(auto spirit:sps)
+//    {
+//        //TODO 检查当前电梯是否已经被AGV锁定如果已锁定返回错误
+//        auto line = MapManager::getInstance()->getPathById(spirit);
+//        if(line != nullptr)
+//        {
+//            UNIQUE_LCK lck(lineOccuMtx);
+//            if(line_occuagvs[line->getId()].size())
+//            {
+//                return false;
+//            }
+//        }
+//    }
+//    for(auto spirit:sps)
+//    {
+//        auto line = MapManager::getInstance()->getPathById(spirit);
+//        if(line != nullptr)
+//        {
+//            lineOccuMtx.lock();
+//            line_occuagvs[line->getId()].push_back(agvId);
+//            lineOccuMtx.unlock();
+//        }
+//    }
+//    return true;
+//}
 
-bool MapManager::freeGroup(int groupid, int agvId)
-{
-    auto group = getGroupById(groupid);
-    if(group != nullptr){
-        combined_logger->info("group id:{0} change status to unlock", groupid);
-    }
-    else
-    {
-        combined_logger->info("group id:{0} error", groupid);
-    }
-    auto sps = group->getSpirits();
-    lineOccuMtx.lock();
-    for(auto spirit:sps)
-    {
-        auto line = MapManager::getInstance()->getPathById(spirit);
-        if(line != nullptr)
-        {
-            for (auto itr = line_occuagvs[line->getId()].begin(); itr != line_occuagvs[line->getId()].end(); ) {
-                if (*itr == agvId) {
-                    itr = line_occuagvs[line->getId()].erase(itr);
-                }
-                else {
-                    ++itr;
-                }
-            }
-        }
-    }
-    lineOccuMtx.unlock();
-    return true;
-}
+//bool MapManager::freeGroup(int groupid, int agvId)
+//{
+//    auto group = getGroupById(groupid);
+//    if(group != nullptr){
+//        combined_logger->info("group id:{0} change status to unlock", groupid);
+//    }
+//    else
+//    {
+//        combined_logger->info("group id:{0} error", groupid);
+//    }
+//    auto sps = group->getSpirits();
+//    lineOccuMtx.lock();
+//    for(auto spirit:sps)
+//    {
+//        auto line = MapManager::getInstance()->getPathById(spirit);
+//        if(line != nullptr)
+//        {
+//            for (auto itr = line_occuagvs[line->getId()].begin(); itr != line_occuagvs[line->getId()].end(); ) {
+//                if (*itr == agvId) {
+//                    itr = line_occuagvs[line->getId()].erase(itr);
+//                }
+//                else {
+//                    ++itr;
+//                }
+//            }
+//        }
+//    }
+//    lineOccuMtx.unlock();
+//    return true;
+//}

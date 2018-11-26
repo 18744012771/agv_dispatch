@@ -71,8 +71,8 @@ public:
     //获取 距离 目标点位 最近的躲避点
     int getNearestHaltStation(int agvId, int aimStation);
 
-    bool addOccuGroup(int groupid, int agvId);
-    bool freeGroup(int groupid, int agvId);
+//    bool addOccuGroup(int groupid, int agvId);
+//    bool freeGroup(int groupid, int agvId);
 
     std::vector<int> getStations(int floor);
 
@@ -80,6 +80,7 @@ public:
     int getFloor(int spiritID);
     std::vector<int> getBlocks(int spiritID);
     std::vector<int> getGroup(int spiritID);
+    std::vector<int> getHaltGroup(int spiritID);
     std::list<MapConflictPair *> getConflictPairs();
 
     MapPoint *getPointById(int id) { return g_onemap.getPointById(id); }
@@ -123,8 +124,8 @@ private:
     std::mutex stationOccuMtx;
     std::map<int, int> station_occuagv;//一个站点，及当前占用改站点的agv
 
-    std::mutex groupMtx;
-    std::map<int,std::pair<int, std::vector<int> > > group_occuagv;//一个区块，及当前区块占用agv
+//    std::mutex groupMtx;
+//    std::map<int,std::pair<int, std::vector<int> > > group_occuagv;//一个区块，及当前区块占用agv
 
     //    std::mutex blockMtx;
     //    //std::map<int,std::pair<int, std::vector<int> > > block_occuagv;//一个区块，及当前区块占用agv
