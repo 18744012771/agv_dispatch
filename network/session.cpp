@@ -1,4 +1,4 @@
-﻿#include "session.h"
+#include "session.h"
 #include "./sessionmanager.h"
 #include "../common.h"
 
@@ -6,8 +6,7 @@ Session::Session(boost::asio::io_context &_context):
     strand_(_context),
     socket_(_context),
     timeout(90),
-    wait_request_timer_(_context),
-    sending(false)
+    wait_request_timer_(_context)
 {
     sessionId = SessionManager::getInstance()->getNextSessionId();
 }
@@ -92,10 +91,6 @@ void Session::send(const Json::Value &json)
 void Session::stop()
 {
     socket_.close();
-    sending = false;
-    mtx.lock();
-    sendmsgs.clear();
-    mtx.unlock();
     onStop();
     wait_request_timer_.cancel();
 }
@@ -103,51 +98,20 @@ void Session::stop()
 void Session::write(const char *data,int len)
 {
     if(data==nullptr || len<=0)return ;
-    //if(!socket_.is_open())return ;
-    bool f = len%SESSION_MSG_MEMORY_LENGTH == 0;
-    int pack_nums = len/SESSION_MSG_MEMORY_LENGTH;
-    if(!f)pack_nums++;
-    mtx.lock();
-    for(int ii=0;ii<pack_nums-1;++ii){
-        sendmsgs.push_back(SessionMsg(data+ii*SESSION_MSG_MEMORY_LENGTH,SESSION_MSG_MEMORY_LENGTH));
-    }
-    sendmsgs.push_back(SessionMsg(data+(pack_nums-1)*SESSION_MSG_MEMORY_LENGTH,len - (pack_nums-1)*SESSION_MSG_MEMORY_LENGTH));
-    
-    if(!sending){
-        if (!sendmsgs.empty()){
-            sending = true;
-            boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
-                                     boost::asio::bind_executor(strand_,
-                                                                boost::bind(&Session::onWrite, shared_from_this(),
-                                                                            boost::asio::placeholders::error)));
-        }
-    }
-	mtx.unlock();
-
+    char *temp = (char *) malloc(sizeof(char) *len);
+    memcpy(temp,data,len);
+    boost::asio::async_write(socket_, boost::asio::buffer(temp, len),
+                             boost::asio::bind_executor(strand_,
+                                                        boost::bind(&Session::onWrite, shared_from_this(),
+                                                                    boost::asio::placeholders::error,temp)));
 }
 
-void Session::onWrite(boost::system::error_code ec)
+void Session::onWrite(boost::system::error_code ec,char *sendTempPtr)
 {
+    delete sendTempPtr;
+
     if (ec && ec !=  boost::asio::error::operation_aborted){
         combined_logger->debug("session id {0} write fail,error:{1}",sessionId,ec.message());
         stop();
-    }
-
-    if (!ec)
-    {
-        mtx.lock();
-        if (!sendmsgs.empty())
-            sendmsgs.pop_front();
-        if (!sendmsgs.empty())
-        {
-            sending = true;
-            boost::asio::async_write(socket_, boost::asio::buffer(sendmsgs.front().data(), sendmsgs.front().length()),
-                                     boost::asio::bind_executor(strand_,
-                                                                boost::bind(&Session::onWrite, shared_from_this(),
-                                                                            boost::asio::placeholders::error)));
-        }else{
-            sending = false;
-        }
-        mtx.unlock();
     }
 }

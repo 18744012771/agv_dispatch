@@ -1,4 +1,4 @@
-﻿#ifndef SESSION_H
+#ifndef SESSION_H
 #define SESSION_H
 
 #include <boost/noncopyable.hpp>
@@ -72,7 +72,7 @@ public:
     virtual void onread(const boost::system::error_code& ec,
                         std::size_t bytes_transferred);
     virtual void onTimeOut(const boost::system::error_code &ec);
-    virtual void onWrite(boost::system::error_code ec);
+    virtual void onWrite(boost::system::error_code ec, char *sendTempPtr);
     int getTimeout(){return timeout;}
     void setTimeout(int _timeout){
         wait_request_timer_.cancel();
@@ -95,10 +95,10 @@ protected:
     char read_buffer[MSG_READ_BUFFER_LENGTH];
     int timeout;
 
-    std::mutex mtx;
-    SendMessageQueue sendmsgs;
+//    std::mutex mtx;
+//    SendMessageQueue sendmsgs;
 
-    boost::atomics::atomic_bool sending;
+//    boost::atomics::atomic_bool sending;
 };
 
 #endif // SESSION_H
