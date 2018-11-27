@@ -88,7 +88,7 @@ void SessionManager::removeClientSession(ClientSessionPtr c)
 void SessionManager::sendToAllClient(Json::Value &v)
 {
     UNIQUE_LCK(clientsessoinmtx);
-    for(auto itr = clientsessions.begin();itr!=clientsessions.end();){
+    for(auto itr = clientsessions.begin();itr!=clientsessions.end();++itr){
         (*itr)->send(v);
     }
 }

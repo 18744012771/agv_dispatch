@@ -112,6 +112,6 @@ void Session::onWrite(boost::system::error_code ec,char *sendTempPtr)
 
     if (ec && ec !=  boost::asio::error::operation_aborted){
         combined_logger->debug("session id {0} write fail,error:{1}",sessionId,ec.message());
-        stop();
+//        stop();
     }
 }
