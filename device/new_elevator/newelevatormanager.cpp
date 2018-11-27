@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include "newelevatormanager.h"
 #include "../../common.h"
 #include "../../agvmanager.h"
@@ -287,7 +287,7 @@ void NewElevatorManager::ttest(int agv_id, int from_floor, int to_floor, int ele
     combined_logger->debug("==============FINISH go into elevator");
     //关门
     elemanagerptr->DropOpen(elevator_id);
-    sleep_for_s(1);
+    sleep_for_s(2);
     elemanagerptr->resetElevatorState(elevator_id);
     sleep_for_s(5);
     //呼梯

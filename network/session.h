@@ -95,10 +95,7 @@ protected:
     char read_buffer[MSG_READ_BUFFER_LENGTH];
     int timeout;
 
-//    std::mutex mtx;
-//    SendMessageQueue sendmsgs;
-
-//    boost::atomics::atomic_bool sending;
+    std::mutex close_mtx;
 };
 
 #endif // SESSION_H

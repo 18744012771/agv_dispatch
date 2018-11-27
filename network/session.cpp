@@ -66,7 +66,6 @@ void Session::onread(const boost::system::error_code& ec,
         combined_logger->debug("session id {0} read fail,error:{1}",sessionId,ec.message());
         stop();
     }
-
 }
 
 void Session::send(const Json::Value &json)
@@ -90,9 +89,11 @@ void Session::send(const Json::Value &json)
 
 void Session::stop()
 {
+    close_mtx.lock();
     socket_.close();
     onStop();
     wait_request_timer_.cancel();
+    close_mtx.unlock();
 }
 
 void Session::write(const char *data,int len)
@@ -112,6 +113,5 @@ void Session::onWrite(boost::system::error_code ec,char *sendTempPtr)
 
     if (ec && ec !=  boost::asio::error::operation_aborted){
         combined_logger->debug("session id {0} write fail,error:{1}",sessionId,ec.message());
-        stop();
     }
 }
