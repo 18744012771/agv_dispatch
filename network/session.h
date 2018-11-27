@@ -94,8 +94,6 @@ protected:
     QyhBuffer buffer;
     char read_buffer[MSG_READ_BUFFER_LENGTH];
     int timeout;
-
-    std::mutex close_mtx;
 };
 
 #endif // SESSION_H
