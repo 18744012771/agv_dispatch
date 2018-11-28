@@ -616,15 +616,17 @@ int TaskManager::cancelTask(int taskId)
             {
                 task = t;
                 //TODO 释放占有的路径等
-                //doingTask.erase(std::find(doingTask.begin(), doingTask.end(), task));
-                //alreadyCancel = true;
                 break;
             }
         }
         doingTaskMtx.unlock();
+    }else{
+        doingTaskMtx.lock();
+        doingTask.push_back(task);
+        doingTaskMtx.unlock();
     }
 
-    if (task != nullptr)
+    if (task != nullptr && !task->getIsCancel())
     {
         task->cancel();
         task->setCancelTime(getTimeStrNow());

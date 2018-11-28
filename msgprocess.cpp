@@ -287,7 +287,7 @@ void MsgProcess::publisher_task()
             response["queuenumber"] = 0;
 
             auto tasks = TaskManager::getInstance()->getCurrentTasks();
-            if (tasks.size() <= 0)continue;
+            //if (tasks.size() <= 0)continue;
             Json::Value v_tasks;
             for (auto task : tasks) {
                 Json::Value v_task;
