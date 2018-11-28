@@ -6,7 +6,8 @@ Session::Session(boost::asio::io_context &_context):
     strand_(_context),
     socket_(_context),
     timeout(90),
-    wait_request_timer_(_context)
+    wait_request_timer_(_context),
+    _alive(true)
 {
     sessionId = SessionManager::getInstance()->getNextSessionId();
 }
@@ -37,6 +38,7 @@ void Session::onTimeOut(const boost::system::error_code& ec)
 
 void Session::read()
 {
+    if(!_alive)return ;
     wait_request_timer_.expires_from_now(boost::posix_time::seconds(timeout));
     wait_request_timer_.async_wait(strand_.wrap(bind(&Session::onTimeOut, shared_from_this(), _1)));
     socket_.async_read_some(boost::asio::buffer(read_buffer,MSG_READ_BUFFER_LENGTH),
@@ -89,6 +91,8 @@ void Session::send(const Json::Value &json)
 
 void Session::stop()
 {
+    if(!_alive)return ;
+    _alive = false;
     onStop();
     wait_request_timer_.cancel();
     boost::system::error_code ec;
@@ -98,6 +102,7 @@ void Session::stop()
 void Session::write(const char *data,int len)
 {
     if(data==nullptr || len<=0)return ;
+    if(!_alive)return ;
     char *temp = (char *) malloc(sizeof(char) *len);
     memcpy(temp,data,len);
     boost::asio::async_write(socket_, boost::asio::buffer(temp, len),
@@ -112,6 +117,6 @@ void Session::onWrite(boost::system::error_code ec,char *sendTempPtr)
 
     if (ec && ec !=  boost::asio::error::operation_aborted){
         combined_logger->debug("session id {0} write fail,error:{1}",sessionId,ec.message());
-//        stop();
+        stop();
     }
 }

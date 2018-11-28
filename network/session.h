@@ -67,7 +67,7 @@ public:
     void send(const Json::Value &json);
     void write(const char *data,int len);
     int getSessionId(){return sessionId;}
-    bool alive(){return socket_.is_open();}
+    bool alive(){return _alive;}
 
     virtual void onread(const boost::system::error_code& ec,
                         std::size_t bytes_transferred);
@@ -94,6 +94,8 @@ protected:
     QyhBuffer buffer;
     char read_buffer[MSG_READ_BUFFER_LENGTH];
     int timeout;
+
+    boost::atomic_bool _alive;
 };
 
 #endif // SESSION_H
