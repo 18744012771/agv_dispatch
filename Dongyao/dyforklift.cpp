@@ -206,7 +206,27 @@ void DyForklift::onRead(const char *data, int len)
                     //find nearest station
                     nowStation = nearestStation();
                     if (nowStation != -1) {
-                        status = AGV_STATUS_IDLE;
+                        if(isChanging){
+                            status = AGV_STATUS_CHARGING;
+                        }else if(isEmergencyStop){
+                            status = AGV_STATUS_ESTOP;
+                        }else if(isManualControl){
+                            status = AGV_STATUS_HANDING;
+                        }else if(isPowerLow && status != AGV_STATUS_TASKING && status != AGV_STATUS_GO_CHARGING&&status!=AGV_STATUS_CHARGING){
+                            status = AGV_STATUS_POWER_LOW;
+                            //TODO: zidong chongdian
+                            bool ret = TaskMaker::getInstance()->makeChargeTask(getId());
+                            if(ret){
+                                status = AGV_STATUS_GO_CHARGING;
+                            }
+                        }else{
+                            //recover status!!!
+                            if(currentTask!=nullptr && !currentTask->getIsCancel()){
+                                status = AGV_STATUS_TASKING;
+                            }else{
+                                status = AGV_STATUS_IDLE;
+                            }
+                        }
                         onArriveStation(nowStation);
                     }
                 }
