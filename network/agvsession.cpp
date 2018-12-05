@@ -9,7 +9,7 @@ AgvSession::AgvSession(boost::asio::io_context &service):
     Session(service),
     _agvPtr(nullptr)
 {
-    timeout = 5*60;
+    timeout = 40;
 }
 
 void AgvSession::afterread()
