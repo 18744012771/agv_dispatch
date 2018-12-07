@@ -66,14 +66,14 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
         if (runTimes <= 0)
         {
             //东药 特殊处理
-            if(index>1 && (index - 1)<nodes.size()){
+            if(index>=1 && (index - 1)<nodes.size()){
                 AgvTaskNodePtr lastNode = nodes[index-1];
                 if(lastNode->getStation() == 176 || lastNode->getStation() == 181)//二楼的成品库位
                 {
                     //判断是否还有未执行的任务
                     int amount = 0;
                     for(auto itr = toDistributeTasks.begin();itr!=toDistributeTasks.end();++itr){
-                        for (auto pos = itr->second.begin(); pos != itr->second.end();)
+                        for (auto pos = itr->second.begin(); pos != itr->second.end();++pos)
                         {
                             AgvTaskPtr ttask = *pos;
                             if(ttask == task)continue;
@@ -195,7 +195,6 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                 {
                     //找到了最优线路和最佳agv
                     combined_logger->info(" 找到了最优线路和最佳agv {0}", bestAgv->getId());
-                    //长走廊 不再占领
                     mapmanagerptr->addOccuStation(aimStation, bestAgv);
                     for (auto tline : result)
                     {

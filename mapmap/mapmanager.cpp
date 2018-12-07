@@ -214,7 +214,7 @@ void MapManager::addOccuLine(int line, AgvPtr occuAgv)
         line_occuagvs[line].push_back(occuAgv->getId());
     }
     lineOccuMtx.unlock();
-    combined_logger->debug("occupy line:{0} agv:{1}", line, occuAgv->getId());
+    combined_logger->debug("occu line:{0} agv:{1}", line, occuAgv->getId());
 
     //同一条line可能属于多个Group
     std::vector<int> groupIds = getGroup(line);

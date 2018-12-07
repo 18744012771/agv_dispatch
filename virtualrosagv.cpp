@@ -11,7 +11,7 @@
 #include "math.h"
 #include <float.h>
 
-
+#define VIRTUAL_AGV_SPEED   10.0
 VirtualRosAgv::VirtualRosAgv(int id,std::string name):
     VirtualAgv(id,name),
     lastStationOdometer(0),
@@ -365,7 +365,7 @@ void VirtualRosAgv::goStation(int station, bool stop)
         }
         //1.向目标前进100ms的距离 假设每次前进10 //3.重新计算当前位置
         if(path->getPathType() == MapPath::Map_Path_Type_Line){
-            currentT += 10.0 / path_length;
+            currentT += VIRTUAL_AGV_SPEED/ path_length;
             //前移10
             x = startPoint->getX()+(endPoint->getX()-startPoint->getX()) * currentT;
             y = startPoint->getY() + (endPoint->getY() - startPoint->getY()) * currentT;
@@ -377,7 +377,7 @@ void VirtualRosAgv::goStation(int station, bool stop)
             }
         }else if(path->getPathType() == MapPath::Map_Path_Type_Quadratic_Bezier){
             //前移10
-            currentT += 10.0/path_length;
+            currentT += VIRTUAL_AGV_SPEED/path_length;
             if(currentT<0)currentT = 0.;
             if(currentT>1)currentT = 1.;
             BezierArc::POSITION_POSE pp = BezierArc::BezierArcPoint(a,b,d,currentT);
@@ -391,7 +391,7 @@ void VirtualRosAgv::goStation(int station, bool stop)
             }
         }else if(path->getPathType() == MapPath::Map_Path_Type_Cubic_Bezier){
             //前移10
-            currentT += 10.0/path_length;
+            currentT += VIRTUAL_AGV_SPEED/path_length;
             if(currentT<0)currentT = 0.;
             if(currentT>1)currentT = 1.;
             BezierArc::POSITION_POSE pp = BezierArc::BezierArcPoint(a,b,c,d,currentT);
