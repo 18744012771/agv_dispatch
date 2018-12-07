@@ -196,24 +196,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     //找到了最优线路和最佳agv
                     combined_logger->info(" 找到了最优线路和最佳agv {0}", bestAgv->getId());
                     //长走廊 不再占领
-                    if(aimStation != 62
-                            &&aimStation != 63
-                            &&aimStation != 68
-                            &&aimStation != 69
-                            &&aimStation != 70
-                            &&aimStation != 71
-                            &&aimStation != 99
-                            &&aimStation != 100
-                            &&aimStation != 101
-                            &&aimStation != 102
-
-                            &&aimStation != 157
-                            &&aimStation != 158
-                            &&aimStation != 159
-                            &&aimStation != 160
-                            &&aimStation != 161
-                            )
-                        mapmanagerptr->addOccuStation(aimStation, bestAgv);
+                    mapmanagerptr->addOccuStation(aimStation, bestAgv);
                     for (auto tline : result)
                     {
                         mapmanagerptr->addOccuLine(tline, bestAgv);
@@ -380,24 +363,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     //combined_logger->info("path={0}", task->getPath().at(0));
                     //combined_logger->info("3.excuteTask={0}", task->getId());
                     //占用线路和站点
-                    if(aimStation != 62
-                            &&aimStation != 63
-                            &&aimStation != 68
-                            &&aimStation != 69
-                            &&aimStation != 70
-                            &&aimStation != 71
-                            &&aimStation != 99
-                            &&aimStation != 100
-                            &&aimStation != 101
-                            &&aimStation != 102
-
-                            &&aimStation != 157
-                            &&aimStation != 158
-                            &&aimStation != 159
-                            &&aimStation != 160
-                            &&aimStation != 161
-                            )
-                        mapmanagerptr->addOccuStation(aimStation, agv);
+                    mapmanagerptr->addOccuStation(aimStation, agv);
                     for (auto tline : result)
                     {
                         mapmanagerptr->addOccuLine(tline, agv);
