@@ -11,7 +11,7 @@
 #include "math.h"
 #include <float.h>
 
-#define VIRTUAL_AGV_SPEED   10.0
+#define VIRTUAL_AGV_SPEED   30.0
 VirtualRosAgv::VirtualRosAgv(int id,std::string name):
     VirtualAgv(id,name),
     lastStationOdometer(0),

@@ -22,6 +22,7 @@ Conflict::Conflict(const Conflict&b)
 
 Conflict &Conflict::operator = (const Conflict&b)
 {
+    boost::recursive_mutex::scoped_lock lock(mtx);
     lockedAgv = b.lockedAgv;
     agvA = b.agvA;
     agvB = b.agvB;
@@ -37,6 +38,7 @@ Conflict::~Conflict()
 
 bool Conflict::passable(int agvId,int spirit)
 {
+    boost::recursive_mutex::scoped_lock lock(mtx);
     if(isAllFree())return true;
     if(agvId!=agvA && agvId!=agvB)return true;
     if(agvId == agvA && std::find(agvAspirits.begin(),agvAspirits.end(),spirit)==agvAspirits.end())return true;
@@ -47,6 +49,7 @@ bool Conflict::passable(int agvId,int spirit)
 
 void Conflict::print()
 {
+    boost::recursive_mutex::scoped_lock lock(mtx);
     std::stringstream ssa;
     std::stringstream ssb;
     for(auto i:agvAspirits)ssa<<i<<",";
@@ -56,11 +59,11 @@ void Conflict::print()
 
 bool Conflict::lock(int agvId, int spirit)
 {
+    boost::recursive_mutex::scoped_lock lock(mtx);
     if(isAllFree())return true;
     if(agvId!=agvA && agvId!=agvB)return true;
     if(agvId == agvA && std::find(agvAspirits.begin(),agvAspirits.end(),spirit)==agvAspirits.end())return true;
     if(agvId == agvB && std::find(agvBspirits.begin(),agvBspirits.end(),spirit)==agvBspirits.end())return true;
-    UNIQUE_LCK(lockedAgvMtx);
     if(lockedAgv == agvId)return true;
     //if(lockedAgv!=0 && lockedAgv!=agvId)return false;
     lockedAgv = agvId;
@@ -69,11 +72,11 @@ bool Conflict::lock(int agvId, int spirit)
 
 bool Conflict::checkLock(int agvId,int spirit)
 {
+    boost::recursive_mutex::scoped_lock lock(mtx);
     if(isAllFree())return true;
     if(agvId!=agvA && agvId!=agvB)return true;
     if(agvId == agvA && std::find(agvAspirits.begin(),agvAspirits.end(),spirit)==agvAspirits.end())return true;
     if(agvId == agvB && std::find(agvBspirits.begin(),agvBspirits.end(),spirit)==agvBspirits.end())return true;
-    UNIQUE_LCK(lockedAgvMtx);
     if(lockedAgv == agvId)return true;
     if(lockedAgv!=0 && lockedAgv!=agvId)return false;
     return true;
@@ -81,7 +84,7 @@ bool Conflict::checkLock(int agvId,int spirit)
 
 bool Conflict::freeLockExcept(int agvId,int spirit)
 {
-    UNIQUE_LCK(lockedAgvMtx);
+    boost::recursive_mutex::scoped_lock lock(mtx);
     if(agvId == agvA){
         for(auto itr = agvAspirits.begin();itr!=agvAspirits.end();){
             if(*itr == spirit){
@@ -113,7 +116,7 @@ bool Conflict::freeLockExcept(int agvId,int spirit)
 
 bool Conflict::freeLock(int agvId, int spirit)
 {
-    UNIQUE_LCK(lockedAgvMtx);
+    boost::recursive_mutex::scoped_lock lock(mtx);
     //if(lockedAgv!=agvId)return false;
     if(agvId == agvA){
         for(auto itr = agvAspirits.begin();itr!=agvAspirits.end();){
@@ -146,6 +149,6 @@ bool Conflict::freeLock(int agvId, int spirit)
 
 bool Conflict::isAllFree()
 {
-    UNIQUE_LCK(lockedAgvMtx);
+    boost::recursive_mutex::scoped_lock lock(mtx);
     return agvAspirits.empty() || agvBspirits.empty();
 }

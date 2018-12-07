@@ -21,7 +21,7 @@ TaskMaker* TaskMaker::getInstance()
 		//不同的AGV，调用不同的子类，即可
 		static QingdaoTaskMaker *m_ins = nullptr;
 		if (m_ins == nullptr) {
-			m_ins = new QingdaoTaskMaker();
+            m_ins = new QingdaoTaskMaker("127.0.0.1", 12345);
 		}
 		return m_ins;
     }else if(GLOBAL_AGV_PROJECT == AGV_PROJECT_QUNCHUANG){

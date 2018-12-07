@@ -116,7 +116,7 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
         else
         {
             //动态规划去最近的非占用的停留点
-            if(agv != nullptr && GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO &&  aimStation == DONGYAO_TASK_GO_HALT_STATION){
+            if(agv != nullptr && (GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO ||GLOBAL_AGV_PROJECT == AGV_PROJECT_QINGDAO )&&  aimStation == DONGYAO_TASK_GO_HALT_STATION){
                 aimStation = MapManager::getInstance()->getWaitPoint(agv->getId());
                 //没有空闲可用的等待点
                 if(aimStation<0)

@@ -3,6 +3,7 @@
 #include <vector>
 #include <atomic>
 #include <mutex>
+#include <boost/thread/recursive_mutex.hpp>
 
 class Conflict
 {
@@ -18,10 +19,10 @@ public:
     bool passable(int agvId,int spirit);
     void print();
     Conflict &operator = (const Conflict&b);
-    int getAgvA(){return agvA;}
-    int getAgvB(){return agvB;}
-    std::vector<int> getAspirits(){return agvAspirits;}
-    std::vector<int> getBspirits(){return agvBspirits;}
+    int getAgvA(){boost::recursive_mutex::scoped_lock lock(mtx);return agvA;}
+    int getAgvB(){boost::recursive_mutex::scoped_lock lock(mtx);return agvB;}
+    std::vector<int> getAspirits(){boost::recursive_mutex::scoped_lock lock(mtx); return agvAspirits;}
+    std::vector<int> getBspirits(){boost::recursive_mutex::scoped_lock lock(mtx); return agvBspirits;}
     bool operator ==(const Conflict &b){
         return agvA == b.agvA
                 && agvB == b.agvB
@@ -34,7 +35,7 @@ private:
     std::vector<int> agvAspirits;
     std::vector<int> agvBspirits;
     int lockedAgv;
-    std::mutex lockedAgvMtx;
+    boost::recursive_mutex mtx;
 };
 
 #endif // CONFLICT_H
