@@ -30,12 +30,12 @@ INCLUDEPATH+=D:\thirdparty\boost\src\boost_1_67_0
 INCLUDEPATH+=D:\thirdparty\spdlog\include
 LIBS+=D:\thirdparty\sqlite\lib\Debug\sqlite3.lib
 LIBS+=D:\thirdparty\jsoncpp\lib\x64\Debug\jsoncpp.lib
-LIBS+=D:\thirdparty\boost\install\lib\libboost_system-vc141-mt-gd-x64-1_67.lib
-LIBS+=D:\thirdparty\boost\install\lib\libboost_thread-vc141-mt-gd-x64-1_67.lib
-LIBS+=D:\thirdparty\boost\install\lib\libboost_chrono-vc141-mt-gd-x64-1_67.lib
-LIBS+=D:\thirdparty\boost\install\lib\libboost_atomic-vc141-mt-gd-x64-1_67.lib
-LIBS+=D:\thirdparty\boost\install\lib\libboost_date_time-vc141-mt-gd-x64-1_67.lib
-LIBS+=D:\thirdparty\boost\install\lib\libboost_regex-vc141-mt-gd-x64-1_67.lib
+LIBS+=D:\thirdparty\boost\lib\libboost_system-vc141-mt-gd-x64-1_67.lib
+LIBS+=D:\thirdparty\boost\lib\libboost_thread-vc141-mt-gd-x64-1_67.lib
+LIBS+=D:\thirdparty\boost\lib\libboost_chrono-vc141-mt-gd-x64-1_67.lib
+LIBS+=D:\thirdparty\boost\lib\libboost_atomic-vc141-mt-gd-x64-1_67.lib
+LIBS+=D:\thirdparty\boost\lib\libboost_date_time-vc141-mt-gd-x64-1_67.lib
+LIBS+=D:\thirdparty\boost\lib\libboost_regex-vc141-mt-gd-x64-1_67.lib
 }
 
 HEADERS += \

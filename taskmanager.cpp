@@ -65,8 +65,32 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
 
         if (runTimes <= 0)
         {
-            //            AgvPtr agv = AgvManager::getInstance()->getAgvById(task->getAgv());
-            //            agv->status = Agv::AGV_STATUS_IDLE;
+            //东药 特殊处理
+            if(index>1 && (index - 1)<nodes.size()){
+                AgvTaskNodePtr lastNode = nodes[index-1];
+                if(lastNode->getStation() == 176 || lastNode->getStation() == 181)//二楼的成品库位
+                {
+                    //判断是否还有未执行的任务
+                    int amount = 0;
+                    for(auto itr = toDistributeTasks.begin();itr!=toDistributeTasks.end();++itr){
+                        for (auto pos = itr->second.begin(); pos != itr->second.end();)
+                        {
+                            AgvTaskPtr ttask = *pos;
+                            if(ttask == task)continue;
+                            ++amount;
+                        }
+                    }
+                    if(amount<=0){
+                        //go to wait point
+                        AgvTaskNodePtr node(new AgvTaskNode());
+                        node->setStation(DONGYAO_TASK_GO_HALT_STATION);
+                        nodes.push_back(node);
+                        task->setTaskNodes(nodes);
+                        return false;
+                    }
+                }
+            }
+
             finishTask(task);
             return true;
         }
@@ -268,13 +292,6 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                             task->setAgv(bestAgv->getId());
                             bestAgv->onTaskStart(task);
 
-                            //占用线路和站点
-                            mapmanagerptr->addOccuStation(aimStation, bestAgv);
-                            for (auto tline : result)
-                            {
-                                mapmanagerptr->addOccuLine(tline, bestAgv);
-                            }
-
                             excuteTask(task);
                             return true;
                         }
@@ -311,7 +328,9 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                     }
                     //以下几个点，不能一号车去
                     if(forklift->getId() == 1
-                            && (aimStation == 68
+                            && (aimStation == 62
+                                ||aimStation == 63
+                                ||aimStation == 68
                                 ||aimStation == 69
                                 ||aimStation == 70
                                 ||aimStation == 71
