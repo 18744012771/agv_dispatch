@@ -19,6 +19,10 @@ public:
 
 //    void makeTask(std::string from ,std::string to,std::string dispatch_id,int ceid,std::string line_id, int agv_id, int all_floor_info);
     void finishTask(std::string store_no, std::string storage_no, int type, std::string key_part_no, int agv_id);
+
+    void queryTodoTaskCount();
+
+    int getTodoTaskCount(){return todoTaskCount;}
 private:
     void onRead(const char *data, int len);
     void onConnect();
@@ -30,7 +34,7 @@ private:
     int m_port;
     bool m_connectState;
     QyhBuffer buffer;
-
+    std::atomic_int todoTaskCount;
 };
 
 #endif // DYTASKMAKER_H

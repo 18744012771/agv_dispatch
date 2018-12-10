@@ -10,7 +10,8 @@ TcpClient::TcpClient(std::string _ip, int _port, ClientReadCallback _readcallbac
     connectcallback(_connectcallback),
     disconnectcallback(_disconnectcallback),
     t(nullptr),
-    quit(false)
+    quit(false),
+    s(nullptr)
 {
 }
 
@@ -95,6 +96,7 @@ void TcpClient::resetConnect(std::string _ip, int _port)
 
 bool TcpClient::sendToServer(const char *data,int len)
 {
+    if(s == nullptr)return false;
     try{
         return len == s->write_some(boost::asio::buffer(data, len));
     }catch(...){

@@ -27,7 +27,13 @@ void DyTaskMaker::init()
 
     m_wms_tcpClient = new TcpClient(m_ip, m_port, onread, onconnect, ondisconnect);
     m_wms_tcpClient->start();
-    //combined_logger->info(typeid(TaskMaker::getInstance()).name());
+    //每隔5秒查询一次未完成的任务的数量
+    g_threads.create_thread([&]{
+        while(!g_quit){
+            queryTodoTaskCount();
+            sleep_for_s(5);
+        }
+    });
 }
 
 int DyTaskMaker::msgProcess()
@@ -279,7 +285,7 @@ void DyTaskMaker::makeTask(ClientSessionPtr conn, const Json::Value &request)
 
 void DyTaskMaker::receiveTask(std::string str_task)
 {
-    combined_logger->info("receiveTask:{0}", str_task);
+    combined_logger->info("receive:{0}", str_task);
 
     std::vector<std::string> all = split(str_task);
     //all组成部分:
@@ -288,12 +294,10 @@ void DyTaskMaker::receiveTask(std::string str_task)
     //例如一个任务是指定 AGV 到A点取货，放到B点
     //[0] [2] [get_good] [aId] [put_good] [bId]
 
-    if(all.size()<4){
-        combined_logger->warn("dytaskmaker recv task msg format error");
-        //TODO
-        //tell wms task make error to roll back database changes!
-        return;
-    }else{
+    if(all.size() == 1){
+        todoTaskCount = stringToInt(all[0]);
+        combined_logger->info("dytaskmaker recv todoTaskCount ={}",todoTaskCount);
+    }else if(all.size()>=4){
         int agvId = stringToInt( all[0]);
         // AgvPtr agv = AgvManager::getInstance()->getAgvById(agvId);
         int priority = stringToInt(all[1]);
@@ -396,6 +400,33 @@ void DyTaskMaker::receiveTask(std::string str_task)
         //tell wms task make success and the task id
         //TODO:
     }
+    else{
+        combined_logger->warn("dytaskmaker recv task msg format error");
+    }
+}
+
+void DyTaskMaker::queryTodoTaskCount()
+{
+    std::stringstream body;
+    body<<"76";
+
+    std::stringstream ss;
+    ss<<"*";
+    //时间戳
+    ss.fill('0');
+    ss.width(6);
+    time_t   TimeStamp = clock()%1000000;
+    ss<<TimeStamp;
+    //长度
+    ss.fill('0');
+    ss.width(4);
+    ss<<(body.str().length()+10);
+    ss<<body.str();
+    ss<<"#";
+
+    combined_logger->info("sendToWMS:{0}", ss.str().c_str());
+
+    m_wms_tcpClient->sendToServer(ss.str().c_str(),ss.str().length());
 }
 
 void DyTaskMaker::finishTask(std::string store_no, std::string storage_no, int type, std::string key_part_no, int agv_id)

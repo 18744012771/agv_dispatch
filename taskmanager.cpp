@@ -5,6 +5,7 @@
 #include "sqlite3/CppSQLite3.h"
 #include "userlogmanager.h"
 #include "taskmaker.h"
+#include "Dongyao/dytaskmaker.h"
 #include "Dongyao/dyforklift.h"
 #ifdef QUNCHUANG_PROJECT
 #include "agvImpl/ros/agv/rosAgv.h"
@@ -78,6 +79,12 @@ bool TaskManager::distributeTask(AgvTaskPtr task)
                             AgvTaskPtr ttask = *pos;
                             if(ttask == task)continue;
                             ++amount;
+                        }
+                    }
+                    if(amount<=0){
+                        if(GLOBAL_AGV_PROJECT == AGV_PROJECT_DONGYAO){
+                            DyTaskMaker* dytaskmaker =(DyTaskMaker*)(TaskMaker::getInstance());
+                            amount = dytaskmaker->getTodoTaskCount();
                         }
                     }
                     if(amount<=0){
