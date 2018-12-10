@@ -424,7 +424,7 @@ void DyTaskMaker::queryTodoTaskCount()
     ss<<body.str();
     ss<<"#";
 
-    combined_logger->info("sendToWMS:{0}", ss.str().c_str());
+    //combined_logger->info("sendToWMS:{0}", ss.str().c_str());
 
     m_wms_tcpClient->sendToServer(ss.str().c_str(),ss.str().length());
 }
